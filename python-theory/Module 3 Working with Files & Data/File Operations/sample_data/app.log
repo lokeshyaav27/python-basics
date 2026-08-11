@@ -1,0 +1,4 @@
+INFO  server started
+ERROR db connection failed
+INFO  retrying
+ERROR timeout after 30s

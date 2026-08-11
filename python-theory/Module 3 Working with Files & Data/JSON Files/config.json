@@ -1,0 +1,15 @@
+{
+  "app": "python-basics",
+  "version": 1.2,
+  "debug": false,
+  "owner": null,
+  "modules": [
+    "fundamentals",
+    "files",
+    "apis"
+  ],
+  "limits": {
+    "timeout": 30,
+    "retries": 3
+  }
+}
