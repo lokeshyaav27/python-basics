@@ -4,5 +4,6 @@ SQLAlchemy>=1.4
 alembic
 psycopg2-binary
 python-dotenv
-pydantic
+pydantic>=2.0
+pydantic-settings
 pytest

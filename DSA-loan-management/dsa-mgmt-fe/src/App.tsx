@@ -1,6 +1,8 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Public/Home'
+import AboutUs from './pages/Public/AboutUs'
+import ContactUs from './pages/Public/ContactUs'
 import Login from './pages/Public/Login'
 import ApplyLoanPublic from './pages/Public/ApplyLoan'
 import AdminDashboard from './pages/Admin/AdminDashboard'
@@ -15,12 +17,27 @@ import CustomerLoanList from './pages/Customer/LoanList'
 import LoanDetail from './pages/Customer/LoanDetail'
 import NotFound from './pages/NotFound'
 import { ProtectedRoute } from './auth/AuthProvider'
+import { Link } from 'react-router-dom'
 
 export default function App() {
   return (
     <BrowserRouter>
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="text-xl font-bold">DSA Finance</div>
+          <nav className="space-x-4">
+            <Link to="/" className="text-slate-700">Home</Link>
+            <Link to="/apply" className="text-slate-700">Apply</Link>
+            <Link to="/about-us" className="text-slate-700">About Us</Link>
+            <Link to="/contact-us" className="text-slate-700">Contact</Link>
+            <Link to="/login" className="text-slate-700">Login</Link>
+          </nav>
+        </div>
+      </header>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/login" element={<Login />} />
         <Route path="/apply" element={<ApplyLoanPublic />} />
 
