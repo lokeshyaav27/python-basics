@@ -2,7 +2,13 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Public/Home'
 import AboutUs from './pages/Public/AboutUs'
+import WhyChooseUs from './pages/Public/WhyChooseUs'
 import ContactUs from './pages/Public/ContactUs'
+import Faqs from './pages/Public/Faqs'
+import PrivacyPolicy from './pages/Public/PrivacyPolicy'
+import TermsOfUse from './pages/Public/TermsOfUse'
+import Partners from './pages/Public/Partners'
+import ProductsCatalog from './pages/Public/ProductsCatalog'
 import Login from './pages/Public/Login'
 import CustomerLogin from './pages/Public/CustomerLogin'
 import AgentLogin from './pages/Public/AgentLogin'
@@ -25,49 +31,128 @@ import { Link } from 'react-router-dom'
 export default function App() {
   return (
     <BrowserRouter>
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="text-xl font-bold">DSA Finance</div>
-          <nav className="space-x-4">
-            <Link to="/" className="text-slate-700">Home</Link>
-            <Link to="/apply" className="text-slate-700">Apply</Link>
-            <Link to="/about-us" className="text-slate-700">About Us</Link>
-            <Link to="/contact-us" className="text-slate-700">Contact</Link>
-            <Link to="/customer-login" className="text-slate-700">Customer Login</Link>
-            <Link to="/agent-login" className="text-slate-700">Agent Login</Link>
-            <Link to="/admin-login" className="text-slate-700">Admin Login</Link>
-          </nav>
-        </div>
-      </header>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/contact-us" element={<ContactUs />} />
-        {/* legacy single login removed; new dedicated login pages */}
-        <Route path="/customer-login" element={<CustomerLogin />} />
-        <Route path="/agent-login" element={<AgentLogin />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/apply" element={<ApplyLoanPublic />} />
+      <div className="min-h-screen bg-slate-50 text-slate-800">
+        <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
+            <Link to="/" className="flex items-center gap-3 min-w-0">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-900 text-lg font-extrabold text-white shadow-sm">D</span>
+              <span className="leading-tight">
+                <span className="block text-lg font-bold text-slate-900">DSA Finance</span>
+                <span className="block text-[10px] text-slate-500">Your Trusted Loan Partner</span>
+              </span>
+            </Link>
 
-        {/* Admin routes */}
-        <Route path="/admin" element={<ProtectedRoute role={'admin'}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/products" element={<ProtectedRoute role={'admin'}><ProductsPage /></ProtectedRoute>} />
-        <Route path="/admin/banks" element={<ProtectedRoute role={'admin'}><BanksPage /></ProtectedRoute>} />
-        <Route path="/admin/agents" element={<ProtectedRoute role={'admin'}><AgentsPage /></ProtectedRoute>} />
-        <Route path="/admin/customers" element={<ProtectedRoute role={'admin'}><CustomersPage /></ProtectedRoute>} />
+            <nav className="hidden items-center gap-8 lg:flex">
+              <Link to="/" className="relative text-sm font-semibold text-blue-700 after:absolute after:-bottom-5 after:left-0 after:h-1 after:w-full after:rounded-full after:bg-blue-600">Home</Link>
+              <Link to="/products" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Loan Products</Link>
+              <Link to="/why-choose-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Why Choose Us</Link>
+              <Link to="/about-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">About Us</Link>
+              <Link to="/contact-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Contact Us</Link>
+            </nav>
 
-        {/* Agent routes */}
-        <Route path="/agent/customers" element={<ProtectedRoute role={'agent'}><AgentCustomerList /></ProtectedRoute>} />
-        <Route path="/agent/customers/:id" element={<ProtectedRoute role={'agent'}><AgentCustomerDetail /></ProtectedRoute>} />
+            <div className="flex items-center gap-4">
+              <div className="hidden items-center gap-2 text-blue-600 md:flex">
+                <span className="text-lg">☎</span>
+                <span className="leading-tight">
+                  <span className="block text-[11px] font-bold text-slate-900">1800-123-4567</span>
+                  <span className="block text-[9px] text-slate-500">Mon - Sat 9:00 AM - 7:00 PM</span>
+                </span>
+              </div>
 
-        {/* Customer routes */}
-        <Route path="/customer" element={<ProtectedRoute role={'customer'}><CustomerPortal /></ProtectedRoute>} />
-        <Route path="/customer/loans" element={<ProtectedRoute role={'customer'}><CustomerLoanList /></ProtectedRoute>} />
-        <Route path="/customer/loans/:id" element={<ProtectedRoute role={'customer'}><LoanDetail /></ProtectedRoute>} />
+              <Link to="/apply" className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
+                Apply for Loan
+              </Link>
+            </div>
+          </div>
+        </header>
 
-        <Route path="/404" element={<NotFound />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/why-choose-us" element={<WhyChooseUs />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/products" element={<ProductsCatalog />} />
+          <Route path="/partners" element={<Partners />} />
+          <Route path="/faqs" element={<Faqs />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-use" element={<TermsOfUse />} />
+          {/* legacy single login removed; new dedicated login pages */}
+          <Route path="/customer-login" element={<CustomerLogin />} />
+          <Route path="/agent-login" element={<AgentLogin />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/apply" element={<ApplyLoanPublic />} />
+
+          {/* Admin routes */}
+          <Route path="/admin" element={<ProtectedRoute role={'admin'}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/products" element={<ProtectedRoute role={'admin'}><ProductsPage /></ProtectedRoute>} />
+          <Route path="/admin/banks" element={<ProtectedRoute role={'admin'}><BanksPage /></ProtectedRoute>} />
+          <Route path="/admin/agents" element={<ProtectedRoute role={'admin'}><AgentsPage /></ProtectedRoute>} />
+          <Route path="/admin/customers" element={<ProtectedRoute role={'admin'}><CustomersPage /></ProtectedRoute>} />
+
+          {/* Agent routes */}
+          <Route path="/agent/customers" element={<ProtectedRoute role={'agent'}><AgentCustomerList /></ProtectedRoute>} />
+          <Route path="/agent/customers/:id" element={<ProtectedRoute role={'agent'}><AgentCustomerDetail /></ProtectedRoute>} />
+
+          {/* Customer routes */}
+          <Route path="/customer" element={<ProtectedRoute role={'customer'}><CustomerPortal /></ProtectedRoute>} />
+          <Route path="/customer/loans" element={<ProtectedRoute role={'customer'}><CustomerLoanList /></ProtectedRoute>} />
+          <Route path="/customer/loans/:id" element={<ProtectedRoute role={'customer'}><LoanDetail /></ProtectedRoute>} />
+
+          <Route path="/404" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
+        </Routes>
+
+        <footer className="bg-[#071b3d] pt-12 text-white">
+          <div className="mx-auto grid max-w-7xl gap-10 px-6 pb-10 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Link to="/" className="flex items-center gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-900 text-lg font-extrabold text-white">D</span>
+                <span className="leading-tight">
+                  <span className="block text-lg font-bold">DSA Finance</span>
+                  <span className="block text-[10px] text-slate-300">Your Trusted Loan Partner</span>
+                </span>
+              </Link>
+              <p className="mt-4 max-w-xs text-sm leading-6 text-slate-300">
+                Helping customers compare and access suitable loan options from leading banks and NBFCs.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Loan Products</h4>
+              <ul className="space-y-3 text-sm text-slate-300">
+                <li><Link to="/apply">Home Loan</Link></li>
+                <li><Link to="/apply">Car Loan</Link></li>
+                <li><Link to="/apply">Personal Loan</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Company</h4>
+              <ul className="space-y-3 text-sm text-slate-300">
+                <li><Link to="/about-us">About Us</Link></li>
+                <li><Link to="/about-us">Why Choose Us</Link></li>
+                <li><Link to="/contact-us">Contact Us</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Support</h4>
+              <ul className="space-y-3 text-sm text-slate-300">
+                <li><Link to="/faqs">FAQs</Link></li>
+                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+                <li><Link to="/terms-of-use">Terms of Use</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10">
+            <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-4 text-[11px] text-slate-300 md:flex-row">
+              <span>© 2026 DSA Finance. All rights reserved.</span>
+              <span>Privacy Policy · Terms of Use</span>
+            </div>
+          </div>
+        </footer>
+      </div>
     </BrowserRouter>
   )
 }

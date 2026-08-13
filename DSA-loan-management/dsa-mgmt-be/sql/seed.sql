@@ -14,10 +14,10 @@ INSERT INTO products (name, description, image) VALUES
     'https://via.placeholder.com/300x200?text=Personal+Loan'
 );
 
--- Optional: Insert sample bank data
+-- Seed lending partner bank data for the public home page
 INSERT INTO banks (name, isnationalize, isprivate, isnbfc, logo) VALUES
 (
-    'State Bank of India',
+    'SBI',
     true,
     false,
     false,
@@ -29,4 +29,46 @@ INSERT INTO banks (name, isnationalize, isprivate, isnbfc, logo) VALUES
     true,
     false,
     'https://via.placeholder.com/200x100?text=HDFC'
+),
+(
+    'PNB',
+    true,
+    false,
+    false,
+    'https://via.placeholder.com/200x100?text=PNB'
+),
+(
+    'ICICI Bank',
+    false,
+    true,
+    false,
+    'https://via.placeholder.com/200x100?text=ICICI'
+),
+(
+    'Axis Bank',
+    false,
+    true,
+    false,
+    'https://via.placeholder.com/200x100?text=Axis'
+),
+(
+    'Kotak Mahindra Bank',
+    false,
+    true,
+    false,
+    'https://via.placeholder.com/200x100?text=Kotak'
+),
+(
+    'Yes Bank',
+    false,
+    true,
+    false,
+    'https://via.placeholder.com/200x100?text=Yes'
+),
+(
+    'Bajaj Finance',
+    false,
+    false,
+    true,
+    'https://via.placeholder.com/200x100?text=Bajaj'
 );
