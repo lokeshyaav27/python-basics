@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS agents (
     email varchar(255) NOT NULL UNIQUE,
     mobile varchar(32) NOT NULL,
     temppassword varchar(255),
+    password varchar(255),
     temppasswordreset boolean NOT NULL DEFAULT false,
     isadmin boolean NOT NULL DEFAULT false
 );
