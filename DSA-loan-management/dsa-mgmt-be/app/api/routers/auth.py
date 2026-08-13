@@ -57,6 +57,58 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     return {'status': 'ok', 'customer': dict(row)}
 
 
+@router.post('/customer/add')
+def add_customer(payload: Dict, db: Session = Depends(get_db)):
+    name = str(payload.get('name') or '').strip()
+    email = str(payload.get('email') or '').strip()
+    mobile = str(payload.get('mobile') or '').strip()
+
+    if not name or not email or not mobile:
+        raise HTTPException(status_code=400, detail='name, email and mobile are required')
+
+    unique_customer_id = str(payload.get('uniqueCustomerId') or mobile).strip()
+
+    try:
+        existing = db.execute(
+            text(
+                'SELECT id, email, name, mobile, uniqueCustomerId, status FROM customers WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
+            ),
+            {'mobile': mobile, 'unique_customer_id': unique_customer_id},
+        ).mappings().fetchone()
+
+        if existing:
+            return {'status': 'ok', 'customer': dict(existing), 'created': False}
+
+        db.execute(
+            text(
+                'INSERT INTO customers (email, name, mobile, uniqueCustomerId, agentid, status) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status)'
+            ),
+            {
+                'email': email,
+                'name': name,
+                'mobile': mobile,
+                'unique_customer_id': unique_customer_id,
+                'status': 'not-started',
+            },
+        )
+        db.commit()
+
+        row = db.execute(
+            text('SELECT id, email, name, mobile, uniqueCustomerId, status FROM customers WHERE mobile = :mobile'),
+            {'mobile': mobile},
+        ).mappings().fetchone()
+
+        if not row:
+            raise HTTPException(status_code=500, detail='customer creation failed')
+
+        return {'status': 'ok', 'customer': dict(row), 'created': True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+
+
 @router.post('/agent-login')
 def agent_login(payload: Dict, db: Session = Depends(get_db)):
     email = payload.get('email')

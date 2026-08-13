@@ -15,7 +15,7 @@ function Hero() {
 
             <div className="mt-6 flex gap-3">
               <Link to="/apply" className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow">Apply for Loan</Link>
-              <Link to="/customer/loans" className="inline-flex items-center px-5 py-3 border border-slate-200 rounded-md">Check Eligibility</Link>
+              <Link to="/customer-login" className="inline-flex items-center px-5 py-3 border border-slate-200 rounded-md">Check Eligibility</Link>
             </div>
 
             <div className="mt-8 flex gap-6 text-sm text-slate-600">

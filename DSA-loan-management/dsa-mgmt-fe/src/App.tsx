@@ -48,6 +48,7 @@ export default function App() {
               <Link to="/why-choose-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Why Choose Us</Link>
               <Link to="/about-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">About Us</Link>
               <Link to="/contact-us" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Contact Us</Link>
+              <Link to="/customer-login" className="text-sm font-semibold text-slate-700 transition hover:text-blue-700">Customer Login</Link>
             </nav>
 
             <div className="flex items-center gap-4">
