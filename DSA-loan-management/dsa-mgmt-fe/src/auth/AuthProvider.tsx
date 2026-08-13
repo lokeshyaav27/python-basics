@@ -16,12 +16,14 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null)
-
-  useEffect(() => {
-    const raw = localStorage.getItem('dsa_auth')
-    if (raw) setUser(JSON.parse(raw))
-  }, [])
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const raw = localStorage.getItem('dsa_auth')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  })
 
   const login = (name: string, role: Role) => {
     const u = { name, role }
