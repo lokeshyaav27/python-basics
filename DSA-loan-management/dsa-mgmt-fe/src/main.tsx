@@ -7,13 +7,16 @@ import { queryClient } from './queryClient'
 import App from './App'
 import './index.css'
 import './i18n'
+import { AuthProvider } from './auth/AuthProvider'
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </Provider>
+    <AuthProvider>
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </Provider>
+    </AuthProvider>
   </React.StrictMode>
 )

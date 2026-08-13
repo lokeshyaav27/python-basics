@@ -6,6 +6,7 @@ from app.models.base import Base
 app = FastAPI(title="DSA Mgmt BE")
 
 app.include_router(api_routers.products.router, prefix="/api/products", tags=["products"])
+app.include_router(api_routers.banks.router, prefix="/api/banks", tags=["banks"])
 
 
 @app.on_event("startup")
