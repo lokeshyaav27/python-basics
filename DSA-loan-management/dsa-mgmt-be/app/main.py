@@ -3,8 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import routers as api_routers
 from app.db.session import engine
 from app.models.base import Base
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 app = FastAPI(title="DSA Mgmt BE")
+
+# mount static files for product images
+project_root = Path(__file__).resolve().parents[1].parent
+static_dir = project_root / 'dsa-file-storage' / 'product-images'
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/product-images", StaticFiles(directory=str(static_dir)), name="product-images")
 
 # Allow CORS for frontend dev server(s)
 app.add_middleware(
@@ -21,6 +29,8 @@ app.add_middleware(
 )
 
 app.include_router(api_routers.products.router, prefix="/api/products", tags=["products"])
+from app.api.routers import files as file_router
+app.include_router(file_router.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.banks.router, prefix="/api/banks", tags=["banks"])
 app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
 

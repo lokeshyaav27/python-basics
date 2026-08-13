@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/products'
+import { fetchProducts, createProduct, updateProduct, deleteProduct, uploadProductImage } from '../../services/products'
 
 type Product = {
   id: number
@@ -26,6 +26,34 @@ export default function ProductsPage() {
   const [active, setActive] = useState<Product | null>(null)
 
   const [form, setForm] = useState({ name: '', description: '', image: '' })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+
+  function validateFileSize(file: File) {
+    const max = 3 * 1024 * 1024
+    return file.size <= max
+  }
+
+  function validateFileRatio(file: File) {
+    return new Promise<boolean>((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const img = new Image()
+        img.onload = () => {
+          const width = img.width
+          const height = img.height
+          const ratio = height / width
+          const ok = Math.abs(ratio - 2 / 3) < 0.03
+          resolve(ok)
+        }
+        img.onerror = () => resolve(false)
+        img.src = String(reader.result)
+      }
+      reader.onerror = () => resolve(false)
+      reader.readAsDataURL(file)
+    })
+  }
 
   function openAdd() {
     setForm({ name: '', description: '', image: '' })
@@ -45,14 +73,47 @@ export default function ProductsPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    await createMut.mutateAsync({ name: form.name, description: form.description, image: form.image || undefined })
+    if (!selectedFile) {
+      alert('image is required')
+      return
+    }
+
+    if (!validateFileSize(selectedFile)) {
+      alert('image must be <= 3MB')
+      return
+    }
+
+    const okRatio = await validateFileRatio(selectedFile)
+    if (!okRatio) {
+      alert('image must have 2:3 (height:width) ratio')
+      return
+    }
+
+    const up = await uploadProductImage(selectedFile as File)
+    const filename = up.filename
+    await createMut.mutateAsync({ name: form.name, description: form.description, image: filename })
     setShowAdd(false)
   }
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault()
     if (!active) return
-    await updateMut.mutateAsync({ id: active.id, payload: { name: form.name, description: form.description, image: form.image || undefined } })
+    let imageName = form.image
+    if (selectedFile) {
+      if (!validateFileSize(selectedFile)) {
+        alert('image must be <= 3MB')
+        return
+      }
+      const okRatio = await validateFileRatio(selectedFile)
+      if (!okRatio) {
+        alert('image must have 2:3 (height:width) ratio')
+        return
+      }
+      const up = await uploadProductImage(selectedFile as File, active.id)
+      imageName = up.filename
+    }
+
+    await updateMut.mutateAsync({ id: active.id, payload: { name: form.name, description: form.description, image: imageName } })
     setShowEdit(false)
   }
 
@@ -127,6 +188,10 @@ export default function ProductsPage() {
                 <label className="block text-sm font-medium">Description</label>
                 <textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded border px-3 py-2" />
               </div>
+              <div>
+                <label className="block text-sm font-medium">Image (required)</label>
+                <input required type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
+              </div>
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 rounded border">Cancel</button>
                 <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white">Create</button>
@@ -150,6 +215,11 @@ export default function ProductsPage() {
                 <label className="block text-sm font-medium">Description</label>
                 <textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded border px-3 py-2" />
               </div>
+              <div>
+                <label className="block text-sm font-medium">Image (required)</label>
+                <input type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
+                <div className="text-xs text-slate-500">Leave empty to keep existing image.</div>
+              </div>
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowEdit(false)} className="px-4 py-2 rounded border">Cancel</button>
                 <button type="submit" className="px-4 py-2 rounded bg-yellow-600 text-white">Save</button>
@@ -172,6 +242,14 @@ export default function ProductsPage() {
               <div>
                 <div className="text-sm font-medium text-slate-600">Description</div>
                 <div className="text-slate-800">{active.description}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-slate-600">Image</div>
+                {active.image ? (
+                  <img src={`${API_BASE_URL}/static/product-images/${active.image}`} alt={active.name} className="mt-2 max-h-64 object-contain" />
+                ) : (
+                  <div className="text-slate-500">No image</div>
+                )}
               </div>
               <div className="flex justify-end">
                 <button onClick={() => setShowView(false)} className="px-4 py-2 rounded border">Close</button>

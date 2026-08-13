@@ -5,6 +5,7 @@ from typing import List
 from app.db.session import SessionLocal
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductRead
+from fastapi import HTTPException
 
 router = APIRouter()
 
@@ -19,6 +20,8 @@ def get_db():
 
 @router.post("/", response_model=ProductRead)
 def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
+    if not payload.image:
+        raise HTTPException(status_code=400, detail='image is required')
     p = Product(name=payload.name, description=payload.description, image=payload.image)
     db.add(p)
     db.commit()
@@ -36,6 +39,9 @@ def update_product(product_id: int, payload: ProductCreate, db: Session = Depend
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="product not found")
+
+    if not payload.image:
+        raise HTTPException(status_code=400, detail='image is required')
 
     p.name = payload.name
     p.description = payload.description

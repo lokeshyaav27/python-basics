@@ -21,3 +21,16 @@ export async function deleteProduct(id: number) {
   const res = await axios.delete(`${API_BASE_URL}/api/products/${id}`)
   return res.data
 }
+
+export async function uploadProductImage(file: File, productId?: number) {
+  const fd = new FormData()
+  fd.append('file', file)
+  if (productId) fd.append('product_id', String(productId))
+  const res = await axios.post(`${API_BASE_URL}/api/files/product-image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  return res.data
+}
+
+export async function deleteProductImage(filename: string) {
+  const res = await axios.delete(`${API_BASE_URL}/api/files/product-image/${filename}`)
+  return res.data
+}
