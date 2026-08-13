@@ -4,6 +4,9 @@ import Home from './pages/Public/Home'
 import AboutUs from './pages/Public/AboutUs'
 import ContactUs from './pages/Public/ContactUs'
 import Login from './pages/Public/Login'
+import CustomerLogin from './pages/Public/CustomerLogin'
+import AgentLogin from './pages/Public/AgentLogin'
+import AdminLogin from './pages/Public/AdminLogin'
 import ApplyLoanPublic from './pages/Public/ApplyLoan'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import ProductsPage from './pages/Admin/Products'
@@ -30,7 +33,9 @@ export default function App() {
             <Link to="/apply" className="text-slate-700">Apply</Link>
             <Link to="/about-us" className="text-slate-700">About Us</Link>
             <Link to="/contact-us" className="text-slate-700">Contact</Link>
-            <Link to="/login" className="text-slate-700">Login</Link>
+            <Link to="/customer-login" className="text-slate-700">Customer Login</Link>
+            <Link to="/agent-login" className="text-slate-700">Agent Login</Link>
+            <Link to="/admin-login" className="text-slate-700">Admin Login</Link>
           </nav>
         </div>
       </header>
@@ -38,7 +43,10 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
-        <Route path="/login" element={<Login />} />
+        {/* legacy single login removed; new dedicated login pages */}
+        <Route path="/customer-login" element={<CustomerLogin />} />
+        <Route path="/agent-login" element={<AgentLogin />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/apply" element={<ApplyLoanPublic />} />
 
         {/* Admin routes */}

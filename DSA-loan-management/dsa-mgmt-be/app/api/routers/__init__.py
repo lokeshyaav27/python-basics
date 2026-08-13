@@ -1,1 +1,1 @@
-from app.api.routers import products, banks
+from app.api.routers import products, banks, auth

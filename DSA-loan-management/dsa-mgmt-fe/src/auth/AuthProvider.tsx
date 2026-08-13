@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import { Navigate } from 'react-router-dom'
 type Role = 'admin' | 'agent' | 'customer'
 
 type User = {
@@ -50,9 +51,8 @@ export function ProtectedRoute({ children, role }: { children: ReactNode; role?:
 }
 
 function NavigateToLogin() {
-  // lazy import to avoid circular
-  const { Navigate } = require('react-router-dom')
-  return <Navigate to="/login" replace />
+  // Default to customer login
+  return <Navigate to="/customer-login" replace />
 }
 
 function Unauthorized() {
