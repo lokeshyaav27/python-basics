@@ -8,8 +8,8 @@ from pathlib import Path
 
 app = FastAPI(title="DSA Mgmt BE")
 
-# mount static files for product images
-project_root = Path(__file__).resolve().parents[1].parent
+# mount static files for product images inside this service folder (dsa-mgmt-be/dsa-file-storage)
+project_root = Path(__file__).resolve().parents[1]
 static_dir = project_root / 'dsa-file-storage' / 'product-images'
 static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static/product-images", StaticFiles(directory=str(static_dir)), name="product-images")

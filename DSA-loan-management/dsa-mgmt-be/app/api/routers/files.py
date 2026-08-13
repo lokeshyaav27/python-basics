@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from app.db.session import get_db
+from app.db.session import SessionLocal
 from app.models.product import Product
 from pathlib import Path
 import os
@@ -12,9 +12,17 @@ from PIL import Image
 router = APIRouter()
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 def get_storage_dir() -> Path:
-    # Project root is two levels up from app/ (dsa-mgmt-be parent)
-    project_root = Path(__file__).resolve().parents[4].parent
+    # Project root: dsa-mgmt-be folder (three parents up from this file)
+    project_root = Path(__file__).resolve().parents[3]
     storage = project_root / 'dsa-file-storage' / 'product-images'
     storage.mkdir(parents=True, exist_ok=True)
     return storage

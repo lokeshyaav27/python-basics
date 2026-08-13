@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchProducts, createProduct, updateProduct, deleteProduct, uploadProductImage } from '../../services/products'
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/products'
+import { message } from 'antd'
 
 type Product = {
   id: number
@@ -13,11 +14,39 @@ export default function ProductsPage() {
   const qc = useQueryClient()
   const { data: products = [], isLoading } = useQuery<Product[]>({ queryKey: ['admin-products'], queryFn: fetchProducts })
 
-  const createMut = useMutation({ mutationFn: createProduct, onSuccess: () => qc.invalidateQueries(['admin-products']) })
+  const createMut = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      qc.invalidateQueries(['admin-products'])
+      message.success('Product created')
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to create product')
+    },
+  })
 
-  const updateMut = useMutation({ mutationFn: ({ id, payload }: any) => updateProduct(id, payload), onSuccess: () => qc.invalidateQueries(['admin-products']) })
+  const updateMut = useMutation({
+    mutationFn: ({ id, payload }: any) => updateProduct(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries(['admin-products'])
+      message.success('Product updated')
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to update product')
+    },
+  })
 
-  const deleteMut = useMutation({ mutationFn: (id: number) => deleteProduct(id), onSuccess: () => qc.invalidateQueries(['admin-products']) })
+  const deleteMut = useMutation({
+    mutationFn: (id: number) => deleteProduct(id),
+    onSuccess: () => {
+      qc.invalidateQueries(['admin-products'])
+      message.success('Product deleted')
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to delete product')
+    },
+  })
+  
 
   const [showAdd, setShowAdd] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -66,6 +95,8 @@ export default function ProductsPage() {
     setShowEdit(true)
   }
 
+  const [removeImage, setRemoveImage] = useState(false)
+
   function openView(p: Product) {
     setActive(p)
     setShowView(true)
@@ -89,31 +120,14 @@ export default function ProductsPage() {
       return
     }
 
-    const up = await uploadProductImage(selectedFile as File)
-    const filename = up.filename
-    await createMut.mutateAsync({ name: form.name, description: form.description, image: filename })
+    await createMut.mutateAsync({ name: form.name, description: form.description, file: selectedFile as File })
     setShowAdd(false)
   }
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault()
     if (!active) return
-    let imageName = form.image
-    if (selectedFile) {
-      if (!validateFileSize(selectedFile)) {
-        alert('image must be <= 3MB')
-        return
-      }
-      const okRatio = await validateFileRatio(selectedFile)
-      if (!okRatio) {
-        alert('image must have 2:3 (height:width) ratio')
-        return
-      }
-      const up = await uploadProductImage(selectedFile as File, active.id)
-      imageName = up.filename
-    }
-
-    await updateMut.mutateAsync({ id: active.id, payload: { name: form.name, description: form.description, image: imageName } })
+    await updateMut.mutateAsync({ id: active.id, payload: { name: form.name, description: form.description, file: selectedFile, remove_image: removeImage } })
     setShowEdit(false)
   }
 
@@ -139,7 +153,6 @@ export default function ProductsPage() {
         <table className="w-full table-auto">
           <thead className="bg-slate-50">
             <tr>
-              <th className="p-3 text-left text-sm font-medium">ID</th>
               <th className="p-3 text-left text-sm font-medium">Name</th>
               <th className="p-3 text-left text-sm font-medium">Description</th>
               <th className="p-3 text-left text-sm font-medium">Actions</th>
@@ -148,16 +161,15 @@ export default function ProductsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-sm text-slate-500">Loading...</td>
+                <td colSpan={3} className="p-4 text-center text-sm text-slate-500">Loading...</td>
               </tr>
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-sm text-slate-500">No products found.</td>
+                <td colSpan={3} className="p-4 text-center text-sm text-slate-500">No products found.</td>
               </tr>
             ) : (
               products.map((p) => (
                 <tr key={p.id} className="border-t">
-                  <td className="p-3 text-sm text-slate-700">{p.id}</td>
                   <td className="p-3 text-sm text-slate-700">{p.name}</td>
                   <td className="p-3 text-sm text-slate-700">{p.description}</td>
                   <td className="p-3 text-sm text-slate-700">
@@ -217,8 +229,22 @@ export default function ProductsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium">Image (required)</label>
-                <input type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
-                <div className="text-xs text-slate-500">Leave empty to keep existing image.</div>
+                <div className="flex items-start gap-4">
+                  <div>
+                    <input type="file" accept="image/*" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
+                    <div className="text-xs text-slate-500">Choose a file to replace existing image.</div>
+                  </div>
+                  <div>
+                    {form.image ? (
+                      <div className="flex flex-col items-start">
+                        <img src={`${API_BASE_URL}/static/product-images/${form.image}`} alt="current" className="h-24 object-contain border" />
+                        <button type="button" onClick={() => { setRemoveImage(true); setForm({ ...form, image: '' }); setSelectedFile(null); }} className="mt-2 text-sm text-red-600">Remove image</button>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-500">No current image</div>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowEdit(false)} className="px-4 py-2 rounded border">Cancel</button>
