@@ -1,10 +1,12 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class ProductBase(BaseModel):
     name: str
     description: str
     image: str
+    isActive: bool = True
 
 
 class ProductCreate(ProductBase):

@@ -64,8 +64,11 @@ def create_bank(
 
 
 @router.get("/", response_model=List[BankRead])
-def list_banks(db: Session = Depends(get_db)):
-    return db.query(Bank).all()
+def list_banks(include_inactive: bool = False, db: Session = Depends(get_db)):
+    query = db.query(Bank)
+    if not include_inactive:
+        query = query.filter(Bank.isActive == True)
+    return query.all()
 
 
 @router.put("/{bank_id}", response_model=BankRead)
@@ -137,14 +140,7 @@ def delete_bank(bank_id: int, db: Session = Depends(get_db)):
     b = db.query(Bank).filter(Bank.id == bank_id).first()
     if not b:
         raise HTTPException(status_code=404, detail='bank not found')
-    storage = get_logo_storage()
-    if b.logo:
-        old = storage / b.logo
-        if old.exists():
-            try:
-                old.unlink()
-            except Exception:
-                pass
-    db.delete(b)
+    b.isActive = False
+    db.add(b)
     db.commit()
     return {"status": "ok"}

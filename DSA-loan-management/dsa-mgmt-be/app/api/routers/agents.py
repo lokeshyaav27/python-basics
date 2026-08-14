@@ -31,8 +31,11 @@ def get_photo_storage() -> Path:
 # ── List ──────────────────────────────────────────────────────────────────────
 
 @router.get("/")
-def list_agents(db: Session = Depends(get_db)):
-    agents = db.query(Agent).all()
+def list_agents(include_inactive: bool = False, db: Session = Depends(get_db)):
+    query = db.query(Agent)
+    if not include_inactive:
+        query = query.filter(Agent.isActive == True)
+    agents = query.all()
     return [_serialize(a) for a in agents]
 
 
@@ -121,10 +124,8 @@ def delete_agent(agent_id: int, db: Session = Depends(get_db)):
     a = db.query(Agent).filter(Agent.id == agent_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="agent not found")
-    storage = get_photo_storage()
-    if a.photo:
-        _delete_file(storage / a.photo)
-    db.delete(a)
+    a.isActive = False
+    db.add(a)
     db.commit()
     return {"status": "ok"}
 
@@ -166,4 +167,5 @@ def _serialize(a: Agent) -> dict:
         "tempPasswordReset": a.tempPasswordReset,
         "isAdmin": a.isAdmin,
         "photo": a.photo,
+        "isActive": a.isActive,
     }

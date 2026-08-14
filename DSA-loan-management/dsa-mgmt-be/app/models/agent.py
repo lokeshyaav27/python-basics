@@ -13,3 +13,4 @@ class Agent(Base):
     tempPasswordReset = Column("temppasswordreset", Boolean, nullable=False, default=False)
     isAdmin = Column("isadmin", Boolean, nullable=False, default=False)
     photo = Column(String(1024), nullable=True)
+    isActive = Column("isactive", Boolean, nullable=False, default=True)

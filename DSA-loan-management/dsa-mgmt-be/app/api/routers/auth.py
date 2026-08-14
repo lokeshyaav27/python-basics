@@ -25,13 +25,16 @@ def request_customer_otp(payload: Dict, db: Session = Depends(get_db)):
 
     try:
         # use lowercase unquoted column name to match DB (Postgres folds unquoted identifiers to lowercase)
-        q = text('SELECT id, email, name, mobile, uniquecustomerid FROM customers WHERE mobile = :mobile')
+        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM customers WHERE mobile = :mobile')
         row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=404, detail='customer not found')
+
+    if row.get('isactive') is False:
+        raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
     # In production, send OTP via SMS. Here we just return success.
     return {'detail': 'otp_sent'}
@@ -47,13 +50,16 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='invalid otp')
 
     try:
-        q = text('SELECT id, email, name, mobile, uniquecustomerid FROM customers WHERE mobile = :mobile')
+        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM customers WHERE mobile = :mobile')
         row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=404, detail='customer not found')
+
+    if row.get('isactive') is False:
+        raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
     return {'status': 'ok', 'customer': dict(row)}
 
@@ -72,17 +78,19 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
     try:
         existing = db.execute(
             text(
-                'SELECT id, email, name, mobile, uniqueCustomerId, status FROM customers WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
+                'SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM customers WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
             ),
             {'mobile': mobile, 'unique_customer_id': unique_customer_id},
         ).mappings().fetchone()
 
         if existing:
+            if existing.get('isactive') is False:
+                raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
             return {'status': 'ok', 'customer': dict(existing), 'created': False}
 
         db.execute(
             text(
-                'INSERT INTO customers (email, name, mobile, uniqueCustomerId, agentid, status) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status)'
+                'INSERT INTO customers (email, name, mobile, uniqueCustomerId, agentid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status, true)'
             ),
             {
                 'email': email,
@@ -95,7 +103,7 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
         db.commit()
 
         row = db.execute(
-            text('SELECT id, email, name, mobile, uniqueCustomerId, status FROM customers WHERE mobile = :mobile'),
+            text('SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM customers WHERE mobile = :mobile'),
             {'mobile': mobile},
         ).mappings().fetchone()
 
@@ -118,13 +126,16 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='email and password are required')
 
     try:
-        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo FROM agents WHERE email = :email AND password = :password AND isadmin = false')
+        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo, isactive FROM agents WHERE email = :email AND password = :password AND isadmin = false')
         row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=401, detail='invalid credentials')
+
+    if row.get('isactive') is False:
+        raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
     return {'status': 'ok', 'agent': dict(row)}
 
@@ -137,13 +148,16 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='email and password are required')
 
     try:
-        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo FROM agents WHERE email = :email AND password = :password AND isadmin = true')
+        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo, isactive FROM agents WHERE email = :email AND password = :password AND isadmin = true')
         row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=401, detail='invalid credentials')
+
+    if row.get('isactive') is False:
+        raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
     return {'status': 'ok', 'admin': dict(row)}
 

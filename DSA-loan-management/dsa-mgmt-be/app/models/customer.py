@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 
@@ -12,5 +12,6 @@ class Customer(Base):
     uniqueCustomerId = Column("uniquecustomerid", String(32), nullable=True)
     agentId = Column("agentid", Integer, ForeignKey("agents.id"), nullable=True)
     status = Column(String(32), nullable=False, default="not-started")
+    isActive = Column("isactive", Boolean, nullable=False, default=True)
 
     agent = relationship("Agent", backref="customers")

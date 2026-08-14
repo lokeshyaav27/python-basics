@@ -8,6 +8,7 @@ class BankBase(BaseModel):
     isPrivate: bool = False
     isnbfc: bool = False
     logo: Optional[str] = None
+    isActive: bool = True
 
 
 class BankCreate(BankBase):

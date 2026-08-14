@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS products (
     id serial PRIMARY KEY,
     name varchar(255) NOT NULL,
     description text NOT NULL,
-    image varchar(1024)
+    image varchar(1024),
+    isactive boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS banks (
@@ -14,7 +15,8 @@ CREATE TABLE IF NOT EXISTS banks (
     isnationalize boolean NOT NULL DEFAULT false,
     isprivate boolean NOT NULL DEFAULT false,
     isnbfc boolean NOT NULL DEFAULT false,
-    logo varchar(1024)
+    logo varchar(1024),
+    isactive boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS agents (
@@ -25,7 +27,9 @@ CREATE TABLE IF NOT EXISTS agents (
     temppassword varchar(255),
     password varchar(255),
     temppasswordreset boolean NOT NULL DEFAULT false,
-    isadmin boolean NOT NULL DEFAULT false
+    isadmin boolean NOT NULL DEFAULT false,
+    photo varchar(1024),
+    isactive boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS product_bank_links (
@@ -96,7 +100,8 @@ CREATE TABLE IF NOT EXISTS customers (
     mobile varchar(32) NOT NULL,
     uniqueCustomerId varchar(32) NOT NULL UNIQUE,
     agentid integer REFERENCES agents(id),
-    status varchar(32) NOT NULL DEFAULT 'not-started'
+    status varchar(32) NOT NULL DEFAULT 'not-started',
+    isactive boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS loans (

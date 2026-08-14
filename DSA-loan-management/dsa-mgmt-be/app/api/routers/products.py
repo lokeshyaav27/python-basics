@@ -65,8 +65,11 @@ async def create_product(
 
 
 @router.get("/", response_model=List[ProductRead])
-def list_products(db: Session = Depends(get_db)):
-    return db.query(Product).all()
+def list_products(include_inactive: bool = False, db: Session = Depends(get_db)):
+    query = db.query(Product)
+    if not include_inactive:
+        query = query.filter(Product.isActive == True)
+    return query.all()
 
 
 @router.put("/{product_id}", response_model=ProductRead)
@@ -140,20 +143,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="product not found")
-    # delete image file if exists
-    try:
-        storage = get_storage_dir()
-        if p.image:
-            old = storage / p.image
-            if old.exists():
-                try:
-                    old.unlink()
-                except Exception:
-                    pass
-    except Exception:
-        # ignore storage errors
-        pass
-
-    db.delete(p)
+    p.isActive = False
+    db.add(p)
     db.commit()
     return {"status": "ok", "deleted_id": product_id}

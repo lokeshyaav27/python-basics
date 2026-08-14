@@ -10,3 +10,4 @@ class Bank(Base):
     isPrivate = Column("isprivate", Boolean, nullable=False, default=False)
     isnbfc = Column("isnbfc", Boolean, nullable=False, default=False)
     logo = Column(String(1024), nullable=True)
+    isActive = Column("isactive", Boolean, nullable=False, default=True)

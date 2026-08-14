@@ -45,12 +45,15 @@ def _serialize(c: Customer) -> dict:
         "agentName": c.agent.name if c.agent else None,
         "agentPhoto": c.agent.photo if c.agent else None,
         "status": c.status,
+        "isActive": c.isActive,
     }
 
 
 @router.get("/")
-def list_customers(agent_id: Optional[int] = None, db: Session = Depends(get_db)):
+def list_customers(agent_id: Optional[int] = None, include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Customer)
+    if not include_inactive:
+        query = query.filter(Customer.isActive == True)
     if agent_id is not None:
         query = query.filter(Customer.agentId == agent_id)
     customers = query.all()
@@ -145,6 +148,7 @@ def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     c = db.query(Customer).filter(Customer.id == customer_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Customer not found")
-    db.delete(c)
+    c.isActive = False
+    db.add(c)
     db.commit()
     return {"status": "ok"}
