@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS loan_applications (
     car_loan_detail_id integer REFERENCES car_loan_details(id) ON DELETE SET NULL,
     personal_loan_detail_id integer REFERENCES personal_loan_details(id) ON DELETE SET NULL,
     client_general_detail_id integer REFERENCES client_general_details(id) ON DELETE SET NULL,
-    status varchar(32) NOT NULL DEFAULT 'not-started',
+    status varchar(32) DEFAULT NULL,
     description text,
     is_active boolean NOT NULL DEFAULT true
 );

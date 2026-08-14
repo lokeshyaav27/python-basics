@@ -6,40 +6,36 @@ import { useAuth } from '../../auth/AuthProvider'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function StatusBadge({ status, bankName }: { status: string; bankName?: string | null }) {
-  switch (status.toLowerCase()) {
-    case 'approved':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 shadow-sm">
-          <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
-        </span>
-      )
-    case 'rejected':
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 border border-rose-200 shadow-sm">
-          <span>❌</span> Rejected
-        </span>
-      )
-    case 'inprogress':
-    case 'in-progress':
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-200 shadow-sm">
-          <span>⏳</span> In Progress
-        </span>
-      )
-    case 'not-started':
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 border border-amber-200 shadow-sm">
-          <span>📝</span> Application Received
-        </span>
-      )
-    default:
-      return (
-        <span className="inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-          {status}
-        </span>
-      )
+function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+  if (!status) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200 shadow-xs">
+        <span>⏳</span> Under Review
+      </span>
+    )
   }
+
+  const s = status.toLowerCase()
+  if (s === 'approved') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 shadow-xs">
+        <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
+      </span>
+    )
+  }
+  if (s === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 border border-rose-200 shadow-xs">
+        <span>❌</span> Rejected
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200">
+      <span>⏳</span> Under Review
+    </span>
+  )
 }
 
 export default function CustomerLoanList() {
@@ -56,11 +52,9 @@ export default function CustomerLoanList() {
   })
 
   const totalCount = loans.length
-  const approvedCount = loans.filter((l) => l.status.toLowerCase() === 'approved').length
-  const inReviewCount = loans.filter(
-    (l) => l.status.toLowerCase() !== 'approved' && l.status.toLowerCase() !== 'rejected'
-  ).length
-  const rejectedCount = loans.filter((l) => l.status.toLowerCase() === 'rejected').length
+  const approvedCount = loans.filter((l) => (l.status || '').toLowerCase() === 'approved').length
+  const inReviewCount = loans.filter((l) => !l.status || ((l.status || '').toLowerCase() !== 'approved' && (l.status || '').toLowerCase() !== 'rejected')).length
+  const rejectedCount = loans.filter((l) => (l.status || '').toLowerCase() === 'rejected').length
 
   function openDetails(loan: LoanApplication) {
     setSelectedLoan(loan)

@@ -21,7 +21,7 @@ class LoanApplication(Base):
     personalLoanDetailId = Column("personal_loan_detail_id", Integer, ForeignKey("personal_loan_details.id", ondelete="SET NULL"), nullable=True)
     clientGeneralDetailTableId = Column("client_general_detail_id", Integer, ForeignKey("client_general_details.id", ondelete="SET NULL"), nullable=True)
 
-    status = Column(String(32), nullable=False, default="not-started")
+    status = Column(String(32), nullable=True, default=None)
     description = Column(Text, nullable=True)
     isActive = Column("is_active", Boolean, nullable=False, default=True)
 

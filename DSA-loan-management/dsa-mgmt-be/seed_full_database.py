@@ -200,32 +200,32 @@ def seed_database():
         apps_plan = [
             # Customer 1 (Lokesh - 3 apps)
             {"cust_idx": 0, "prod_idx": 0, "status": "approved", "req_amt": 5000000, "tenure": 240, "desc": "Home loan sanctioned at 8.40% special concession."},
-            {"cust_idx": 0, "prod_idx": 1, "status": "in-progress", "req_amt": 1200000, "tenure": 60, "desc": "New Sedan car loan - awaiting showroom invoice."},
-            {"cust_idx": 0, "prod_idx": 2, "status": "not-started", "req_amt": 300000, "tenure": 24, "desc": None},
+            {"cust_idx": 0, "prod_idx": 1, "status": None, "req_amt": 1200000, "tenure": 60, "desc": None},
+            {"cust_idx": 0, "prod_idx": 2, "status": "rejected", "req_amt": 300000, "tenure": 24, "desc": "Multiple active unsecured credit cards with high utilization."},
             # Customer 2 (Rahul - 2 apps)
             {"cust_idx": 1, "prod_idx": 0, "status": "approved", "req_amt": 7500000, "tenure": 300, "desc": "Ready to move 3BHK flat in Andheri."},
-            {"cust_idx": 1, "prod_idx": 2, "status": "in-progress", "req_amt": 500000, "tenure": 36, "desc": "Medical expenses requirement."},
+            {"cust_idx": 1, "prod_idx": 2, "status": None, "req_amt": 500000, "tenure": 36, "desc": None},
             # Customer 3 (Pooja - 2 apps)
-            {"cust_idx": 2, "prod_idx": 1, "status": "forwardedtobank", "req_amt": 950000, "tenure": 48, "desc": "Electric vehicle loan application."},
-            {"cust_idx": 2, "prod_idx": 0, "status": "not-started", "req_amt": 4200000, "tenure": 180, "desc": None},
+            {"cust_idx": 2, "prod_idx": 1, "status": "approved", "req_amt": 950000, "tenure": 48, "desc": "Electric vehicle loan approved at 8.90%."},
+            {"cust_idx": 2, "prod_idx": 0, "status": None, "req_amt": 4200000, "tenure": 180, "desc": None},
             # Customer 4 (Rohan - 3 apps)
             {"cust_idx": 3, "prod_idx": 0, "status": "approved", "req_amt": 6000000, "tenure": 240, "desc": "Independent villa in Baner."},
-            {"cust_idx": 3, "prod_idx": 1, "status": "in-progress", "req_amt": 1500000, "tenure": 60, "desc": "SUV vehicle financing."},
-            {"cust_idx": 3, "prod_idx": 2, "status": "not-started", "req_amt": 400000, "tenure": 36, "desc": None},
+            {"cust_idx": 3, "prod_idx": 1, "status": None, "req_amt": 1500000, "tenure": 60, "desc": None},
+            {"cust_idx": 3, "prod_idx": 2, "status": "rejected", "req_amt": 400000, "tenure": 36, "desc": "CIBIL score below institutional policy threshold (620)."},
             # Customer 5 (Neha - 2 apps)
             {"cust_idx": 4, "prod_idx": 2, "status": "rejected", "req_amt": 800000, "tenure": 36, "desc": "High existing debt-to-income ratio."},
-            {"cust_idx": 4, "prod_idx": 0, "status": "in-progress", "req_amt": 3500000, "tenure": 180, "desc": "Co-applicant verification in progress."},
+            {"cust_idx": 4, "prod_idx": 0, "status": None, "req_amt": 3500000, "tenure": 180, "desc": None},
             # Customer 6 (Siddharth - 3 apps)
             {"cust_idx": 5, "prod_idx": 0, "status": "approved", "req_amt": 8500000, "tenure": 240, "desc": "Commercial and residential duplex sanction."},
             {"cust_idx": 5, "prod_idx": 1, "status": "approved", "req_amt": 2200000, "tenure": 60, "desc": "Luxury car loan sanctioned at 8.75%."},
-            {"cust_idx": 5, "prod_idx": 2, "status": "not-started", "req_amt": 600000, "tenure": 48, "desc": None},
+            {"cust_idx": 5, "prod_idx": 2, "status": None, "req_amt": 600000, "tenure": 48, "desc": None},
             # Customer 7 (Divya - 2 apps)
-            {"cust_idx": 6, "prod_idx": 0, "status": "forwardedtobank", "req_amt": 4800000, "tenure": 240, "desc": "Female co-applicant concession applied."},
-            {"cust_idx": 6, "prod_idx": 2, "status": "not-started", "req_amt": 250000, "tenure": 24, "desc": None},
+            {"cust_idx": 6, "prod_idx": 0, "status": "approved", "req_amt": 4800000, "tenure": 240, "desc": "Female co-applicant concession applied."},
+            {"cust_idx": 6, "prod_idx": 2, "status": None, "req_amt": 250000, "tenure": 24, "desc": None},
             # Customer 8 (Karan - 3 apps)
             {"cust_idx": 7, "prod_idx": 0, "status": "approved", "req_amt": 5500000, "tenure": 180, "desc": "Property legal search completed successfully."},
-            {"cust_idx": 7, "prod_idx": 1, "status": "in-progress", "req_amt": 1100000, "tenure": 60, "desc": "Used car valuation verified."},
-            {"cust_idx": 7, "prod_idx": 2, "status": "not-started", "req_amt": 350000, "tenure": 24, "desc": None},
+            {"cust_idx": 7, "prod_idx": 1, "status": "rejected", "req_amt": 1100000, "tenure": 60, "desc": "Vehicle age exceeds bank cutoff limits."},
+            {"cust_idx": 7, "prod_idx": 2, "status": None, "req_amt": 350000, "tenure": 24, "desc": None},
         ]
 
         created_apps = []
@@ -233,7 +233,7 @@ def seed_database():
             cust = customers[plan["cust_idx"]]
             prod = products[plan["prod_idx"]]
             assigned_agent = regular_agents[(i - 1) % len(regular_agents)]
-            assigned_bank = banks[(i - 1) % len(banks)] if plan["status"] in ["approved", "in-progress", "forwardedtobank"] else None
+            assigned_bank = banks[(i - 1) % len(banks)] if plan["status"] == "approved" else None
 
             # 1. Create client general details
             cgd = ClientGeneralDetail(

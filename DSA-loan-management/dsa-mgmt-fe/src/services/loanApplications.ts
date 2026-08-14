@@ -26,7 +26,7 @@ export type LoanApplication = {
   productId?: number | null
   productName?: string | null
   productImage?: string | null
-  status: string
+  status: 'approved' | 'rejected' | null | string
   description?: string | null
   isActive?: boolean
 }
@@ -53,7 +53,7 @@ export async function assignLoanApplicationAgent(
 
 export async function updateLoanApplicationStatus(
   applicationId: number,
-  payload: { status: string; bankId?: number | null; description?: string | null }
+  payload: { status?: string | null; bankId?: number | null; description?: string | null }
 ): Promise<LoanApplication> {
   const res = await axios.put(`${API_BASE_URL}/api/loan-applications/${applicationId}/status`, payload)
   return res.data

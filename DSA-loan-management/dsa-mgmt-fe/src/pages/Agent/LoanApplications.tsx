@@ -27,40 +27,36 @@ function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg'
   )
 }
 
-function StatusBadge({ status, bankName }: { status: string; bankName?: string | null }) {
-  switch (status.toLowerCase()) {
-    case 'approved':
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-          <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
-        </span>
-      )
-    case 'rejected':
-      return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 border border-red-200">
-          <span>❌</span> Rejected
-        </span>
-      )
-    case 'inprogress':
-    case 'in-progress':
-      return (
-        <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
-          In Progress
-        </span>
-      )
-    case 'not-started':
-      return (
-        <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
-          Not Started
-        </span>
-      )
-    default:
-      return (
-        <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-          {status}
-        </span>
-      )
+function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+  if (!status) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+        <span>⏳</span> Pending Review
+      </span>
+    )
   }
+
+  const s = status.toLowerCase()
+  if (s === 'approved') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+        <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
+      </span>
+    )
+  }
+  if (s === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 border border-red-200">
+        <span>❌</span> Rejected
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
+      <span>⏳</span> Pending Review
+    </span>
+  )
 }
 
 export default function AgentLoanApplicationsPage() {

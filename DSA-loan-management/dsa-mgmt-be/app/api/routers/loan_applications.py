@@ -54,7 +54,7 @@ class AssignAgentPayload(BaseModel):
 
 
 class ApplicationStatusPayload(BaseModel):
-    status: str
+    status: Optional[str] = None
     bankId: Optional[int] = None
     description: Optional[str] = None
 
@@ -248,7 +248,7 @@ def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Sessio
         homeLoanDetailId=home_loan_id,
         carLoanDetailId=car_loan_id,
         personalLoanDetailId=personal_loan_id,
-        status="not-started",
+        status=None,
     )
     db.add(app)
     db.commit()
@@ -272,7 +272,7 @@ def create_loan_application(payload: LoanApplicationCreate, db: Session = Depend
         mobile=mobile,
         uniqueCustomerId=mobile,
         productId=payload.productId,
-        status="not-started",
+        status=None,
     )
     db.add(app)
     db.commit()
@@ -341,11 +341,9 @@ def update_application_status(
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
 
-    status = payload.status.strip().lower()
-    if status not in ["not-started", "in-progress", "inprogress", "approved", "rejected", "forwardedtobank"]:
-        raise HTTPException(status_code=400, detail="Invalid status value")
+    raw_status = (payload.status or "").strip().lower() if payload.status else None
 
-    if status == "approved":
+    if raw_status in ["approved"]:
         if payload.bankId is not None:
             bank = db.query(Bank).filter(Bank.id == payload.bankId).first()
             if not bank:
@@ -355,19 +353,22 @@ def update_application_status(
             app.description = payload.description.strip() or None
         app.status = "approved"
 
-    elif status == "rejected":
+    elif raw_status in ["rejected"]:
         if not payload.description or not payload.description.strip():
             raise HTTPException(status_code=400, detail="Rejection reason is required")
         app.description = payload.description.strip()
         app.bankId = None
         app.status = "rejected"
 
-    else:
-        app.status = status
+    elif raw_status in [None, "", "null", "pending"]:
+        app.status = None
         if payload.bankId is not None:
             app.bankId = payload.bankId
         if payload.description is not None:
             app.description = payload.description.strip() or None
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid status value. Allowed: approved, rejected, or null")
 
     db.add(app)
     db.commit()
