@@ -41,7 +41,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 text-slate-800">
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
         {(() => {
           if (authUser) return null
 
@@ -83,7 +83,8 @@ export default function App() {
           )
         })()}
 
-        <Routes>
+        <div className="flex-1 flex flex-col">
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/why-choose-us" element={<WhyChooseUs />} />
@@ -210,6 +211,7 @@ export default function App() {
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
+        </div>
 
         {!authUser && <Footer />}
       </div>
