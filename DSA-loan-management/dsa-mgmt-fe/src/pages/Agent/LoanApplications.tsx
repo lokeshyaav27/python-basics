@@ -196,6 +196,7 @@ export default function AgentLoanApplicationsPage() {
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Applicant</th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Product</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Mobile</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
@@ -205,13 +206,13 @@ export default function AgentLoanApplicationsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-sm text-slate-400">
+                <td colSpan={6} className="p-8 text-center text-sm text-slate-400">
                   Loading your assigned loan applications…
                 </td>
               </tr>
             ) : applications.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-sm text-slate-400">
+                <td colSpan={6} className="p-8 text-center text-sm text-slate-400">
                   <div className="mx-auto max-w-sm text-center">
                     <span className="text-3xl">📂</span>
                     <div className="mt-2 font-medium text-slate-600">No applications assigned yet</div>
@@ -234,6 +235,15 @@ export default function AgentLoanApplicationsPage() {
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td className="p-3">
+                    {c.productName ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
+                        <span>🏷️</span> {c.productName}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Not specified</span>
+                    )}
                   </td>
                   <td className="p-3 text-sm text-slate-600">{c.email}</td>
                   <td className="p-3 text-sm text-slate-600">{c.mobile}</td>
@@ -480,6 +490,16 @@ export default function AgentLoanApplicationsPage() {
 
               {/* Detail Rows */}
               <div className="mt-4 space-y-3">
+                <ViewRow
+                  label="Loan Product"
+                  value={
+                    activeApplication.productName ? (
+                      <span className="font-semibold text-blue-700">{activeApplication.productName}</span>
+                    ) : (
+                      <span className="text-slate-400 italic">Not specified</span>
+                    )
+                  }
+                />
                 <ViewRow label="Email Address" value={activeApplication.email} />
                 <ViewRow label="Mobile Number" value={activeApplication.mobile} />
                 <ViewRow

@@ -18,8 +18,8 @@ import AdminDashboard from './pages/Admin/AdminDashboard'
 import ProductsPage from './pages/Admin/Products'
 import BanksPage from './pages/Admin/Banks'
 import AgentsPage from './pages/Admin/Agents'
-import CustomersPage from './pages/Admin/Customers'
-import AgentCustomerList from './pages/Agent/CustomerList'
+import AdminLoanApplicationsPage from './pages/Admin/LoanApplications'
+import AgentLoanApplicationsPage from './pages/Agent/LoanApplications'
 import AgentCustomerDetail from './pages/Agent/CustomerDetail'
 import CustomerPortal from './pages/Customer/Portal'
 import CustomerLoanList from './pages/Customer/LoanList'
@@ -146,7 +146,7 @@ export default function App() {
             element={
               <ProtectedRoute role={'admin'}>
                 <ProtectedLayout role={'admin'}>
-                  <CustomersPage />
+                  <AdminLoanApplicationsPage />
                 </ProtectedLayout>
               </ProtectedRoute>
             }
@@ -159,7 +159,7 @@ export default function App() {
             element={
               <ProtectedRoute role={'agent'}>
                 <ProtectedLayout role={'agent'}>
-                  <AgentCustomerList />
+                  <AgentLoanApplicationsPage />
                 </ProtectedLayout>
               </ProtectedRoute>
             }

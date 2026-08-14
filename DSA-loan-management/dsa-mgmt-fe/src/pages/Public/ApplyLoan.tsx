@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
-import { addCustomer } from '../../services/customers'
+import { addLoanApplication } from '../../services/loanApplications'
 
 export default function ApplyLoan() {
   const navigate = useNavigate()
@@ -22,7 +22,7 @@ export default function ApplyLoan() {
     setIsSubmitting(true)
 
     try {
-      const response = await addCustomer(form)
+      const response = await addLoanApplication(form)
       const customer = response?.customer || {}
       const customerName = customer.name || form.name
 

@@ -9,9 +9,10 @@ import {
   LoanApplication,
 } from '../../services/loanApplications'
 import { fetchAgents } from '../../services/agents'
+import { fetchProducts } from '../../services/products'
 import { message } from 'antd'
 
-const BLANK_FORM = { name: '', email: '', mobile: '' }
+const BLANK_FORM = { name: '', email: '', mobile: '', productId: null as number | null }
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 function Avatar({ name, photo, size = 'md' }: { name: string; photo?: string | null; size?: 'sm' | 'md' | 'lg' }) {
@@ -90,6 +91,11 @@ export default function LoanApplicationsPage() {
     queryFn: fetchAgents,
   })
 
+  const { data: products = [] } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: fetchProducts,
+  })
+
   const createMut = useMutation({
     mutationFn: createLoanApplication,
     onSuccess: () => {
@@ -152,7 +158,7 @@ export default function LoanApplicationsPage() {
 
   function openEdit(c: LoanApplication) {
     setActive(c)
-    setForm({ name: c.name, email: c.email, mobile: c.mobile })
+    setForm({ name: c.name, email: c.email, mobile: c.mobile, productId: c.productId ?? null })
     setShowEdit(true)
   }
 
@@ -215,6 +221,7 @@ export default function LoanApplicationsPage() {
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Applicant</th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Product</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Mobile</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Assigned Agent</th>
@@ -225,11 +232,11 @@ export default function LoanApplicationsPage() {
           <tbody>
             {isApplicationsLoading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-sm text-slate-400">Loading loan applications…</td>
+                <td colSpan={7} className="p-6 text-center text-sm text-slate-400">Loading loan applications…</td>
               </tr>
             ) : applications.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-sm text-slate-400">No loan applications found.</td>
+                <td colSpan={7} className="p-6 text-center text-sm text-slate-400">No loan applications found.</td>
               </tr>
             ) : (
               applications.map((c) => (
@@ -245,6 +252,17 @@ export default function LoanApplicationsPage() {
                         )}
                       </div>
                     </div>
+                  </td>
+
+                  {/* Loan Product */}
+                  <td className="p-3">
+                    {c.productName ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
+                        <span>🏷️</span> {c.productName}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Not specified</span>
+                    )}
                   </td>
 
                   {/* Email */}
@@ -396,6 +414,21 @@ export default function LoanApplicationsPage() {
               />
             </Field>
 
+            <Field label="Loan Product">
+              <select
+                value={form.productId ?? ''}
+                onChange={(e) => setForm({ ...form, productId: e.target.value ? Number(e.target.value) : null })}
+                className={inputCls}
+              >
+                <option value="">-- Select Loan Product (Optional) --</option>
+                {products.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label="Email Address">
               <input
                 required
@@ -439,6 +472,21 @@ export default function LoanApplicationsPage() {
               />
             </Field>
 
+            <Field label="Loan Product">
+              <select
+                value={form.productId ?? ''}
+                onChange={(e) => setForm({ ...form, productId: e.target.value ? Number(e.target.value) : null })}
+                className={inputCls}
+              >
+                <option value="">-- Select Loan Product (Optional) --</option>
+                {products.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field label="Email Address">
               <input
                 required
@@ -480,6 +528,16 @@ export default function LoanApplicationsPage() {
 
           <div className="mt-4 space-y-3">
             <ViewRow label="Full Name" value={active.name} />
+            <ViewRow
+              label="Loan Product"
+              value={
+                active.productName ? (
+                  <span className="font-semibold text-blue-700">{active.productName}</span>
+                ) : (
+                  <span className="text-slate-400 italic">Not specified</span>
+                )
+              }
+            />
             <ViewRow label="Email Address" value={active.email} />
             <ViewRow label="Mobile Number" value={active.mobile} />
             <ViewRow

@@ -6,6 +6,7 @@ export type LoanApplicationInput = {
   name: string
   email: string
   mobile: string
+  productId?: number | null
 }
 
 export type LoanApplication = {
@@ -20,6 +21,9 @@ export type LoanApplication = {
   bankId?: number | null
   bankName?: string | null
   bankLogo?: string | null
+  productId?: number | null
+  productName?: string | null
+  productIcon?: string | null
   status: string
   description?: string | null
   isActive?: boolean

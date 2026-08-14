@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS loan_applications (
     uniqueCustomerId varchar(32) NOT NULL UNIQUE,
     agentid integer REFERENCES agents(id),
     bankid integer REFERENCES banks(id),
+    productid integer REFERENCES products(id),
     status varchar(32) NOT NULL DEFAULT 'not-started',
     description text,
     isactive boolean NOT NULL DEFAULT true

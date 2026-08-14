@@ -46,8 +46,8 @@ app.include_router(file_router.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.banks.router, prefix="/api/banks", tags=["banks"])
 app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_routers.agents.router, prefix="/api/agents", tags=["agents"])
-app.include_router(api_routers.customers.router, prefix="/api/loan-applications", tags=["loan-applications"])
-app.include_router(api_routers.customers.router, prefix="/api/customers", tags=["customers"])
+app.include_router(api_routers.loan_applications.router, prefix="/api/loan-applications", tags=["loan-applications"])
+app.include_router(api_routers.loan_applications.router, prefix="/api/customers", tags=["customers"])
 
 
 @app.on_event("startup")
