@@ -6,13 +6,14 @@ type User = {
   id?: number
   name: string
   email?: string
+  mobile?: string
   photo?: string
   role: Role
 }
 
 type AuthContextType = {
   user: User | null
-  login: (name: string, role: Role, extra?: { id?: number; email?: string; photo?: string }) => void
+  login: (name: string, role: Role, extra?: { id?: number; email?: string; mobile?: string; photo?: string }) => void
   logout: () => void
 }
 
@@ -28,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   })
 
-  const login = (name: string, role: Role, extra?: { id?: number; email?: string; photo?: string }) => {
+  const login = (name: string, role: Role, extra?: { id?: number; email?: string; mobile?: string; photo?: string }) => {
     const u: User = { name, role, ...extra }
     setUser(u)
     localStorage.setItem('dsa_auth', JSON.stringify(u))

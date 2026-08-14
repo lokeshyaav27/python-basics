@@ -18,21 +18,29 @@ export type LoanApplication = {
   agentId?: number | null
   agentName?: string | null
   agentPhoto?: string | null
+  agentMobile?: string | null
+  agentEmail?: string | null
   bankId?: number | null
   bankName?: string | null
   bankLogo?: string | null
   productId?: number | null
   productName?: string | null
-  productIcon?: string | null
+  productImage?: string | null
   status: string
   description?: string | null
   isActive?: boolean
 }
 
-export async function fetchLoanApplications(agentId?: number): Promise<LoanApplication[]> {
-  const params = agentId !== undefined && agentId !== null ? { agent_id: agentId } : {}
+export async function fetchLoanApplications(agentId?: number, mobile?: string): Promise<LoanApplication[]> {
+  const params: any = {}
+  if (agentId !== undefined && agentId !== null) params.agent_id = agentId
+  if (mobile !== undefined && mobile !== null) params.mobile = mobile
   const res = await axios.get(`${API_BASE_URL}/api/loan-applications`, { params })
   return res.data || []
+}
+
+export async function fetchCustomerLoanApplications(mobile: string): Promise<LoanApplication[]> {
+  return fetchLoanApplications(undefined, mobile)
 }
 
 export async function assignLoanApplicationAgent(

@@ -59,12 +59,14 @@ def _serialize(app: LoanApplication) -> dict:
         "agentId": app.agentId,
         "agentName": app.agent.name if app.agent else None,
         "agentPhoto": app.agent.photo if app.agent else None,
+        "agentMobile": app.agent.mobile if app.agent else None,
+        "agentEmail": app.agent.email if app.agent else None,
         "bankId": app.bankId,
         "bankName": app.bank.name if app.bank else None,
         "bankLogo": app.bank.logo if app.bank else None,
         "productId": app.productId,
         "productName": app.product.name if app.product else None,
-        "productIcon": app.product.icon if app.product else None,
+        "productImage": app.product.image if app.product else None,
         "status": app.status,
         "description": app.description,
         "isActive": app.isActive,
@@ -74,14 +76,18 @@ def _serialize(app: LoanApplication) -> dict:
 @router.get("/")
 def list_loan_applications(
     agent_id: Optional[int] = None,
+    mobile: Optional[str] = None,
     include_inactive: bool = False,
     db: Session = Depends(get_db)
 ):
     query = db.query(LoanApplication)
     if not include_inactive:
-        query = query.filter(LoanApplication.isActive == True)
+        query = query.filter(LoanApplication.isActive != False)
     if agent_id is not None:
         query = query.filter(LoanApplication.agentId == agent_id)
+    if mobile is not None and mobile.strip():
+        m = mobile.strip()
+        query = query.filter((LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m))
     applications = query.all()
     return [_serialize(a) for a in applications]
 
