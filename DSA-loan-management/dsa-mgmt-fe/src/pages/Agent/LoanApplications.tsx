@@ -8,6 +8,7 @@ import {
 import { fetchBanks } from '../../services/banks'
 import { useAuth } from '../../auth/AuthProvider'
 import { message } from 'antd'
+import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
@@ -248,31 +249,42 @@ export default function AgentLoanApplicationsPage() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      {/* Approve Button */}
-                      <button
-                        onClick={() => openApprove(c)}
-                        className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
-                        title="Approve loan application"
-                      >
-                        <span>✅</span> Approve
-                      </button>
+                      {c.status === 'approved' || c.status === 'rejected' ? (
+                        <button
+                          onClick={() => openView(c)}
+                          className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-sm"
+                        >
+                          View Details
+                        </button>
+                      ) : (
+                        <>
+                          {/* Approve Button */}
+                          <button
+                            onClick={() => openApprove(c)}
+                            className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
+                            title="Approve loan application"
+                          >
+                            <span>✅</span> Approve
+                          </button>
 
-                      {/* Reject Button */}
-                      <button
-                        onClick={() => openReject(c)}
-                        className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-sm flex items-center gap-1"
-                        title="Reject loan application"
-                      >
-                        <span>❌</span> Reject
-                      </button>
+                          {/* Reject Button */}
+                          <button
+                            onClick={() => openReject(c)}
+                            className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-sm flex items-center gap-1"
+                            title="Reject loan application"
+                          >
+                            <span>❌</span> Reject
+                          </button>
 
-                      {/* View Details Button */}
-                      <button
-                        onClick={() => openView(c)}
-                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition shadow-sm"
-                      >
-                        View
-                      </button>
+                          {/* View Details Button */}
+                          <button
+                            onClick={() => openView(c)}
+                            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition shadow-sm"
+                          >
+                            View
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -369,6 +381,14 @@ export default function AgentLoanApplicationsPage() {
                 />
               </div>
 
+              {/* Permanent Decision Warning */}
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-start gap-2">
+                <span className="text-base">⚠️</span>
+                <div>
+                  <span className="font-bold">Permanent Decision:</span> Once approved, this application is sanctioned and cannot be modified or reversed.
+                </div>
+              </div>
+
               {/* Modal Actions */}
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
@@ -434,6 +454,14 @@ export default function AgentLoanApplicationsPage() {
                 <p className="mt-1 text-xs text-slate-400">Please provide clear remarks for customer records and internal audit.</p>
               </div>
 
+              {/* Permanent Decision Warning */}
+              <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 flex items-start gap-2">
+                <span className="text-base">⚠️</span>
+                <div>
+                  <span className="font-bold">Permanent Action:</span> Once rejected, this decision is final and cannot be modified or reversed.
+                </div>
+              </div>
+
               {/* Modal Actions */}
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
@@ -458,109 +486,18 @@ export default function AgentLoanApplicationsPage() {
 
       {/* ── View Customer Modal ────────────────────────────────────────── */}
       {showViewModal && activeApplication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <h3 className="text-lg font-bold text-slate-800">Application Details</h3>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              {/* Profile Overview Card */}
-              <div className="flex flex-col items-center gap-2.5 pb-4 border-b border-slate-100 text-center">
-                <Avatar name={activeApplication.name} size="lg" />
-                <div>
-                  <h4 className="text-lg font-bold text-slate-800">{activeApplication.name}</h4>
-                  <div className="mt-1">
-                    <StatusBadge status={activeApplication.status} bankName={activeApplication.bankName} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Detail Rows */}
-              <div className="mt-4 space-y-3">
-                <ViewRow
-                  label="Loan Product"
-                  value={
-                    activeApplication.productName ? (
-                      <span className="font-semibold text-blue-700">{activeApplication.productName}</span>
-                    ) : (
-                      <span className="text-slate-400 italic">Not specified</span>
-                    )
-                  }
-                />
-                <ViewRow label="Email Address" value={activeApplication.email} />
-                <ViewRow label="Mobile Number" value={activeApplication.mobile} />
-                <ViewRow
-                  label="Customer Unique ID"
-                  value={activeApplication.uniqueCustomerId || activeApplication.mobile}
-                />
-                <ViewRow
-                  label="Application Status"
-                  value={<StatusBadge status={activeApplication.status} bankName={activeApplication.bankName} />}
-                />
-                {activeApplication.bankName && (
-                  <ViewRow
-                    label="Approved Bank"
-                    value={
-                      <span className="font-semibold text-emerald-700">
-                        {activeApplication.bankName}
-                      </span>
-                    }
-                  />
-                )}
-                {activeApplication.description && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-2">
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                      {activeApplication.status === 'approved' ? 'Approval Notes' : 'Rejection / Decision Remarks'}
-                    </div>
-                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{activeApplication.description}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Actions in View Modal */}
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowViewModal(false)
-                      openApprove(activeApplication)
-                    }}
-                    className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowViewModal(false)
-                      openReject(activeApplication)
-                    }}
-                    className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition"
-                  >
-                    Reject
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowViewModal(false)}
-                  className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ApplicationDetailModal
+          application={activeApplication}
+          onClose={() => {
+            setShowViewModal(false)
+            setActiveApplication(null)
+          }}
+          onUpdated={() => {
+            qc.invalidateQueries({ queryKey: ['agent-loan-applications'] })
+            setShowViewModal(false)
+            setActiveApplication(null)
+          }}
+        />
       )}
     </div>
   )

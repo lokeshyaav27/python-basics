@@ -32,10 +32,14 @@ class LoanApplicationCreate(BaseModel):
 
 
 class LoanApplicationUpdate(BaseModel):
-    name: str
-    email: str
-    mobile: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    mobile: Optional[str] = None
     productId: Optional[int] = None
+    clientGeneralDetails: Optional[dict] = None
+    homeLoanDetails: Optional[dict] = None
+    carLoanDetails: Optional[dict] = None
+    personalLoanDetails: Optional[dict] = None
 
 
 class FullLoanApplicationPayload(BaseModel):
@@ -290,17 +294,128 @@ def update_loan_application(
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
 
-    name = payload.name.strip()
-    email = payload.email.strip()
-    mobile = payload.mobile.strip()
+    # Lock editing if application is already approved or rejected
+    if app.status in ["approved", "rejected"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"This loan application has already been {app.status} and cannot be modified."
+        )
 
-    if not name or not email or not mobile:
-        raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
+    if payload.name is not None and payload.name.strip():
+        app.name = payload.name.strip()
+    if payload.email is not None and payload.email.strip():
+        app.email = payload.email.strip()
+    if payload.mobile is not None and payload.mobile.strip():
+        app.mobile = payload.mobile.strip()
+    if payload.productId is not None:
+        app.productId = payload.productId
 
-    app.name = name
-    app.email = email
-    app.mobile = mobile
-    app.productId = payload.productId
+    # 1. Update / Create Client General Details
+    if payload.clientGeneralDetails is not None:
+        cgd_data = payload.clientGeneralDetails
+        cgd = app.clientGeneralDetail
+        if not cgd:
+            cgd = ClientGeneralDetail()
+            db.add(cgd)
+            db.flush()
+            app.clientGeneralDetailTableId = cgd.id
+
+        if "name" in cgd_data:
+            cgd.name = cgd_data.get("name") or app.name
+        if "age" in cgd_data:
+            cgd.age = int(cgd_data.get("age")) if cgd_data.get("age") is not None and str(cgd_data.get("age")).isdigit() else None
+        if "gender" in cgd_data:
+            cgd.gender = str(cgd_data.get("gender") or "") or None
+        if "location" in cgd_data:
+            cgd.location = str(cgd_data.get("location") or "") or None
+        if "employment_type" in cgd_data:
+            cgd.employment_type = str(cgd_data.get("employment_type") or "") or None
+        if "monthly_income" in cgd_data:
+            cgd.monthly_income = float(cgd_data.get("monthly_income")) if cgd_data.get("monthly_income") is not None and str(cgd_data.get("monthly_income")).replace(".", "", 1).isdigit() else None
+        if "monthly_obligation" in cgd_data:
+            cgd.monthly_obligation = float(cgd_data.get("monthly_obligation")) if cgd_data.get("monthly_obligation") is not None and str(cgd_data.get("monthly_obligation")).replace(".", "", 1).isdigit() else None
+        if "existing_emi" in cgd_data:
+            cgd.existing_emi = float(cgd_data.get("existing_emi")) if cgd_data.get("existing_emi") is not None and str(cgd_data.get("existing_emi")).replace(".", "", 1).isdigit() else None
+        if "cibil_score" in cgd_data:
+            cgd.cibil_score = int(cgd_data.get("cibil_score")) if cgd_data.get("cibil_score") is not None and str(cgd_data.get("cibil_score")).isdigit() else None
+        if "loan_amount_required" in cgd_data:
+            cgd.loan_amount_required = float(cgd_data.get("loan_amount_required")) if cgd_data.get("loan_amount_required") is not None and str(cgd_data.get("loan_amount_required")).replace(".", "", 1).isdigit() else None
+        if "preferred_tenure" in cgd_data:
+            cgd.preferred_tenure = int(cgd_data.get("preferred_tenure")) if cgd_data.get("preferred_tenure") is not None and str(cgd_data.get("preferred_tenure")).isdigit() else None
+        if "isSalaried" in cgd_data:
+            cgd.isSalaried = bool(cgd_data.get("isSalaried"))
+
+    # 2. Update / Create Home Loan Details
+    if payload.homeLoanDetails is not None:
+        h_data = payload.homeLoanDetails
+        hld = app.homeLoanDetail
+        if not hld:
+            hld = HomeLoanDetail()
+            db.add(hld)
+            db.flush()
+            app.homeLoanDetailId = hld.id
+
+        if "property_value" in h_data:
+            hld.property_value = float(h_data.get("property_value")) if h_data.get("property_value") is not None and str(h_data.get("property_value")).replace(".", "", 1).isdigit() else None
+        if "property_location" in h_data:
+            hld.property_location = str(h_data.get("property_location") or "") or None
+        if "propertyUsageType" in h_data:
+            hld.propertyUsageType = str(h_data.get("propertyUsageType") or "") or None
+        if "down_payment" in h_data:
+            hld.down_payment = float(h_data.get("down_payment")) if h_data.get("down_payment") is not None and str(h_data.get("down_payment")).replace(".", "", 1).isdigit() else None
+        if "isPartProperty" in h_data:
+            hld.isPartProperty = bool(h_data.get("isPartProperty"))
+        if "propertyRequirement" in h_data:
+            hld.propertyRequirement = str(h_data.get("propertyRequirement") or "") or None
+        if "propertyType" in h_data:
+            hld.propertyType = str(h_data.get("propertyType") or "") or None
+        if "propertyStatus" in h_data:
+            hld.propertyStatus = str(h_data.get("propertyStatus") or "") or None
+        if "femaleCoApplicant" in h_data:
+            hld.femaleCoApplicant = bool(h_data.get("femaleCoApplicant"))
+        if "propertyInsurance" in h_data:
+            hld.propertyInsurance = bool(h_data.get("propertyInsurance"))
+        if "applicantInsurance" in h_data:
+            hld.applicantInsurance = bool(h_data.get("applicantInsurance"))
+
+    # 3. Update / Create Car Loan Details
+    if payload.carLoanDetails is not None:
+        c_data = payload.carLoanDetails
+        cld = app.carLoanDetail
+        if not cld:
+            cld = CarLoanDetail()
+            db.add(cld)
+            db.flush()
+            app.carLoanDetailId = cld.id
+
+        if "new_or_used" in c_data:
+            cld.new_or_used = str(c_data.get("new_or_used") or "") or None
+        if "car_value" in c_data:
+            cld.car_value = float(c_data.get("car_value")) if c_data.get("car_value") is not None and str(c_data.get("car_value")).replace(".", "", 1).isdigit() else None
+        if "down_payment" in c_data:
+            cld.down_payment = float(c_data.get("down_payment")) if c_data.get("down_payment") is not None and str(c_data.get("down_payment")).replace(".", "", 1).isdigit() else None
+        if "vehicle_age" in c_data:
+            cld.vehicle_age = int(c_data.get("vehicle_age")) if c_data.get("vehicle_age") is not None and str(c_data.get("vehicle_age")).isdigit() else 0
+
+    # 4. Update / Create Personal Loan Details
+    if payload.personalLoanDetails is not None:
+        p_data = payload.personalLoanDetails
+        pld = app.personalLoanDetail
+        if not pld:
+            pld = PersonalLoanDetail()
+            db.add(pld)
+            db.flush()
+            app.personalLoanDetailId = pld.id
+
+        if "loan_purpose" in p_data:
+            pld.loan_purpose = str(p_data.get("loan_purpose") or "") or None
+        if "other" in p_data:
+            pld.other = str(p_data.get("other") or "") or None
+        if "required_amount" in p_data:
+            pld.required_amount = float(p_data.get("required_amount")) if p_data.get("required_amount") is not None and str(p_data.get("required_amount")).replace(".", "", 1).isdigit() else None
+        if "existing_obligations" in p_data:
+            pld.existing_obligations = float(p_data.get("existing_obligations")) if p_data.get("existing_obligations") is not None and str(p_data.get("existing_obligations")).replace(".", "", 1).isdigit() else None
+
     db.add(app)
     db.commit()
     db.refresh(app)
@@ -341,9 +456,16 @@ def update_application_status(
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
 
+    # Enforce non-reversible one-time decision rule
+    if app.status in ["approved", "rejected"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"This loan application has already been {app.status}. Decisions are permanent and cannot be modified or reversed."
+        )
+
     raw_status = (payload.status or "").strip().lower() if payload.status else None
 
-    if raw_status in ["approved"]:
+    if raw_status == "approved":
         if payload.bankId is not None:
             bank = db.query(Bank).filter(Bank.id == payload.bankId).first()
             if not bank:
@@ -353,22 +475,15 @@ def update_application_status(
             app.description = payload.description.strip() or None
         app.status = "approved"
 
-    elif raw_status in ["rejected"]:
+    elif raw_status == "rejected":
         if not payload.description or not payload.description.strip():
             raise HTTPException(status_code=400, detail="Rejection reason is required")
         app.description = payload.description.strip()
         app.bankId = None
         app.status = "rejected"
 
-    elif raw_status in [None, "", "null", "pending"]:
-        app.status = None
-        if payload.bankId is not None:
-            app.bankId = payload.bankId
-        if payload.description is not None:
-            app.description = payload.description.strip() or None
-
     else:
-        raise HTTPException(status_code=400, detail="Invalid status value. Allowed: approved, rejected, or null")
+        raise HTTPException(status_code=400, detail="Invalid decision. Application can only be approved or rejected.")
 
     db.add(app)
     db.commit()

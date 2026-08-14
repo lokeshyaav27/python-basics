@@ -11,6 +11,7 @@ import {
 import { fetchAgents } from '../../services/agents'
 import { fetchProducts } from '../../services/products'
 import { message } from 'antd'
+import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const BLANK_FORM = { name: '', email: '', mobile: '', productId: null as number | null }
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
@@ -513,71 +514,18 @@ export default function LoanApplicationsPage() {
 
       {/* ── View Modal ──────────────────────────────────────────────────── */}
       {showView && active && (
-        <Modal title="Application Details" onClose={() => setShowView(false)}>
-          <div className="flex flex-col items-center gap-2.5 pb-4 border-b border-slate-100 text-center">
-            <Avatar name={active.name} size="lg" />
-            <div>
-              <div className="text-lg font-bold text-slate-800">{active.name}</div>
-              <div className="text-xs text-slate-400 font-mono mt-0.5">ID: {active.uniqueCustomerId || active.mobile}</div>
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            <ViewRow label="Full Name" value={active.name} />
-            <ViewRow
-              label="Loan Product"
-              value={
-                active.productName ? (
-                  <span className="font-semibold text-blue-700">{active.productName}</span>
-                ) : (
-                  <span className="text-slate-400 italic">Not specified</span>
-                )
-              }
-            />
-            <ViewRow label="Email Address" value={active.email} />
-            <ViewRow label="Mobile Number" value={active.mobile} />
-            <ViewRow
-              label="Assigned Agent"
-              value={
-                active.agentName ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar name={active.agentName} photo={active.agentPhoto} size="sm" />
-                    <span>{active.agentName}</span>
-                  </div>
-                ) : (
-                  <span className="text-slate-400 italic">Unassigned</span>
-                )
-              }
-            />
-            <ViewRow
-              label="Application Status"
-              value={<StatusBadge status={active.status} bankName={active.bankName} />}
-            />
-            {active.bankName && (
-              <ViewRow
-                label="Sanctioned / Approving Bank"
-                value={<span className="font-semibold text-emerald-700">{active.bankName}</span>}
-              />
-            )}
-            {active.description && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-2">
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                  {active.status === 'approved' ? 'Approval Notes' : 'Remarks / Reason'}
-                </div>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap">{active.description}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setShowView(false)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition"
-            >
-              Close
-            </button>
-          </div>
-        </Modal>
+        <ApplicationDetailModal
+          application={active}
+          onClose={() => {
+            setShowView(false)
+            setActive(null)
+          }}
+          onUpdated={() => {
+            qc.invalidateQueries({ queryKey: ['admin-loan-applications'] })
+            setShowView(false)
+            setActive(null)
+          }}
+        />
       )}
 
       {/* ── Delete Confirmation ────────────────────────────────────────── */}

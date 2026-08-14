@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchCustomerLoanApplications, LoanApplication } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
+import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
@@ -46,7 +47,7 @@ export default function CustomerLoanList() {
   const [showDetailModal, setShowDetailModal] = useState(false)
 
   // Fetch loans specific to this customer (by mobile, email, or customer ID)
-  const { data: loans = [], isLoading } = useQuery<LoanApplication[]>({
+  const { data: loans = [], isLoading, refetch } = useQuery<LoanApplication[]>({
     queryKey: ['customer-loans', customerIdentifier],
     queryFn: () => fetchCustomerLoanApplications(customerIdentifier),
   })
@@ -175,7 +176,7 @@ export default function CustomerLoanList() {
                   </div>
 
                   {/* Highlight Box if Approved or Rejected */}
-                  {loan.status.toLowerCase() === 'approved' && (
+                  {(loan.status || '').toLowerCase() === 'approved' && (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 mb-4">
                       <div className="flex items-center gap-2.5">
                         {loan.bankLogo ? (
@@ -199,7 +200,7 @@ export default function CustomerLoanList() {
                     </div>
                   )}
 
-                  {loan.status.toLowerCase() === 'rejected' && loan.description && (
+                  {(loan.status || '').toLowerCase() === 'rejected' && loan.description && (
                     <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-3.5 mb-4">
                       <div className="text-xs font-bold text-rose-900 mb-0.5">Decision Remarks:</div>
                       <p className="text-xs text-rose-700">{loan.description}</p>
@@ -253,7 +254,7 @@ export default function CustomerLoanList() {
                 {/* Footer Action */}
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] text-slate-400">
-                    Status: <span className="capitalize font-medium text-slate-600">{loan.status}</span>
+                    Status: <span className="capitalize font-medium text-slate-600">{loan.status || 'Pending Review'}</span>
                   </span>
                   <button
                     onClick={() => openDetails(loan)}
@@ -270,125 +271,18 @@ export default function CustomerLoanList() {
 
       {/* ── Detailed Modal ──────────────────────────────────────────────── */}
       {showDetailModal && selectedLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50">
-              <div>
-                <h3 className="text-lg font-bold text-slate-800">
-                  {selectedLoan.productName || 'Loan Application'} Details
-                </h3>
-                <span className="text-xs text-slate-400 font-mono">
-                  Application Reference #{selectedLoan.id}
-                </span>
-              </div>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              {/* Status Section */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-slate-400 uppercase font-semibold">Current Status</span>
-                  <div className="mt-1">
-                    <StatusBadge status={selectedLoan.status} bankName={selectedLoan.bankName} />
-                  </div>
-                </div>
-                {selectedLoan.bankName && (
-                  <div className="text-right">
-                    <span className="text-xs text-slate-400 uppercase font-semibold">Lending Bank</span>
-                    <div className="text-sm font-bold text-slate-800 mt-1">{selectedLoan.bankName}</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Applicant Info */}
-              <div className="rounded-xl border border-slate-200 p-4 space-y-2.5">
-                <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Applicant Information
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-xs text-slate-400 block">Full Name</span>
-                    <span className="font-semibold text-slate-800">{selectedLoan.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block">Mobile Number</span>
-                    <span className="font-semibold text-slate-800">{selectedLoan.mobile}</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block">Email Address</span>
-                    <span className="font-semibold text-slate-800 truncate block">{selectedLoan.email}</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block">Customer ID</span>
-                    <span className="font-mono text-xs font-semibold text-slate-800">
-                      {selectedLoan.uniqueCustomerId || selectedLoan.mobile}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bank Sanction / Remarks */}
-              {selectedLoan.description && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                    {selectedLoan.status.toLowerCase() === 'approved'
-                      ? 'Sanction Notes & Terms'
-                      : 'Application Remarks'}
-                  </div>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{selectedLoan.description}</p>
-                </div>
-              )}
-
-              {/* Assigned Agent Card */}
-              {selectedLoan.agentName && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-                  <div className="text-xs font-bold uppercase tracking-wide text-blue-800 mb-2">
-                    Dedicated Loan Advisor
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {selectedLoan.agentPhoto ? (
-                      <img
-                        src={`${API_BASE_URL}/static/agent-photos/${selectedLoan.agentPhoto}`}
-                        alt={selectedLoan.agentName}
-                        className="h-10 w-10 rounded-full object-cover border border-blue-200"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
-                        {selectedLoan.agentName.charAt(0)}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-slate-900">{selectedLoan.agentName}</div>
-                      <div className="text-xs text-slate-500">
-                        {selectedLoan.agentEmail && `${selectedLoan.agentEmail} • `}
-                        {selectedLoan.agentMobile && selectedLoan.agentMobile}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-end border-t border-slate-100 px-6 py-3 bg-slate-50">
-              <button
-                type="button"
-                onClick={() => setShowDetailModal(false)}
-                className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApplicationDetailModal
+          application={selectedLoan}
+          onClose={() => {
+            setShowDetailModal(false)
+            setSelectedLoan(null)
+          }}
+          onUpdated={() => {
+            refetch()
+            setShowDetailModal(false)
+            setSelectedLoan(null)
+          }}
+        />
       )}
     </div>
   )

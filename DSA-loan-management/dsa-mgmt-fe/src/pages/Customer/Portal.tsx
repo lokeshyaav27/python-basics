@@ -13,9 +13,9 @@ export default function CustomerPortal() {
     queryFn: () => fetchCustomerLoanApplications(customerIdentifier),
   })
 
-  const approved = loans.filter((l: any) => l.status.toLowerCase() === 'approved').length
+  const approved = loans.filter((l: any) => (l.status || '').toLowerCase() === 'approved').length
   const inProgress = loans.filter(
-    (l: any) => l.status.toLowerCase() !== 'approved' && l.status.toLowerCase() !== 'rejected'
+    (l: any) => !l.status || ((l.status || '').toLowerCase() !== 'approved' && (l.status || '').toLowerCase() !== 'rejected')
   ).length
 
   return (
