@@ -20,8 +20,9 @@ export type Customer = {
   status: string
 }
 
-export async function fetchCustomers(): Promise<Customer[]> {
-  const res = await axios.get(`${API_BASE_URL}/api/customers`)
+export async function fetchCustomers(agentId?: number): Promise<Customer[]> {
+  const params = agentId !== undefined && agentId !== null ? { agent_id: agentId } : {}
+  const res = await axios.get(`${API_BASE_URL}/api/customers`, { params })
   return res.data || []
 }
 

@@ -47,7 +47,7 @@ export default function AgentLogin() {
 
       // Normal login flow
       const name = agent?.name || email
-      auth.login(name, 'agent')
+      auth.login(name, 'agent', { id: agent.id, email: agent.email, photo: agent.photo })
       message.success(`Welcome back, ${name}!`)
       nav('/agent/customers')
     } catch (err: any) {

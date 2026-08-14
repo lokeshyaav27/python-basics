@@ -3,13 +3,16 @@ import { Navigate } from 'react-router-dom'
 type Role = 'admin' | 'agent' | 'customer'
 
 type User = {
+  id?: number
   name: string
+  email?: string
+  photo?: string
   role: Role
 }
 
 type AuthContextType = {
   user: User | null
-  login: (name: string, role: Role) => void
+  login: (name: string, role: Role, extra?: { id?: number; email?: string; photo?: string }) => void
   logout: () => void
 }
 
@@ -25,8 +28,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   })
 
-  const login = (name: string, role: Role) => {
-    const u = { name, role }
+  const login = (name: string, role: Role, extra?: { id?: number; email?: string; photo?: string }) => {
+    const u: User = { name, role, ...extra }
     setUser(u)
     localStorage.setItem('dsa_auth', JSON.stringify(u))
   }

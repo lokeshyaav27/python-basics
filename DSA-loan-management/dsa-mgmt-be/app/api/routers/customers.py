@@ -49,8 +49,11 @@ def _serialize(c: Customer) -> dict:
 
 
 @router.get("/")
-def list_customers(db: Session = Depends(get_db)):
-    customers = db.query(Customer).all()
+def list_customers(agent_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(Customer)
+    if agent_id is not None:
+        query = query.filter(Customer.agentId == agent_id)
+    customers = query.all()
     return [_serialize(c) for c in customers]
 
 
