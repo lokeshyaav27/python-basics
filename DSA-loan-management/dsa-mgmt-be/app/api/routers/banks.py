@@ -167,8 +167,8 @@ def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.isActive == True).all()
 
     # Get existing links for this bank
-    links = db.query(ProductBankLink).filter(ProductBankLink.bankid == bank_id).all()
-    links_map = {link.productid: link for link in links}
+    links = db.query(ProductBankLink).filter(ProductBankLink.bankId == bank_id).all()
+    links_map = {link.productId: link for link in links}
 
     result = []
     for p in products:
@@ -205,8 +205,8 @@ def link_bank_product(
         raise HTTPException(status_code=404, detail="Product not found")
 
     link = db.query(ProductBankLink).filter(
-        ProductBankLink.bankid == bank_id,
-        ProductBankLink.productid == product_id,
+        ProductBankLink.bankId == bank_id,
+        ProductBankLink.productId == product_id,
     ).first()
 
     storage = get_document_storage()
@@ -227,7 +227,7 @@ def link_bank_product(
 
     # If linking (or updating existing link)
     if not link:
-        link = ProductBankLink(bankid=bank_id, productid=product_id)
+        link = ProductBankLink(bankId=bank_id, productId=product_id)
         db.add(link)
 
     if commission is not None:
