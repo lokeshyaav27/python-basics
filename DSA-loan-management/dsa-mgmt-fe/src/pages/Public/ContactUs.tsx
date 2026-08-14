@@ -1,14 +1,24 @@
 import React, { useState } from 'react'
 import { message } from 'antd'
+import { submitContactEnquiry } from '../../services/contact'
 
 export default function ContactUs() {
   const [form, setForm] = useState({ name: '', email: '', mobile: '', loanType: 'Home Loan', message: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    message.success('Thank you! Your enquiry has been received. A loan advisor will contact you within 2 hours.')
-    setSubmitted(true)
+    setIsSubmitting(true)
+    try {
+      await submitContactEnquiry(form)
+      message.success('Thank you! Your enquiry has been received. A loan advisor will contact you within 2 hours.')
+      setSubmitted(true)
+    } catch (err: any) {
+      message.error(err?.response?.data?.detail || 'Failed to submit enquiry. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -116,9 +126,10 @@ export default function ContactUs() {
 
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-blue-600 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition active:scale-[0.99]"
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-blue-600 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition active:scale-[0.99] disabled:opacity-50"
               >
-                Submit Consultation Request →
+                {isSubmitting ? 'Submitting Enquiry…' : 'Submit Consultation Request →'}
               </button>
             </form>
           )}
