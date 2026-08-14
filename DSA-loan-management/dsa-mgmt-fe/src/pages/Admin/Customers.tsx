@@ -1,14 +1,34 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer, Customer } from '../../services/customers'
+import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer, assignCustomerAgent, Customer } from '../../services/customers'
+import { fetchAgents } from '../../services/agents'
 import { message } from 'antd'
 
 const BLANK_FORM = { name: '', email: '', mobile: '' }
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, photo, size = 'md' }: { name: string; photo?: string | null; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClasses = {
+    sm: 'h-7 w-7 text-xs',
+    md: 'h-9 w-9 text-sm',
+    lg: 'h-12 w-12 text-base',
+  }
+
+  if (photo) {
+    return (
+      <img
+        src={`${API_BASE_URL}/static/agent-photos/${photo}`}
+        alt={name}
+        className={`${sizeClasses[size]} rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0`}
+      />
+    )
+  }
+
   const initial = name ? name.charAt(0).toUpperCase() : 'C'
   return (
-    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+    <div
+      className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0`}
+    >
       {initial}
     </div>
   )
@@ -46,11 +66,26 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+type AgentItem = {
+  id: number
+  name: string
+  email: string
+  mobile: string
+  photo?: string
+  isAdmin: boolean
+}
+
 export default function CustomersPage() {
   const qc = useQueryClient()
-  const { data: customers = [], isLoading } = useQuery<Customer[]>({
+
+  const { data: customers = [], isLoading: isCustomersLoading } = useQuery<Customer[]>({
     queryKey: ['admin-customers'],
     queryFn: fetchCustomers,
+  })
+
+  const { data: agents = [] } = useQuery<AgentItem[]>({
+    queryKey: ['admin-agents'],
+    queryFn: fetchAgents,
   })
 
   const createMut = useMutation({
@@ -86,12 +121,26 @@ export default function CustomersPage() {
     },
   })
 
+  const assignMut = useMutation({
+    mutationFn: ({ customerId, agentId }: { customerId: number; agentId: number | null }) =>
+      assignCustomerAgent(customerId, agentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-customers'] })
+      message.success('Agent assigned successfully')
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to assign agent')
+    },
+  })
+
   const [showAdd, setShowAdd] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showView, setShowView] = useState(false)
+  const [showAssign, setShowAssign] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: number }>({ open: false })
   const [active, setActive] = useState<Customer | null>(null)
   const [form, setForm] = useState(BLANK_FORM)
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null)
 
   function openAdd() {
     setForm(BLANK_FORM)
@@ -107,6 +156,12 @@ export default function CustomersPage() {
   function openView(c: Customer) {
     setActive(c)
     setShowView(true)
+  }
+
+  function openAssign(c: Customer) {
+    setActive(c)
+    setSelectedAgentId(c.agentId ?? null)
+    setShowAssign(true)
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -133,6 +188,16 @@ export default function CustomersPage() {
     setShowEdit(false)
   }
 
+  async function handleAssign(e: React.FormEvent) {
+    e.preventDefault()
+    if (!active) return
+    await assignMut.mutateAsync({
+      customerId: active.id,
+      agentId: selectedAgentId,
+    })
+    setShowAssign(false)
+  }
+
   async function handleDelete() {
     if (!confirmDelete.id) return
     await deleteMut.mutateAsync(confirmDelete.id)
@@ -145,7 +210,7 @@ export default function CustomersPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Customers</h2>
-          <p className="text-sm text-slate-500">Manage customers and their loan applications</p>
+          <p className="text-sm text-slate-500">Manage customers and their assigned DSA agents</p>
         </div>
         <button
           onClick={openAdd}
@@ -163,18 +228,19 @@ export default function CustomersPage() {
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Customer</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Mobile</th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Assigned Agent</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
               <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
+            {isCustomersLoading ? (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-sm text-slate-400">Loading…</td>
+                <td colSpan={6} className="p-6 text-center text-sm text-slate-400">Loading…</td>
               </tr>
             ) : customers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-6 text-center text-sm text-slate-400">No customers found.</td>
+                <td colSpan={6} className="p-6 text-center text-sm text-slate-400">No customers found.</td>
               </tr>
             ) : (
               customers.map((c) => (
@@ -193,25 +259,43 @@ export default function CustomersPage() {
                   <td className="p-3 text-sm text-slate-600">{c.email}</td>
                   <td className="p-3 text-sm text-slate-600">{c.mobile}</td>
                   <td className="p-3">
+                    {c.agentName ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar name={c.agentName} photo={c.agentPhoto} size="sm" />
+                        <span className="text-sm font-medium text-slate-700">{c.agentName}</span>
+                      </div>
+                    ) : (
+                      <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-400 font-medium">
+                        Unassigned
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">
                     <StatusBadge status={c.status} />
                   </td>
                   <td className="p-3">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        onClick={() => openAssign(c)}
+                        className="rounded px-2.5 py-1 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                      >
+                        {c.agentId ? 'Change Agent' : 'Assign Agent'}
+                      </button>
                       <button
                         onClick={() => openView(c)}
-                        className="rounded px-3 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                       >
                         View
                       </button>
                       <button
                         onClick={() => openEdit(c)}
-                        className="rounded px-3 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setConfirmDelete({ open: true, id: c.id })}
-                        className="rounded px-3 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
                       >
                         Delete
                       </button>
@@ -223,6 +307,110 @@ export default function CustomersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* ── Assign Agent Modal ─────────────────────────────────────────── */}
+      {showAssign && active && (
+        <Modal title="Assign Agent to Customer" onClose={() => setShowAssign(false)}>
+          <form onSubmit={handleAssign} className="space-y-4">
+            {/* Customer Summary Card */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar name={active.name} />
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">{active.name}</div>
+                  <div className="text-xs text-slate-500">{active.email} • {active.mobile}</div>
+                </div>
+              </div>
+              <StatusBadge status={active.status} />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Select Agent
+              </label>
+              
+              {agents.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">
+                  No agents found. Please add agents first.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {/* Unassign option */}
+                  <label
+                    className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition ${
+                      selectedAgentId === null
+                        ? 'border-indigo-600 bg-indigo-50/50 shadow-sm'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
+                        ✕
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-slate-700">Unassigned</div>
+                        <div className="text-xs text-slate-400">No agent assigned to this customer</div>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="agent_select"
+                      checked={selectedAgentId === null}
+                      onChange={() => setSelectedAgentId(null)}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                  </label>
+
+                  {/* Agents list */}
+                  {agents.map((ag) => {
+                    const isSelected = selectedAgentId === ag.id
+                    return (
+                      <label
+                        key={ag.id}
+                        className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50/60 shadow-sm ring-1 ring-indigo-600'
+                            : 'border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar name={ag.name} photo={ag.photo} size="md" />
+                          <div>
+                            <div className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                              <span>{ag.name}</span>
+                              {ag.isAdmin && (
+                                <span className="rounded-full bg-blue-100 px-2 py-0.2 text-[10px] font-semibold text-blue-700">
+                                  Admin
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {ag.email} • {ag.mobile}
+                            </div>
+                          </div>
+                        </div>
+                        <input
+                          type="radio"
+                          name="agent_select"
+                          checked={isSelected}
+                          onChange={() => setSelectedAgentId(ag.id)}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                        />
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <ModalFooter
+              onCancel={() => setShowAssign(false)}
+              submitLabel="Confirm Assignment"
+              submitClass="bg-indigo-600 hover:bg-indigo-700 text-white"
+            />
+          </form>
+        </Modal>
+      )}
 
       {/* ── Add Modal ───────────────────────────────────────────────────── */}
       {showAdd && (
@@ -307,7 +495,7 @@ export default function CustomersPage() {
       {showView && active && (
         <Modal title="Customer Details" onClose={() => setShowView(false)}>
           <div className="flex flex-col items-center gap-3 pb-4 border-b border-slate-100">
-            <Avatar name={active.name} />
+            <Avatar name={active.name} size="lg" />
             <div className="text-center">
               <div className="text-lg font-semibold text-slate-800">{active.name}</div>
               <div className="mt-1">
@@ -319,6 +507,19 @@ export default function CustomersPage() {
             <ViewRow label="Email" value={active.email} />
             <ViewRow label="Mobile" value={active.mobile} />
             <ViewRow label="Customer ID" value={active.uniqueCustomerId || active.mobile} />
+            <ViewRow
+              label="Assigned Agent"
+              value={
+                active.agentName ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar name={active.agentName} photo={active.agentPhoto} size="sm" />
+                    <span>{active.agentName}</span>
+                  </div>
+                ) : (
+                  <span className="text-slate-400">Unassigned</span>
+                )
+              }
+            />
             <ViewRow label="Status" value={active.status} />
           </div>
           <div className="mt-6 flex justify-end">
@@ -394,9 +595,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ViewRow({ label, value }: { label: string; value: string }) {
+function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between text-sm py-1 border-b border-slate-50 last:border-0">
+    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
       <span className="font-medium text-slate-500">{label}</span>
       <span className="text-slate-800 font-medium">{value}</span>
     </div>
@@ -427,4 +628,5 @@ function ModalFooter({
     </div>
   )
 }
+
 

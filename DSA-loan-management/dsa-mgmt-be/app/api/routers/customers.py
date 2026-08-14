@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from app.db.session import SessionLocal
 from app.models.customer import Customer
+from app.models.agent import Agent
 
 router = APIRouter()
 
@@ -29,6 +30,10 @@ class CustomerUpdate(BaseModel):
     mobile: str
 
 
+class AssignAgentPayload(BaseModel):
+    agentId: Optional[int] = None
+
+
 def _serialize(c: Customer) -> dict:
     return {
         "id": c.id,
@@ -37,6 +42,8 @@ def _serialize(c: Customer) -> dict:
         "mobile": c.mobile,
         "uniqueCustomerId": c.uniqueCustomerId,
         "agentId": c.agentId,
+        "agentName": c.agent.name if c.agent else None,
+        "agentPhoto": c.agent.photo if c.agent else None,
         "status": c.status,
     }
 
@@ -104,6 +111,26 @@ def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Dep
     c.name = name
     c.email = email
     c.mobile = mobile
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return _serialize(c)
+
+
+@router.put("/{customer_id}/assign-agent")
+def assign_agent(customer_id: int, payload: AssignAgentPayload, db: Session = Depends(get_db)):
+    c = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    if payload.agentId is not None:
+        agent = db.query(Agent).filter(Agent.id == payload.agentId).first()
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        c.agentId = payload.agentId
+    else:
+        c.agentId = None
+
     db.add(c)
     db.commit()
     db.refresh(c)
