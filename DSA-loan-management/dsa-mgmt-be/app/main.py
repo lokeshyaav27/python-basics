@@ -43,6 +43,7 @@ app.include_router(api_routers.agents.router, prefix="/api/agents", tags=["agent
 app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_routers.files.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.loan_applications.router, prefix="/api/loan-applications", tags=["loan-applications"])
+app.include_router(api_routers.contact.router, prefix="/api/contact", tags=["contact"])
 
 
 @app.on_event("startup")

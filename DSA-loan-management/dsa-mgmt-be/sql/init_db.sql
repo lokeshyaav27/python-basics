@@ -107,6 +107,18 @@ CREATE TABLE IF NOT EXISTS loan_applications (
     is_active boolean NOT NULL DEFAULT true
 );
 
+CREATE TABLE IF NOT EXISTS contact_enquiries (
+    id serial PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    email varchar(255) NOT NULL,
+    mobile varchar(32) NOT NULL,
+    loan_type varchar(64),
+    message text,
+    status varchar(32) NOT NULL DEFAULT 'new',
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+    is_active boolean NOT NULL DEFAULT true
+);
+
 -- Seed Default Admin
 INSERT INTO agents (name, email, mobile, temp_password, password, temp_password_reset, is_admin, is_active)
 VALUES ('Admin', 'admin@example.com', '0000000000', 'admin', '$2b$12$e6fK89t1fJg3wY7B7z8HNu9W7Yp7o3dF4L8M1k9Z2Q5x6C7v8B9n0', true, true, true)

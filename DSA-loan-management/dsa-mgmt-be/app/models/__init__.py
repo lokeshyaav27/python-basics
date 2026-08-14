@@ -8,6 +8,7 @@ from app.models.home_loan_detail import HomeLoanDetail
 from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.loan_application import LoanApplication
+from app.models.contact_enquiry import ContactEnquiry
 
 __all__ = [
     "Base",
@@ -20,4 +21,5 @@ __all__ = [
     "CarLoanDetail",
     "PersonalLoanDetail",
     "LoanApplication",
+    "ContactEnquiry",
 ]
