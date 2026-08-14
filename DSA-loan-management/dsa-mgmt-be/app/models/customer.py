@@ -9,8 +9,8 @@ class Customer(Base):
     email = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
     mobile = Column(String(32), nullable=False)
-    agentId = Column(Integer, ForeignKey("agents.id"), nullable=True)
-    LoanId = Column(Integer, ForeignKey("loans.id"), nullable=True)
+    uniqueCustomerId = Column("uniquecustomerid", String(32), nullable=True)
+    agentId = Column("agentid", Integer, ForeignKey("agents.id"), nullable=True)
     status = Column(String(32), nullable=False, default="not-started")
 
     agent = relationship("Agent", backref="customers")

@@ -2,13 +2,43 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-type CustomerInput = {
+export type CustomerInput = {
   name: string
   email: string
   mobile: string
 }
 
+export type Customer = {
+  id: number
+  name: string
+  email: string
+  mobile: string
+  uniqueCustomerId?: string
+  agentId?: number | null
+  status: string
+}
+
+export async function fetchCustomers(): Promise<Customer[]> {
+  const res = await axios.get(`${API_BASE_URL}/api/customers`)
+  return res.data || []
+}
+
+export async function createCustomer(payload: CustomerInput): Promise<Customer> {
+  const res = await axios.post(`${API_BASE_URL}/api/customers`, payload)
+  return res.data
+}
+
+export async function updateCustomer(id: number, payload: CustomerInput): Promise<Customer> {
+  const res = await axios.put(`${API_BASE_URL}/api/customers/${id}`, payload)
+  return res.data
+}
+
+export async function deleteCustomer(id: number): Promise<{ status: string }> {
+  const res = await axios.delete(`${API_BASE_URL}/api/customers/${id}`)
+  return res.data
+}
+
 export async function addCustomer(payload: CustomerInput) {
   const res = await axios.post(`${API_BASE_URL}/api/auth/customer/add`, payload)
   return res.data
-}
+}

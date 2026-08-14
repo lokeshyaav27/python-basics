@@ -1,0 +1,120 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import List, Optional
+
+from app.db.session import SessionLocal
+from app.models.customer import Customer
+
+router = APIRouter()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+class CustomerCreate(BaseModel):
+    name: str
+    email: str
+    mobile: str
+
+
+class CustomerUpdate(BaseModel):
+    name: str
+    email: str
+    mobile: str
+
+
+def _serialize(c: Customer) -> dict:
+    return {
+        "id": c.id,
+        "name": c.name,
+        "email": c.email,
+        "mobile": c.mobile,
+        "uniqueCustomerId": c.uniqueCustomerId,
+        "agentId": c.agentId,
+        "status": c.status,
+    }
+
+
+@router.get("/")
+def list_customers(db: Session = Depends(get_db)):
+    customers = db.query(Customer).all()
+    return [_serialize(c) for c in customers]
+
+
+@router.get("/{customer_id}")
+def get_customer(customer_id: int, db: Session = Depends(get_db)):
+    c = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return _serialize(c)
+
+
+@router.post("/")
+def create_customer(payload: CustomerCreate, db: Session = Depends(get_db)):
+    name = payload.name.strip()
+    email = payload.email.strip()
+    mobile = payload.mobile.strip()
+
+    if not name or not email or not mobile:
+        raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
+
+    existing = db.query(Customer).filter((Customer.mobile == mobile) | (Customer.email == email)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Customer with this mobile or email already exists")
+
+    c = Customer(
+        name=name,
+        email=email,
+        mobile=mobile,
+        uniqueCustomerId=mobile,
+        status="not-started",
+    )
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return _serialize(c)
+
+
+@router.put("/{customer_id}")
+def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Depends(get_db)):
+    c = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    name = payload.name.strip()
+    email = payload.email.strip()
+    mobile = payload.mobile.strip()
+
+    if not name or not email or not mobile:
+        raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
+
+    conflict = db.query(Customer).filter(
+        ((Customer.mobile == mobile) | (Customer.email == email)),
+        Customer.id != customer_id
+    ).first()
+    if conflict:
+        raise HTTPException(status_code=400, detail="Another customer with this mobile or email already exists")
+
+    c.name = name
+    c.email = email
+    c.mobile = mobile
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return _serialize(c)
+
+
+@router.delete("/{customer_id}")
+def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+    c = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    db.delete(c)
+    db.commit()
+    return {"status": "ok"}
