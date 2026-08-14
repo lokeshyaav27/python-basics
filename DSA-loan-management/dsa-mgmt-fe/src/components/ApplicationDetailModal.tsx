@@ -43,6 +43,36 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   )
 }
 
+function CibilBadge({ score }: { score?: number | null }) {
+  if (!score) return <span className="text-slate-400 font-medium">Not provided</span>
+  if (score >= 750) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700 border border-emerald-200">
+        <span>🟢</span> {score} (Excellent)
+      </span>
+    )
+  }
+  if (score >= 680) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 border border-blue-200">
+        <span>🔵</span> {score} (Good)
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-extrabold text-amber-700 border border-amber-200">
+      <span>🟡</span> {score} (Fair / Average)
+    </span>
+  )
+}
+
+function formatCurrency(val?: number | string | null): string {
+  if (val === null || val === undefined || val === '') return '—'
+  const num = Number(val)
+  if (isNaN(num)) return '—'
+  return `₹ ${num.toLocaleString('en-IN')}`
+}
+
 interface ApplicationDetailModalProps {
   application: LoanApplication | null
   onClose: () => void
@@ -119,15 +149,15 @@ export default function ApplicationDetailModal({
   }
 
   const productName = application.productName || 'Loan Application'
-  const isHomeLoan = productName.toLowerCase().includes('home')
-  const isCarLoan = productName.toLowerCase().includes('car')
-  const isPersonalLoan = productName.toLowerCase().includes('personal')
+  const isHomeLoan = productName.toLowerCase().includes('home') || productName.toLowerCase().includes('housing')
+  const isCarLoan = productName.toLowerCase().includes('car') || productName.toLowerCase().includes('auto') || productName.toLowerCase().includes('vehicle')
+  const isPersonalLoan = productName.toLowerCase().includes('personal') || (!isHomeLoan && !isCarLoan)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-      <div className="w-full max-w-4xl rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-200 my-8 flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-4xl rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-200 my-8 flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/80">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-slate-50/90">
           <div className="flex items-center gap-3">
             {application.productImage ? (
               <img
@@ -142,7 +172,7 @@ export default function ApplicationDetailModal({
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-800">{productName} Details</h3>
+                <h3 className="text-lg font-bold text-slate-800">{productName}</h3>
                 <StatusBadge status={application.status} bankName={application.bankName} />
               </div>
               <p className="text-xs text-slate-400 font-mono">
@@ -156,16 +186,10 @@ export default function ApplicationDetailModal({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 hover:bg-blue-100 transition flex items-center gap-1"
+                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition flex items-center gap-1.5"
               >
                 <span>✏️</span> Edit Details
               </button>
-            )}
-
-            {isFinalized && (
-              <span className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500 border border-slate-200 flex items-center gap-1">
-                <span>🔒</span> Decision Finalized (Read-only)
-              </span>
             )}
 
             <button
@@ -201,7 +225,7 @@ export default function ApplicationDetailModal({
                   {application.description ? (
                     <p className="text-xs text-emerald-700 mt-0.5">{application.description}</p>
                   ) : (
-                    <p className="text-xs text-emerald-700 mt-0.5">Loan approved with priority processing.</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">Loan approved with priority processing terms.</p>
                   )}
                 </div>
               </div>
@@ -221,7 +245,7 @@ export default function ApplicationDetailModal({
               <div className="flex items-center gap-2">
                 <span>✏️</span>
                 <span>
-                  <strong>Edit Mode Active:</strong> Modify the information below and click Save Changes when finished.
+                  <strong>Edit Mode Active:</strong> You can edit customer general details and product requirements below.
                 </span>
               </div>
               <button
@@ -235,14 +259,14 @@ export default function ApplicationDetailModal({
           )}
 
           <form onSubmit={handleSave} className="space-y-6">
-            {/* 1. Contact Info Section */}
+            {/* ── Section 1: Basic Customer Info ──────────────────────────── */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                 <span>👤</span> Applicant Contact Information
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-500 block mb-1">Full Name</label>
+                  <label className="text-[11px] font-semibold text-slate-500 block mb-1">Applicant Name</label>
                   {isEditing ? (
                     <input
                       required
@@ -281,17 +305,29 @@ export default function ApplicationDetailModal({
                     <span className="text-sm font-medium text-slate-700">{mobile}</span>
                   )}
                 </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 block mb-1">Unique Customer ID</label>
+                  <span className="text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg block w-fit mt-1">
+                    {application.uniqueCustomerId || application.mobile}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* 2. Client General & Financial Details */}
+            {/* ── Section 2: Client General Details (All 11 Fields) ────────── */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <span>📊</span> Personal & Financial Profile (Client General Details)
-              </h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span>📊</span> Personal & Financial Profile (11 Captured Fields)
+                </h4>
+                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                  Client General Details
+                </span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                {/* 1. Age */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Age</label>
+                  <label className="text-slate-400 block mb-1 font-medium">1. Applicant Age</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -305,11 +341,13 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-bold text-slate-800">{generalDetails.age ?? '—'} Yrs</span>
+                    <span className="font-bold text-slate-800">{generalDetails.age ? `${generalDetails.age} Years` : '—'}</span>
                   )}
                 </div>
+
+                {/* 2. Gender */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Gender</label>
+                  <label className="text-slate-400 block mb-1 font-medium">2. Gender</label>
                   {isEditing ? (
                     <select
                       value={generalDetails.gender ?? ''}
@@ -322,11 +360,13 @@ export default function ApplicationDetailModal({
                       <option value="Other">Other</option>
                     </select>
                   ) : (
-                    <span className="font-bold text-slate-800">{generalDetails.gender ?? '—'}</span>
+                    <span className="font-bold text-slate-800">{generalDetails.gender || '—'}</span>
                   )}
                 </div>
+
+                {/* 3. Location / City */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Location / City</label>
+                  <label className="text-slate-400 block mb-1 font-medium">3. Location / City</label>
                   {isEditing ? (
                     <input
                       value={generalDetails.location ?? ''}
@@ -334,30 +374,54 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-bold text-slate-800">{generalDetails.location ?? '—'}</span>
+                    <span className="font-bold text-slate-800">{generalDetails.location || '—'}</span>
                   )}
                 </div>
+
+                {/* 4. Employment Type */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Employment</label>
+                  <label className="text-slate-400 block mb-1 font-medium">4. Employment Type</label>
                   {isEditing ? (
                     <select
-                      value={generalDetails.employment_type ?? ''}
+                      value={generalDetails.employment_type ?? 'Salaried'}
                       onChange={(e) =>
                         setGeneralDetails({ ...generalDetails, employment_type: e.target.value })
                       }
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                     >
                       <option value="Salaried">Salaried</option>
-                      <option value="Self-Employed">Self-Employed</option>
-                      <option value="Business">Business Owner</option>
+                      <option value="Self-Employed">Self-Employed Professional</option>
+                      <option value="Business">Business Owner / Trader</option>
                     </select>
                   ) : (
-                    <span className="font-bold text-slate-800">{generalDetails.employment_type ?? 'Salaried'}</span>
+                    <span className="font-bold text-slate-800">{generalDetails.employment_type || 'Salaried'}</span>
                   )}
                 </div>
 
+                {/* 5. Salaried Flag */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Monthly Income</label>
+                  <label className="text-slate-400 block mb-1 font-medium">5. Salaried / Self-Employed</label>
+                  {isEditing ? (
+                    <select
+                      value={generalDetails.isSalaried !== false ? 'true' : 'false'}
+                      onChange={(e) =>
+                        setGeneralDetails({ ...generalDetails, isSalaried: e.target.value === 'true' })
+                      }
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                    >
+                      <option value="true">Salaried (W-2 / Monthly Payroll)</option>
+                      <option value="false">Self-Employed / Business</option>
+                    </select>
+                  ) : (
+                    <span className="font-bold text-slate-800">
+                      {generalDetails.isSalaried !== false ? 'Salaried Employee' : 'Self-Employed / Business'}
+                    </span>
+                  )}
+                </div>
+
+                {/* 6. Monthly Net Income */}
+                <div>
+                  <label className="text-slate-400 block mb-1 font-medium">6. Monthly Net Income</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -371,15 +435,13 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-bold text-emerald-700">
-                      {generalDetails.monthly_income
-                        ? `₹ ${Number(generalDetails.monthly_income).toLocaleString('en-IN')}`
-                        : '—'}
-                    </span>
+                    <span className="font-bold text-emerald-700">{formatCurrency(generalDetails.monthly_income)}</span>
                   )}
                 </div>
+
+                {/* 7. Monthly Household Obligations */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Monthly Obligations</label>
+                  <label className="text-slate-400 block mb-1 font-medium">7. Monthly Obligations</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -393,15 +455,33 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-bold text-slate-800">
-                      {generalDetails.monthly_obligation
-                        ? `₹ ${Number(generalDetails.monthly_obligation).toLocaleString('en-IN')}`
-                        : '—'}
-                    </span>
+                    <span className="font-bold text-slate-800">{formatCurrency(generalDetails.monthly_obligation)}</span>
                   )}
                 </div>
+
+                {/* 8. Existing Ongoing EMIs */}
                 <div>
-                  <label className="text-slate-400 block mb-1">CIBIL Score</label>
+                  <label className="text-slate-400 block mb-1 font-medium">8. Existing EMIs</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={generalDetails.existing_emi ?? ''}
+                      onChange={(e) =>
+                        setGeneralDetails({
+                          ...generalDetails,
+                          existing_emi: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                    />
+                  ) : (
+                    <span className="font-bold text-slate-800">{formatCurrency(generalDetails.existing_emi)}</span>
+                  )}
+                </div>
+
+                {/* 9. CIBIL Score */}
+                <div>
+                  <label className="text-slate-400 block mb-1 font-medium">9. CIBIL Score</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -415,13 +495,13 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                      {generalDetails.cibil_score ?? '—'}
-                    </span>
+                    <CibilBadge score={generalDetails.cibil_score} />
                   )}
                 </div>
+
+                {/* 10. Required Loan Amount */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Loan Required</label>
+                  <label className="text-slate-400 block mb-1 font-medium">10. Loan Amount Required</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -435,9 +515,29 @@ export default function ApplicationDetailModal({
                       className="w-full rounded-lg border border-slate-300 p-2 text-xs"
                     />
                   ) : (
-                    <span className="font-bold text-blue-700">
-                      {generalDetails.loan_amount_required
-                        ? `₹ ${Number(generalDetails.loan_amount_required).toLocaleString('en-IN')}`
+                    <span className="font-extrabold text-blue-700">{formatCurrency(generalDetails.loan_amount_required)}</span>
+                  )}
+                </div>
+
+                {/* 11. Preferred Tenure */}
+                <div>
+                  <label className="text-slate-400 block mb-1 font-medium">11. Preferred Tenure</label>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={generalDetails.preferred_tenure ?? ''}
+                      onChange={(e) =>
+                        setGeneralDetails({
+                          ...generalDetails,
+                          preferred_tenure: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
+                      className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                    />
+                  ) : (
+                    <span className="font-bold text-slate-800">
+                      {generalDetails.preferred_tenure
+                        ? `${generalDetails.preferred_tenure} Months (${(generalDetails.preferred_tenure / 12).toFixed(1)} Yrs)`
                         : '—'}
                     </span>
                   )}
@@ -445,15 +545,21 @@ export default function ApplicationDetailModal({
               </div>
             </div>
 
-            {/* 3. Product-Specific Loan Details */}
+            {/* ── Section 3: Product-Specific Details (Home / Car / Personal) ── */}
             {isHomeLoan && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                  <span>🏠</span> Home Loan Details
-                </h4>
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/30 p-5 shadow-2xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                    <span>🏠</span> Home Loan Details (All Captured Fields)
+                  </h4>
+                  <span className="text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded">
+                    Property Evaluation
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  {/* 1. Property Value */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Property Value</label>
+                    <label className="text-slate-500 block mb-1 font-medium">1. Property Value</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -464,18 +570,16 @@ export default function ApplicationDetailModal({
                             property_value: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">
-                        {homeDetails.property_value
-                          ? `₹ ${Number(homeDetails.property_value).toLocaleString('en-IN')}`
-                          : '—'}
-                      </span>
+                      <span className="font-bold text-slate-800">{formatCurrency(homeDetails.property_value)}</span>
                     )}
                   </div>
+
+                  {/* 2. Down Payment */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Down Payment</label>
+                    <label className="text-slate-500 block mb-1 font-medium">2. Down Payment</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -486,32 +590,32 @@ export default function ApplicationDetailModal({
                             down_payment: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">
-                        {homeDetails.down_payment
-                          ? `₹ ${Number(homeDetails.down_payment).toLocaleString('en-IN')}`
-                          : '—'}
-                      </span>
+                      <span className="font-bold text-slate-800">{formatCurrency(homeDetails.down_payment)}</span>
                     )}
                   </div>
+
+                  {/* 3. Property Location */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Property Location</label>
+                    <label className="text-slate-500 block mb-1 font-medium">3. Property Location</label>
                     {isEditing ? (
                       <input
                         value={homeDetails.property_location ?? ''}
                         onChange={(e) =>
                           setHomeDetails({ ...homeDetails, property_location: e.target.value })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">{homeDetails.property_location ?? '—'}</span>
+                      <span className="font-bold text-slate-800">{homeDetails.property_location || '—'}</span>
                     )}
                   </div>
+
+                  {/* 4. Property Usage Type */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Usage Type</label>
+                    <label className="text-slate-500 block mb-1 font-medium">4. Property Usage</label>
                     {isEditing ? (
                       <select
                         value={homeDetails.propertyUsageType ?? 'Residential'}
@@ -524,40 +628,152 @@ export default function ApplicationDetailModal({
                         <option value="Commercial">Commercial</option>
                       </select>
                     ) : (
-                      <span className="font-bold text-slate-800">{homeDetails.propertyUsageType ?? 'Residential'}</span>
+                      <span className="font-bold text-slate-800">{homeDetails.propertyUsageType || 'Residential'}</span>
                     )}
                   </div>
+
+                  {/* 5. Property Requirement */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Female Co-Applicant</label>
+                    <label className="text-slate-500 block mb-1 font-medium">5. Property Requirement</label>
                     {isEditing ? (
-                      <input
-                        type="checkbox"
-                        checked={!!homeDetails.femaleCoApplicant}
+                      <select
+                        value={homeDetails.propertyRequirement ?? 'Ready to Move'}
                         onChange={(e) =>
-                          setHomeDetails({ ...homeDetails, femaleCoApplicant: e.target.checked })
+                          setHomeDetails({ ...homeDetails, propertyRequirement: e.target.value })
                         }
-                        className="h-4 w-4 rounded text-blue-600 mt-1"
-                      />
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="Ready to Move">Ready to Move</option>
+                        <option value="Under Construction">Under Construction</option>
+                        <option value="Resale">Resale Property</option>
+                        <option value="Plot + Construction">Plot + Construction</option>
+                      </select>
+                    ) : (
+                      <span className="font-bold text-slate-800">{homeDetails.propertyRequirement || 'Ready to Move'}</span>
+                    )}
+                  </div>
+
+                  {/* 6. Property Type */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">6. Property Type</label>
+                    {isEditing ? (
+                      <select
+                        value={homeDetails.propertyType ?? 'Apartment'}
+                        onChange={(e) =>
+                          setHomeDetails({ ...homeDetails, propertyType: e.target.value })
+                        }
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="Apartment">Apartment / Flat</option>
+                        <option value="Independent House / Villa">Independent House / Villa</option>
+                        <option value="Commercial Shop / Office">Commercial Shop / Office</option>
+                        <option value="Residential Plot">Residential Plot</option>
+                      </select>
+                    ) : (
+                      <span className="font-bold text-slate-800">{homeDetails.propertyType || 'Apartment'}</span>
+                    )}
+                  </div>
+
+                  {/* 7. Property Ownership / Status */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">7. Property Ownership / Title</label>
+                    {isEditing ? (
+                      <select
+                        value={homeDetails.propertyStatus ?? 'Freehold'}
+                        onChange={(e) =>
+                          setHomeDetails({ ...homeDetails, propertyStatus: e.target.value })
+                        }
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="Freehold">Freehold Title</option>
+                        <option value="Leasehold">Leasehold Authority</option>
+                        <option value="Power of Attorney">Power of Attorney (POA)</option>
+                      </select>
+                    ) : (
+                      <span className="font-bold text-slate-800">{homeDetails.propertyStatus || 'Freehold'}</span>
+                    )}
+                  </div>
+
+                  {/* 8. Part Property */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">8. Part Property</label>
+                    {isEditing ? (
+                      <select
+                        value={homeDetails.isPartProperty ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setHomeDetails({ ...homeDetails, isPartProperty: e.target.value === 'true' })
+                        }
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="false">No (Entire Property)</option>
+                        <option value="true">Yes (Sub-divided portion)</option>
+                      </select>
                     ) : (
                       <span className="font-bold text-slate-800">
-                        {homeDetails.femaleCoApplicant ? 'Yes (Discount Eligible)' : 'No'}
+                        {homeDetails.isPartProperty ? 'Yes (Sub-divided)' : 'No (Entire Unit)'}
                       </span>
                     )}
                   </div>
+
+                  {/* 9. Female Co-Applicant */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Property Insurance</label>
+                    <label className="text-slate-500 block mb-1 font-medium">9. Female Co-Applicant</label>
                     {isEditing ? (
-                      <input
-                        type="checkbox"
-                        checked={homeDetails.propertyInsurance !== false}
+                      <select
+                        value={homeDetails.femaleCoApplicant ? 'true' : 'false'}
                         onChange={(e) =>
-                          setHomeDetails({ ...homeDetails, propertyInsurance: e.target.checked })
+                          setHomeDetails({ ...homeDetails, femaleCoApplicant: e.target.value === 'true' })
                         }
-                        className="h-4 w-4 rounded text-blue-600 mt-1"
-                      />
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes (0.05% Interest Concession)</option>
+                      </select>
                     ) : (
                       <span className="font-bold text-slate-800">
-                        {homeDetails.propertyInsurance !== false ? 'Opted' : 'Not Opted'}
+                        {homeDetails.femaleCoApplicant ? '✅ Yes (Concession Applied)' : 'No'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 10. Property Insurance */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">10. Property Insurance</label>
+                    {isEditing ? (
+                      <select
+                        value={homeDetails.propertyInsurance !== false ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setHomeDetails({ ...homeDetails, propertyInsurance: e.target.value === 'true' })
+                        }
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="true">Opted</option>
+                        <option value="false">Not Opted</option>
+                      </select>
+                    ) : (
+                      <span className="font-bold text-slate-800">
+                        {homeDetails.propertyInsurance !== false ? '✅ Opted' : 'Not Opted'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 11. Applicant Insurance */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">11. Loan Suraksha Life Cover</label>
+                    {isEditing ? (
+                      <select
+                        value={homeDetails.applicantInsurance !== false ? 'true' : 'false'}
+                        onChange={(e) =>
+                          setHomeDetails({ ...homeDetails, applicantInsurance: e.target.value === 'true' })
+                        }
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="true">Opted</option>
+                        <option value="false">Not Opted</option>
+                      </select>
+                    ) : (
+                      <span className="font-bold text-slate-800">
+                        {homeDetails.applicantInsurance !== false ? '✅ Opted' : 'Not Opted'}
                       </span>
                     )}
                   </div>
@@ -566,13 +782,19 @@ export default function ApplicationDetailModal({
             )}
 
             {isCarLoan && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                  <span>🚗</span> Car Loan Details
-                </h4>
+              <div className="rounded-2xl border border-indigo-200 bg-indigo-50/30 p-5 shadow-2xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                    <span>🚗</span> Car Loan Details (All Captured Fields)
+                  </h4>
+                  <span className="text-[11px] font-semibold text-indigo-700 bg-white border border-indigo-200 px-2 py-0.5 rounded">
+                    Vehicle Details
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  {/* 1. Vehicle Type */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Vehicle Type</label>
+                    <label className="text-slate-500 block mb-1 font-medium">1. Vehicle Condition</label>
                     {isEditing ? (
                       <select
                         value={carDetails.new_or_used ?? 'New'}
@@ -580,14 +802,16 @@ export default function ApplicationDetailModal({
                         className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       >
                         <option value="New">Brand New Car</option>
-                        <option value="Used">Pre-Owned / Used</option>
+                        <option value="Used">Pre-Owned / Used Car</option>
                       </select>
                     ) : (
-                      <span className="font-bold text-slate-800">{carDetails.new_or_used ?? 'New'}</span>
+                      <span className="font-bold text-slate-800">{carDetails.new_or_used || 'New'}</span>
                     )}
                   </div>
+
+                  {/* 2. Car Value */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Car Value</label>
+                    <label className="text-slate-500 block mb-1 font-medium">2. Vehicle Value / Quotation</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -598,18 +822,16 @@ export default function ApplicationDetailModal({
                             car_value: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">
-                        {carDetails.car_value
-                          ? `₹ ${Number(carDetails.car_value).toLocaleString('en-IN')}`
-                          : '—'}
-                      </span>
+                      <span className="font-bold text-slate-800">{formatCurrency(carDetails.car_value)}</span>
                     )}
                   </div>
+
+                  {/* 3. Down Payment */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Down Payment</label>
+                    <label className="text-slate-500 block mb-1 font-medium">3. Down Payment</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -620,18 +842,16 @@ export default function ApplicationDetailModal({
                             down_payment: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">
-                        {carDetails.down_payment
-                          ? `₹ ${Number(carDetails.down_payment).toLocaleString('en-IN')}`
-                          : '—'}
-                      </span>
+                      <span className="font-bold text-slate-800">{formatCurrency(carDetails.down_payment)}</span>
                     )}
                   </div>
+
+                  {/* 4. Vehicle Age */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Vehicle Age (Yrs)</label>
+                    <label className="text-slate-500 block mb-1 font-medium">4. Vehicle Age</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -639,10 +859,12 @@ export default function ApplicationDetailModal({
                         onChange={(e) =>
                           setCarDetails({ ...carDetails, vehicle_age: Number(e.target.value) })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">{carDetails.vehicle_age ?? 0} Yrs</span>
+                      <span className="font-bold text-slate-800">
+                        {carDetails.vehicle_age ? `${carDetails.vehicle_age} Years` : '0 (Brand New)'}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -650,27 +872,61 @@ export default function ApplicationDetailModal({
             )}
 
             {isPersonalLoan && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                  <span>💼</span> Personal Loan Details
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 shadow-2xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                    <span>💼</span> Personal Loan Details (All Captured Fields)
+                  </h4>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-200 px-2 py-0.5 rounded">
+                    Unsecured Credit
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  {/* 1. Loan Purpose */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Loan Purpose</label>
+                    <label className="text-slate-500 block mb-1 font-medium">1. Loan Purpose</label>
                     {isEditing ? (
-                      <input
-                        value={personalDetails.loan_purpose ?? ''}
+                      <select
+                        value={personalDetails.loan_purpose ?? 'Home Improvement'}
                         onChange={(e) =>
                           setPersonalDetails({ ...personalDetails, loan_purpose: e.target.value })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
-                      />
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      >
+                        <option value="Home Improvement">Home Renovation</option>
+                        <option value="Medical Emergency">Medical Emergency</option>
+                        <option value="Wedding / Family Event">Wedding / Family Event</option>
+                        <option value="Higher Education">Higher Education</option>
+                        <option value="Debt Consolidation">Debt Consolidation</option>
+                        <option value="Travel / Vacation">Travel / Vacation</option>
+                        <option value="Business Expansion">Business Expansion</option>
+                        <option value="Other">Other</option>
+                      </select>
                     ) : (
-                      <span className="font-bold text-slate-800">{personalDetails.loan_purpose ?? '—'}</span>
+                      <span className="font-bold text-slate-800">{personalDetails.loan_purpose || '—'}</span>
                     )}
                   </div>
+
+                  {/* 2. Other Details / Remarks */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Required Amount</label>
+                    <label className="text-slate-500 block mb-1 font-medium">2. Purpose Description / Remarks</label>
+                    {isEditing ? (
+                      <input
+                        value={personalDetails.other ?? ''}
+                        onChange={(e) =>
+                          setPersonalDetails({ ...personalDetails, other: e.target.value })
+                        }
+                        placeholder="Additional remarks"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+                      />
+                    ) : (
+                      <span className="font-bold text-slate-800">{personalDetails.other || '—'}</span>
+                    )}
+                  </div>
+
+                  {/* 3. Required Amount */}
+                  <div>
+                    <label className="text-slate-500 block mb-1 font-medium">3. Required Amount</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -681,18 +937,18 @@ export default function ApplicationDetailModal({
                             required_amount: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
-                      <span className="font-bold text-slate-800">
-                        {personalDetails.required_amount
-                          ? `₹ ${Number(personalDetails.required_amount).toLocaleString('en-IN')}`
-                          : '—'}
+                      <span className="font-extrabold text-emerald-700">
+                        {formatCurrency(personalDetails.required_amount)}
                       </span>
                     )}
                   </div>
+
+                  {/* 4. Existing Obligations */}
                   <div>
-                    <label className="text-slate-400 block mb-1">Existing Obligations</label>
+                    <label className="text-slate-500 block mb-1 font-medium">4. Existing Obligations / EMIs</label>
                     {isEditing ? (
                       <input
                         type="number"
@@ -703,13 +959,11 @@ export default function ApplicationDetailModal({
                             existing_obligations: e.target.value ? Number(e.target.value) : undefined,
                           })
                         }
-                        className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+                        className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
                       />
                     ) : (
                       <span className="font-bold text-slate-800">
-                        {personalDetails.existing_obligations
-                          ? `₹ ${Number(personalDetails.existing_obligations).toLocaleString('en-IN')}`
-                          : '—'}
+                        {formatCurrency(personalDetails.existing_obligations)}
                       </span>
                     )}
                   </div>
@@ -717,7 +971,7 @@ export default function ApplicationDetailModal({
               </div>
             )}
 
-            {/* 4. Assigned Advisor Info (Read-only) */}
+            {/* ── Section 4: Assigned Loan Advisor (Read-only) ─────────────── */}
             {application.agentName && (
               <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -733,7 +987,7 @@ export default function ApplicationDetailModal({
                     </div>
                   )}
                   <div>
-                    <span className="text-[11px] text-slate-400 block">Assigned DSA Advisor</span>
+                    <span className="text-[11px] text-slate-400 block">Assigned DSA Loan Advisor</span>
                     <span className="text-xs font-bold text-slate-800">{application.agentName}</span>
                     <span className="text-[11px] text-slate-500 block">{application.agentEmail}</span>
                   </div>
