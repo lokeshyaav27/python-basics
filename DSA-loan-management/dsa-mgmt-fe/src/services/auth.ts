@@ -21,3 +21,11 @@ export async function adminLogin(email: string, password: string) {
   const res = await axios.post(`${API_BASE_URL}/api/auth/admin-login`, { email, password })
   return res.data
 }
+
+export async function resetAgentPassword(agentId: number, newPassword: string) {
+  const res = await axios.post(`${API_BASE_URL}/api/auth/agent/reset-password`, {
+    agentId,
+    newPassword,
+  })
+  return res.data
+}

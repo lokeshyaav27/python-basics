@@ -4,6 +4,7 @@ from sqlalchemy import text
 from typing import Dict
 
 from app.db.session import SessionLocal
+from app.models.agent import Agent
 
 router = APIRouter()
 
@@ -117,10 +118,10 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='email and password are required')
 
     try:
-        q = text('SELECT id, name, email, mobile, isadmin FROM agents WHERE email = :email AND password = :password AND isadmin = false')
+        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo FROM agents WHERE email = :email AND password = :password AND isadmin = false')
         row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
-    except Exception:
-        raise HTTPException(status_code=500, detail='db error')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=401, detail='invalid credentials')
@@ -136,12 +137,31 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='email and password are required')
 
     try:
-        q = text('SELECT id, name, email, mobile, isadmin FROM agents WHERE email = :email AND password = :password AND isadmin = true')
+        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo FROM agents WHERE email = :email AND password = :password AND isadmin = true')
         row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
-    except Exception:
-        raise HTTPException(status_code=500, detail='db error')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
 
     if not row:
         raise HTTPException(status_code=401, detail='invalid credentials')
 
     return {'status': 'ok', 'admin': dict(row)}
+
+
+@router.post('/agent/reset-password')
+def reset_agent_password(payload: Dict, db: Session = Depends(get_db)):
+    agent_id = payload.get('agentId')
+    new_password = payload.get('newPassword')
+    if not agent_id or not new_password:
+        raise HTTPException(status_code=400, detail='agentId and newPassword are required')
+
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail='Agent not found')
+
+    agent.password = str(new_password).strip()
+    agent.tempPasswordReset = True
+    db.add(agent)
+    db.commit()
+    db.refresh(agent)
+    return {'status': 'ok', 'message': 'Password reset successfully'}
