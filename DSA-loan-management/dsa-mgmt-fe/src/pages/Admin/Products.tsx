@@ -86,12 +86,16 @@ export default function ProductsPage() {
 
   function openAdd() {
     setForm({ name: '', description: '', image: '' })
+    setSelectedFile(null)
+    setRemoveImage(false)
     setShowAdd(true)
   }
 
   function openEdit(p: Product) {
     setActive(p)
     setForm({ name: p.name, description: p.description, image: p.image || '' })
+    setSelectedFile(null)
+    setRemoveImage(false)
     setShowEdit(true)
   }
 

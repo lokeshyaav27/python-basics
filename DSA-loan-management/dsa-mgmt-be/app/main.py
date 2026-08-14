@@ -13,6 +13,10 @@ project_root = Path(__file__).resolve().parents[1]
 static_dir = project_root / 'dsa-file-storage' / 'product-images'
 static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static/product-images", StaticFiles(directory=str(static_dir)), name="product-images")
+# mount static files for bank logos
+bank_logo_dir = project_root / 'dsa-file-storage' / 'bank-logo-images'
+bank_logo_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/bank-logo-images", StaticFiles(directory=str(bank_logo_dir)), name="bank-logo-images")
 
 # Allow CORS for frontend dev server(s)
 app.add_middleware(

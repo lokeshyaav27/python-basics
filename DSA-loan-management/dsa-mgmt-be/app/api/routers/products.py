@@ -82,9 +82,9 @@ async def update_product(
     if not p:
         raise HTTPException(status_code=404, detail="product not found")
 
-    # If remove_image flag set, delete old image and clear
     storage = get_storage_dir()
-    if remove_image:
+    # If remove_image flag set and no new file provided, delete old image and clear
+    if remove_image and file is None:
         if p.image:
             old = storage / p.image
             if old.exists():
@@ -95,7 +95,7 @@ async def update_product(
         p.image = ''
 
     # If new file provided, validate, save and delete old
-    if file is not None:
+    elif file is not None:
         contents = await file.read()
         size_limit = 3 * 1024 * 1024
         if len(contents) > size_limit:
