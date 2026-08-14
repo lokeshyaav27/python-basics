@@ -1,7 +1,11 @@
 import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchCustomers, Customer } from '../../services/customers'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchCustomers, updateCustomerStatus, Customer } from '../../services/customers'
+import { fetchBanks } from '../../services/banks'
 import { useAuth } from '../../auth/AuthProvider'
+import { message } from 'antd'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
   const sizeClasses = {
@@ -19,53 +23,152 @@ function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg'
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  let badgeStyle = 'bg-slate-100 text-slate-600'
-  let label = status
-
-  switch (status) {
-    case 'not-started':
-      badgeStyle = 'bg-amber-100 text-amber-700'
-      label = 'Not Started'
-      break
-    case 'inprogress':
-      badgeStyle = 'bg-blue-100 text-blue-700'
-      label = 'In Progress'
-      break
-    case 'forwardedToBank':
-      badgeStyle = 'bg-emerald-100 text-emerald-700'
-      label = 'Forwarded to Bank'
-      break
+function StatusBadge({ status, bankName }: { status: string; bankName?: string | null }) {
+  switch (status.toLowerCase()) {
+    case 'approved':
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+          <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
+        </span>
+      )
     case 'rejected':
-      badgeStyle = 'bg-red-100 text-red-700'
-      label = 'Rejected'
-      break
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 border border-red-200">
+          <span>❌</span> Rejected
+        </span>
+      )
+    case 'inprogress':
+    case 'in-progress':
+      return (
+        <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+          In Progress
+        </span>
+      )
+    case 'not-started':
+      return (
+        <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-200">
+          Not Started
+        </span>
+      )
     default:
-      label = status
+      return (
+        <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+          {status}
+        </span>
+      )
   }
-
-  return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeStyle}`}>
-      {label}
-    </span>
-  )
 }
 
 export default function AgentCustomerList() {
+  const qc = useQueryClient()
   const { user } = useAuth()
+
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
+  const [approveModal, setApproveModal] = useState<{ open: boolean; customer: Customer | null }>({
+    open: false,
+    customer: null,
+  })
+  const [rejectModal, setRejectModal] = useState<{ open: boolean; customer: Customer | null }>({
+    open: false,
+    customer: null,
+  })
+
+  // State for Approve Modal
+  const [selectedBankId, setSelectedBankId] = useState<number | null>(null)
+  const [approveRemarks, setApproveRemarks] = useState('')
+
+  // State for Reject Modal
+  const [rejectReason, setRejectReason] = useState('')
 
   // Fetch only customers assigned to the logged-in agent
-  const { data: customers = [], isLoading } = useQuery<Customer[]>({
+  const { data: customers = [], isLoading, refetch } = useQuery<Customer[]>({
     queryKey: ['agent-customers', user?.id],
     queryFn: () => fetchCustomers(user?.id),
     enabled: true,
   })
 
+  // Fetch active banks for approval dropdown
+  const { data: banks = [] } = useQuery({
+    queryKey: ['banks-list'],
+    queryFn: fetchBanks,
+  })
+
+  // Mutation for status update
+  const statusMutation = useMutation({
+    mutationFn: ({
+      customerId,
+      payload,
+    }: {
+      customerId: number
+      payload: { status: string; bankId?: number | null; description?: string | null }
+    }) => updateCustomerStatus(customerId, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['agent-customers', user?.id] })
+      refetch()
+      if (variables.payload.status === 'approved') {
+        message.success('Application approved successfully!')
+      } else {
+        message.success('Application marked as rejected.')
+      }
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to update application status')
+    },
+  })
+
   function openView(c: Customer) {
     setActiveCustomer(c)
     setShowViewModal(true)
+  }
+
+  function openApprove(c: Customer) {
+    setSelectedBankId(c.bankId || (banks.length > 0 ? banks[0].id : null))
+    setApproveRemarks(c.description || '')
+    setApproveModal({ open: true, customer: c })
+  }
+
+  function openReject(c: Customer) {
+    setRejectReason(c.status === 'rejected' ? c.description || '' : '')
+    setRejectModal({ open: true, customer: c })
+  }
+
+  async function handleApproveSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!approveModal.customer) return
+    if (!selectedBankId) {
+      message.error('Please select an approving bank')
+      return
+    }
+
+    await statusMutation.mutateAsync({
+      customerId: approveModal.customer.id,
+      payload: {
+        status: 'approved',
+        bankId: selectedBankId,
+        description: approveRemarks.trim() || undefined,
+      },
+    })
+    setApproveModal({ open: false, customer: null })
+  }
+
+  async function handleRejectSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!rejectModal.customer) return
+    if (!rejectReason.trim()) {
+      message.error('Please provide a reason for rejection')
+      return
+    }
+
+    await statusMutation.mutateAsync({
+      customerId: rejectModal.customer.id,
+      payload: {
+        status: 'rejected',
+        bankId: null,
+        description: rejectReason.trim(),
+      },
+    })
+    setRejectModal({ open: false, customer: null })
   }
 
   return (
@@ -75,7 +178,7 @@ export default function AgentCustomerList() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800">My Assigned Customers</h2>
           <p className="text-sm text-slate-500">
-            View all loan applicants and customer files currently assigned to you
+            Manage customer loan applications, evaluate status, and record bank approvals or rejections
           </p>
         </div>
         <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-2 text-xs font-semibold text-blue-700">
@@ -131,15 +234,36 @@ export default function AgentCustomerList() {
                   <td className="p-3 text-sm text-slate-600">{c.email}</td>
                   <td className="p-3 text-sm text-slate-600">{c.mobile}</td>
                   <td className="p-3">
-                    <StatusBadge status={c.status} />
+                    <StatusBadge status={c.status} bankName={c.bankName} />
                   </td>
                   <td className="p-3">
-                    <button
-                      onClick={() => openView(c)}
-                      className="rounded-lg bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-sm"
-                    >
-                      View Details
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {/* Approve Button */}
+                      <button
+                        onClick={() => openApprove(c)}
+                        className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
+                        title="Approve loan application"
+                      >
+                        <span>✅</span> Approve
+                      </button>
+
+                      {/* Reject Button */}
+                      <button
+                        onClick={() => openReject(c)}
+                        className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-sm flex items-center gap-1"
+                        title="Reject loan application"
+                      >
+                        <span>❌</span> Reject
+                      </button>
+
+                      {/* View Details Button */}
+                      <button
+                        onClick={() => openView(c)}
+                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition shadow-sm"
+                      >
+                        View
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -147,6 +271,180 @@ export default function AgentCustomerList() {
           </tbody>
         </table>
       </div>
+
+      {/* ── Approve Modal ───────────────────────────────────────────────── */}
+      {approveModal.open && approveModal.customer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-emerald-50/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✅</span>
+                <h3 className="text-lg font-bold text-slate-800">Approve Loan Application</h3>
+              </div>
+              <button
+                onClick={() => setApproveModal({ open: false, customer: null })}
+                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleApproveSubmit} className="p-6 space-y-4">
+              {/* Applicant Info Box */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex items-center gap-3">
+                <Avatar name={approveModal.customer.name} />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-800">{approveModal.customer.name}</div>
+                  <div className="text-xs text-slate-500">{approveModal.customer.email} • {approveModal.customer.mobile}</div>
+                </div>
+              </div>
+
+              {/* Select Bank */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Select Approving Bank / Partner <span className="text-red-500">*</span>
+                </label>
+                {banks.length === 0 ? (
+                  <div className="text-xs text-slate-400">No active banks found in system.</div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+                    {banks.map((b: any) => {
+                      const isSelected = selectedBankId === b.id
+                      return (
+                        <div
+                          key={b.id}
+                          onClick={() => setSelectedBankId(b.id)}
+                          className={`flex items-center gap-3 rounded-xl border p-2.5 cursor-pointer transition ${
+                            isSelected
+                              ? 'border-emerald-500 bg-emerald-50/60 ring-1 ring-emerald-500'
+                              : 'border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {b.logo ? (
+                            <img
+                              src={`${API_BASE_URL}/static/bank-logo-images/${b.logo}`}
+                              alt={b.name}
+                              className="h-8 w-8 object-contain rounded border bg-white p-0.5"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                              {b.name.charAt(0)}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-slate-800">{b.name}</div>
+                            <div className="text-[11px] text-slate-400">
+                              {b.isNationalize ? 'Nationalized' : b.isPrivate ? 'Private' : b.isnbfc ? 'NBFC' : 'Partner Bank'}
+                            </div>
+                          </div>
+                          {isSelected && <span className="text-emerald-600 font-bold text-sm">✓</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Approval Remarks / Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Approval Notes / Sanction Details (optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={approveRemarks}
+                  onChange={(e) => setApproveRemarks(e.target.value)}
+                  placeholder="e.g. Sanctioned ₹25,00,000 at 8.50% ROI. Reference No: HDFC-2026-9812"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setApproveModal({ open: false, customer: null })}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={statusMutation.isPending}
+                  className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
+                >
+                  {statusMutation.isPending ? 'Approving…' : 'Confirm & Approve'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reject Modal ────────────────────────────────────────────────── */}
+      {rejectModal.open && rejectModal.customer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-rose-50/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">❌</span>
+                <h3 className="text-lg font-bold text-slate-800">Reject Loan Application</h3>
+              </div>
+              <button
+                onClick={() => setRejectModal({ open: false, customer: null })}
+                className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleRejectSubmit} className="p-6 space-y-4">
+              {/* Applicant Info Box */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex items-center gap-3">
+                <Avatar name={rejectModal.customer.name} />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-800">{rejectModal.customer.name}</div>
+                  <div className="text-xs text-slate-500">{rejectModal.customer.email} • {rejectModal.customer.mobile}</div>
+                </div>
+              </div>
+
+              {/* Rejection Reason Textarea */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Rejection Reason / Remarks <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="e.g. CIBIL score is below eligibility threshold (620). High Debt-to-Income ratio."
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition resize-none"
+                />
+                <p className="mt-1 text-xs text-slate-400">Please provide clear remarks for customer records and internal audit.</p>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setRejectModal({ open: false, customer: null })}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={statusMutation.isPending}
+                  className="rounded-xl bg-rose-600 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition shadow-sm"
+                >
+                  {statusMutation.isPending ? 'Rejecting…' : 'Confirm & Reject'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── View Customer Modal ────────────────────────────────────────── */}
       {showViewModal && activeCustomer && (
@@ -171,7 +469,7 @@ export default function AgentCustomerList() {
                 <div>
                   <h4 className="text-lg font-bold text-slate-800">{activeCustomer.name}</h4>
                   <div className="mt-1">
-                    <StatusBadge status={activeCustomer.status} />
+                    <StatusBadge status={activeCustomer.status} bankName={activeCustomer.bankName} />
                   </div>
                 </div>
               </div>
@@ -184,11 +482,54 @@ export default function AgentCustomerList() {
                   label="Customer Unique ID"
                   value={activeCustomer.uniqueCustomerId || activeCustomer.mobile}
                 />
-                <ViewRow label="Application Status" value={activeCustomer.status} />
+                <ViewRow
+                  label="Application Status"
+                  value={<StatusBadge status={activeCustomer.status} bankName={activeCustomer.bankName} />}
+                />
+                {activeCustomer.bankName && (
+                  <ViewRow
+                    label="Approved Bank"
+                    value={
+                      <span className="font-semibold text-emerald-700">
+                        {activeCustomer.bankName}
+                      </span>
+                    }
+                  />
+                )}
+                {activeCustomer.description && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mt-2">
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                      {activeCustomer.status === 'approved' ? 'Approval Notes' : 'Rejection / Decision Remarks'}
+                    </div>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{activeCustomer.description}</p>
+                  </div>
+                )}
               </div>
 
-              {/* Close Action */}
-              <div className="mt-6 flex justify-end">
+              {/* Quick Actions in View Modal */}
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowViewModal(false)
+                      openApprove(activeCustomer)
+                    }}
+                    className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowViewModal(false)
+                      openReject(activeCustomer)
+                    }}
+                    className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition"
+                  >
+                    Reject
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowViewModal(false)}
@@ -213,4 +554,5 @@ function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   )
 }
+
 

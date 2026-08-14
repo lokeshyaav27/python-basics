@@ -6,6 +6,7 @@ from typing import List, Optional
 from app.db.session import SessionLocal
 from app.models.customer import Customer
 from app.models.agent import Agent
+from app.models.bank import Bank
 
 router = APIRouter()
 
@@ -34,6 +35,12 @@ class AssignAgentPayload(BaseModel):
     agentId: Optional[int] = None
 
 
+class ApplicationStatusPayload(BaseModel):
+    status: str
+    bankId: Optional[int] = None
+    description: Optional[str] = None
+
+
 def _serialize(c: Customer) -> dict:
     return {
         "id": c.id,
@@ -44,7 +51,11 @@ def _serialize(c: Customer) -> dict:
         "agentId": c.agentId,
         "agentName": c.agent.name if c.agent else None,
         "agentPhoto": c.agent.photo if c.agent else None,
+        "bankId": c.bankId,
+        "bankName": c.bank.name if c.bank else None,
+        "bankLogo": c.bank.logo if c.bank else None,
         "status": c.status,
+        "description": c.description,
         "isActive": c.isActive,
     }
 
@@ -136,6 +147,37 @@ def assign_agent(customer_id: int, payload: AssignAgentPayload, db: Session = De
         c.agentId = payload.agentId
     else:
         c.agentId = None
+
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return _serialize(c)
+
+
+@router.put("/{customer_id}/status")
+def update_application_status(customer_id: int, payload: ApplicationStatusPayload, db: Session = Depends(get_db)):
+    c = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    status_lower = payload.status.strip().lower()
+    if status_lower == "approved":
+        if not payload.bankId:
+            raise HTTPException(status_code=400, detail="bankId is required when approving application")
+        bank = db.query(Bank).filter(Bank.id == payload.bankId).first()
+        if not bank:
+            raise HTTPException(status_code=404, detail="Bank not found")
+        c.status = "approved"
+        c.bankId = payload.bankId
+        c.description = payload.description.strip() if payload.description else None
+    elif status_lower == "rejected":
+        c.status = "rejected"
+        c.bankId = None
+        c.description = payload.description.strip() if payload.description else None
+    else:
+        c.status = payload.status.strip()
+        c.bankId = payload.bankId
+        c.description = payload.description.strip() if payload.description else None
 
     db.add(c)
     db.commit()

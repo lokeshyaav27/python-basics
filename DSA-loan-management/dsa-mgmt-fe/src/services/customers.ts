@@ -17,7 +17,11 @@ export type Customer = {
   agentId?: number | null
   agentName?: string | null
   agentPhoto?: string | null
+  bankId?: number | null
+  bankName?: string | null
+  bankLogo?: string | null
   status: string
+  description?: string | null
 }
 
 export async function fetchCustomers(agentId?: number): Promise<Customer[]> {
@@ -28,6 +32,14 @@ export async function fetchCustomers(agentId?: number): Promise<Customer[]> {
 
 export async function assignCustomerAgent(customerId: number, agentId: number | null): Promise<Customer> {
   const res = await axios.put(`${API_BASE_URL}/api/customers/${customerId}/assign-agent`, { agentId })
+  return res.data
+}
+
+export async function updateCustomerStatus(
+  customerId: number,
+  payload: { status: string; bankId?: number | null; description?: string | null }
+): Promise<Customer> {
+  const res = await axios.put(`${API_BASE_URL}/api/customers/${customerId}/status`, payload)
   return res.data
 }
 

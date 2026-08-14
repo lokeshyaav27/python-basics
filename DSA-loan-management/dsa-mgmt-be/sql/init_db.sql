@@ -95,7 +95,9 @@ CREATE TABLE IF NOT EXISTS customers (
     mobile varchar(32) NOT NULL,
     uniqueCustomerId varchar(32) NOT NULL UNIQUE,
     agentid integer REFERENCES agents(id),
+    bankid integer REFERENCES banks(id),
     status varchar(32) NOT NULL DEFAULT 'not-started',
+    description text,
     isactive boolean NOT NULL DEFAULT true
 );
 
