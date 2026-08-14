@@ -17,6 +17,10 @@ app.mount("/static/product-images", StaticFiles(directory=str(static_dir)), name
 bank_logo_dir = project_root / 'dsa-file-storage' / 'bank-logo-images'
 bank_logo_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static/bank-logo-images", StaticFiles(directory=str(bank_logo_dir)), name="bank-logo-images")
+# mount static files for agent photos
+agent_photo_dir = project_root / 'dsa-file-storage' / 'agent-photos'
+agent_photo_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/agent-photos", StaticFiles(directory=str(agent_photo_dir)), name="agent-photos")
 
 # Allow CORS for frontend dev server(s)
 app.add_middleware(
@@ -37,6 +41,7 @@ from app.api.routers import files as file_router
 app.include_router(file_router.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.banks.router, prefix="/api/banks", tags=["banks"])
 app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(api_routers.agents.router, prefix="/api/agents", tags=["agents"])
 
 
 @app.on_event("startup")
