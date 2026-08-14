@@ -49,7 +49,7 @@ export default function AgentLogin() {
       const name = agent?.name || email
       auth.login(name, 'agent', { id: agent.id, email: agent.email, photo: agent.photo })
       message.success(`Welcome back, ${name}!`)
-      nav('/agent/customers')
+      nav('/agent/loan-applications')
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Invalid email or password. Please try again.')
     } finally {

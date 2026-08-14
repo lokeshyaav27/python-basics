@@ -13,7 +13,7 @@ export default function Login() {
     auth.login(name || 'user', role)
     // redirect based on role
     if (role === 'admin') nav('/admin')
-    else if (role === 'agent') nav('/agent/customers')
+    else if (role === 'agent') nav('/agent/loan-applications')
     else nav('/customer')
   }
 

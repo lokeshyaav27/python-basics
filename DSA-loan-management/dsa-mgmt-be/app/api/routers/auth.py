@@ -25,7 +25,7 @@ def request_customer_otp(payload: Dict, db: Session = Depends(get_db)):
 
     try:
         # use lowercase unquoted column name to match DB (Postgres folds unquoted identifiers to lowercase)
-        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM customers WHERE mobile = :mobile')
+        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM loan_applications WHERE mobile = :mobile')
         row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
@@ -50,7 +50,7 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail='invalid otp')
 
     try:
-        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM customers WHERE mobile = :mobile')
+        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM loan_applications WHERE mobile = :mobile')
         row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
@@ -78,7 +78,7 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
     try:
         existing = db.execute(
             text(
-                'SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM customers WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
+                'SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM loan_applications WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
             ),
             {'mobile': mobile, 'unique_customer_id': unique_customer_id},
         ).mappings().fetchone()
@@ -90,7 +90,7 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
 
         db.execute(
             text(
-                'INSERT INTO customers (email, name, mobile, uniqueCustomerId, agentid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status, true)'
+                'INSERT INTO loan_applications (email, name, mobile, uniqueCustomerId, agentid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status, true)'
             ),
             {
                 'email': email,
@@ -103,7 +103,7 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
         db.commit()
 
         row = db.execute(
-            text('SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM customers WHERE mobile = :mobile'),
+            text('SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM loan_applications WHERE mobile = :mobile'),
             {'mobile': mobile},
         ).mappings().fetchone()
 

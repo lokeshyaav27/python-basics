@@ -9,11 +9,11 @@ export default function Sidebar({ role }: { role: Role }) {
     { to: '/admin/products', label: 'Manage Products' },
     { to: '/admin/banks', label: 'Manage Banks' },
     { to: '/admin/agents', label: 'Manage Agents' },
-    { to: '/admin/customers', label: 'Manage Customers' },
+    { to: '/admin/loan-applications', label: 'Loan Applications' },
   ]
 
   const agentMenu = [
-    { to: '/agent/customers', label: 'Customers' },
+    { to: '/agent/loan-applications', label: 'Loan Applications' },
   ]
 
   const customerMenu = [

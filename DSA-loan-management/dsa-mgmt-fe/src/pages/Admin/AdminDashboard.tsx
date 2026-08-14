@@ -9,7 +9,7 @@ export default function AdminDashboard() {
         <Link to="/admin/products" className="block text-blue-600">Manage Products</Link>
         <Link to="/admin/banks" className="block text-blue-600">Manage Banks</Link>
         <Link to="/admin/agents" className="block text-blue-600">Manage Agents</Link>
-        <Link to="/admin/customers" className="block text-blue-600">Manage Customers</Link>
+        <Link to="/admin/loan-applications" className="block text-blue-600">Manage Loan Applications</Link>
       </div>
     </div>
   )

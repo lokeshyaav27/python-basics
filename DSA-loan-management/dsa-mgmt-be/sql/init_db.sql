@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS personal_loan_details (
     existing_obligations numeric(14,2)
 );
 
-CREATE TABLE IF NOT EXISTS customers (
+CREATE TABLE IF NOT EXISTS loan_applications (
     id serial PRIMARY KEY,
     email varchar(255) NOT NULL,
     name varchar(255) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS loans (
     homeloandetailid integer REFERENCES home_loan_details(id),
     carloandetailid integer REFERENCES car_loan_details(id),
     personalloandetailid integer REFERENCES personal_loan_details(id),
-    FOREIGN KEY (uniqueCustomerId) REFERENCES customers(uniqueCustomerId)
+    FOREIGN KEY (uniqueCustomerId) REFERENCES loan_applications(uniqueCustomerId)
 );
 
 -- Optional: seed an admin user

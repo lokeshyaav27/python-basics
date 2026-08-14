@@ -3,8 +3,8 @@ from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 
-class Customer(Base):
-    __tablename__ = "customers"
+class LoanApplication(Base):
+    __tablename__ = "loan_applications"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
@@ -16,6 +16,11 @@ class Customer(Base):
     description = Column(Text, nullable=True)
     isActive = Column("isactive", Boolean, nullable=False, default=True)
 
-    agent = relationship("Agent", backref="customers")
-    bank = relationship("Bank", backref="customers")
+    agent = relationship("Agent", backref="loan_applications")
+    bank = relationship("Bank", backref="loan_applications")
+
+
+# Backward compatibility aliases
+Customer = LoanApplication
+
 

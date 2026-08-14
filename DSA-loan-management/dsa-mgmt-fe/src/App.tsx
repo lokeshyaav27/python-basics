@@ -141,7 +141,7 @@ export default function App() {
             }
           />
           <Route
-            path="/admin/customers"
+            path="/admin/loan-applications"
             element={
               <ProtectedRoute role={'admin'}>
                 <ProtectedLayout role={'admin'}>
@@ -150,10 +150,11 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/customers" element={<Navigate to="/admin/loan-applications" replace />} />
 
           {/* Agent routes */}
           <Route
-            path="/agent/customers"
+            path="/agent/loan-applications"
             element={
               <ProtectedRoute role={'agent'}>
                 <ProtectedLayout role={'agent'}>
@@ -162,6 +163,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/agent/customers" element={<Navigate to="/agent/loan-applications" replace />} />
           <Route
             path="/agent/customers/:id"
             element={
