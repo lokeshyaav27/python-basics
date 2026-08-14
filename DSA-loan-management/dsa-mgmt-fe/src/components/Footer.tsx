@@ -21,9 +21,9 @@ export default function Footer() {
         <div>
           <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Loan Products</h4>
           <ul className="space-y-3 text-sm text-slate-300">
-            <li><Link to="/apply">Home Loan</Link></li>
-            <li><Link to="/apply">Car Loan</Link></li>
-            <li><Link to="/apply">Personal Loan</Link></li>
+            <li><Link to="/products">Home Loan</Link></li>
+            <li><Link to="/products">Car Loan</Link></li>
+            <li><Link to="/products">Personal Loan</Link></li>
           </ul>
         </div>
 

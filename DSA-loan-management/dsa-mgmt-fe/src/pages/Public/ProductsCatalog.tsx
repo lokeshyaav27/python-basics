@@ -67,7 +67,7 @@ export default function ProductsCatalog() {
                 <p className="mt-3 text-sm leading-6 text-slate-600">{product.description}</p>
                 <div className="mt-6 flex items-center justify-between">
                   <span className="text-sm font-semibold text-blue-700">From 8.35% p.a.</span>
-                  <Link to="/apply" className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                  <Link to={`/apply-for-loan?productId=${product.id}`} className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                     Apply now
                   </Link>
                 </div>

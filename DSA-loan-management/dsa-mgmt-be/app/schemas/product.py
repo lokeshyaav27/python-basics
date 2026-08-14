@@ -5,8 +5,8 @@ from typing import Optional
 class ProductBase(BaseModel):
     name: str
     description: str
-    image: str
-    isActive: bool = True
+    image: Optional[str] = None
+    isActive: Optional[bool] = True
 
 
 class ProductCreate(ProductBase):

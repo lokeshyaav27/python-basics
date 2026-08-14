@@ -13,7 +13,7 @@ import Login from './pages/Public/Login'
 import CustomerLogin from './pages/Public/CustomerLogin'
 import AgentLogin from './pages/Public/AgentLogin'
 import AdminLogin from './pages/Public/AdminLogin'
-import ApplyLoanPublic from './pages/Public/ApplyLoan'
+import ApplyForLoan from './pages/Public/ApplyForLoan'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import ProductsPage from './pages/Admin/Products'
 import BanksPage from './pages/Admin/Banks'
@@ -74,7 +74,7 @@ export default function App() {
                     </span>
                   </div>
 
-                  <Link to="/apply" className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
+                  <Link to="/apply-for-loan" className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
                     Apply for Loan
                   </Link>
                 </div>
@@ -98,7 +98,7 @@ export default function App() {
           <Route path="/customer-login" element={<CustomerLogin />} />
           <Route path="/agent-login" element={<AgentLogin />} />
           <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/apply" element={<ApplyLoanPublic />} />
+          <Route path="/apply-for-loan" element={<ApplyForLoan />} />
 
           {/* Admin routes */}
           <Route

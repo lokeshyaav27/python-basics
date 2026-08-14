@@ -16,4 +16,4 @@ class ClientGeneralDetail(Base):
     cibil_score = Column(Integer, nullable=True)
     loan_amount_required = Column(Numeric(12, 2), nullable=True)
     preferred_tenure = Column(Integer, nullable=True)
-    isSalaried = Column(Boolean, nullable=True)
+    isSalaried = Column("issalaried", Boolean, nullable=True)

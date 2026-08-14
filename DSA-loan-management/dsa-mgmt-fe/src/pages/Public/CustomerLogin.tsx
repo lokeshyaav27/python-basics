@@ -149,9 +149,9 @@ export default function CustomerLogin() {
 
         <div className="mt-6 border-t border-slate-100 pt-4 text-center">
           <p className="text-xs text-slate-500">
-            Don't have an application yet?{' '}
-            <Link to="/apply" className="font-semibold text-blue-600 hover:underline">
-              Apply Now
+            Want to explore loans?{' '}
+            <Link to="/products" className="font-semibold text-blue-600 hover:underline">
+              View Loan Products
             </Link>
           </p>
         </div>

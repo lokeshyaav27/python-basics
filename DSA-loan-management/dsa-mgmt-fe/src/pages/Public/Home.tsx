@@ -14,8 +14,8 @@ function Hero() {
             <p className="mt-4 text-lg text-slate-600">We help you compare the best loan options from top banks and NBFCs to get the best deal.</p>
 
             <div className="mt-6 flex gap-3">
-              <Link to="/apply" className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow">Apply for Loan</Link>
-              <Link to="/customer-login" className="inline-flex items-center px-5 py-3 border border-slate-200 rounded-md">Check Eligibility</Link>
+              <Link to="/apply-for-loan" className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow">Apply for Loan</Link>
+              <Link to="/customer-login" className="inline-flex items-center px-5 py-3 border border-slate-200 rounded-md">Check Status</Link>
             </div>
 
             <div className="mt-8 flex gap-6 text-sm text-slate-600">
@@ -182,7 +182,7 @@ export default function Home() {
                       <h3 className="text-lg font-semibold">{item.name}</h3>
                       <p className="text-sm text-slate-600 mt-2">{item.description}</p>
                       <div className="mt-4">
-                        <Link to="/apply" className={`inline-flex items-center px-4 py-2 rounded ${idx % 3 === 0 ? 'bg-green-600 text-white' : idx % 3 === 1 ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}`}>Apply Now</Link>
+                        <Link to={`/apply-for-loan?productId=${item.id}`} className={`inline-flex items-center px-4 py-2 rounded ${idx % 3 === 0 ? 'bg-green-600 text-white' : idx % 3 === 1 ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'}`}>Apply Now</Link>
                       </div>
                     </div>
                   </div>

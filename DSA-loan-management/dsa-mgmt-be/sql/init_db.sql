@@ -93,23 +93,17 @@ CREATE TABLE IF NOT EXISTS loan_applications (
     email varchar(255) NOT NULL,
     name varchar(255) NOT NULL,
     mobile varchar(32) NOT NULL,
-    uniqueCustomerId varchar(32) NOT NULL UNIQUE,
+    uniqueCustomerId varchar(32) NOT NULL,
     agentid integer REFERENCES agents(id),
     bankid integer REFERENCES banks(id),
     productid integer REFERENCES products(id),
-    status varchar(32) NOT NULL DEFAULT 'not-started',
-    description text,
-    isactive boolean NOT NULL DEFAULT true
-);
-
-CREATE TABLE IF NOT EXISTS loans (
-    id serial PRIMARY KEY,
-    uniqueCustomerId varchar(32) NOT NULL,
-    clientgeneraldetailstableid integer REFERENCES client_general_details(id),
     homeloandetailid integer REFERENCES home_loan_details(id),
     carloandetailid integer REFERENCES car_loan_details(id),
     personalloandetailid integer REFERENCES personal_loan_details(id),
-    FOREIGN KEY (uniqueCustomerId) REFERENCES loan_applications(uniqueCustomerId)
+    clientgeneraldetailstableid integer REFERENCES client_general_details(id),
+    status varchar(32) NOT NULL DEFAULT 'not-started',
+    description text,
+    isactive boolean NOT NULL DEFAULT true
 );
 
 -- Optional: seed an admin user

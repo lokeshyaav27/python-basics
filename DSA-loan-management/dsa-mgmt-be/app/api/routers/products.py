@@ -28,6 +28,7 @@ def _sanitize_name(name: str) -> str:
     return ''.join(ch for ch in s if (ch.isalnum() or ch == '-')) or uuid4().hex
 
 
+@router.post("", response_model=ProductRead)
 @router.post("/", response_model=ProductRead)
 async def create_product(
     name: str = Form(...),
@@ -64,11 +65,12 @@ async def create_product(
     return p
 
 
+@router.get("", response_model=List[ProductRead])
 @router.get("/", response_model=List[ProductRead])
 def list_products(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Product)
     if not include_inactive:
-        query = query.filter(Product.isActive == True)
+        query = query.filter(Product.isActive != False)
     return query.all()
 
 

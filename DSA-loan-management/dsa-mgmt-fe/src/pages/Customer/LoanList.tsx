@@ -44,16 +44,15 @@ function StatusBadge({ status, bankName }: { status: string; bankName?: string |
 
 export default function CustomerLoanList() {
   const { user } = useAuth()
-  const customerMobile = user?.mobile || ''
+  const customerIdentifier = user?.mobile || user?.email || user?.name || ''
 
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
 
-  // Fetch loans specific to this customer's mobile number
+  // Fetch loans specific to this customer (by mobile, email, or customer ID)
   const { data: loans = [], isLoading } = useQuery<LoanApplication[]>({
-    queryKey: ['customer-loans', customerMobile],
-    queryFn: () => fetchCustomerLoanApplications(customerMobile),
-    enabled: !!customerMobile,
+    queryKey: ['customer-loans', customerIdentifier],
+    queryFn: () => fetchCustomerLoanApplications(customerIdentifier),
   })
 
   const totalCount = loans.length
@@ -76,7 +75,7 @@ export default function CustomerLoanList() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/20 px-3 py-1 text-xs font-medium text-blue-200 border border-blue-400/20 mb-3">
-              <span>📱</span> Mobile: {customerMobile || 'Registered Customer'}
+              <span>📱</span> Mobile: {customerIdentifier || 'Registered Customer'}
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
               My Loan Applications
@@ -87,7 +86,7 @@ export default function CustomerLoanList() {
           </div>
 
           <Link
-            to="/apply"
+            to="/apply-for-loan"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition active:scale-95"
           >
             <span>+</span> Apply for New Loan
@@ -134,12 +133,12 @@ export default function CustomerLoanList() {
             </div>
             <h3 className="mt-4 text-base font-bold text-slate-800">No loan applications found</h3>
             <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
-              We couldn't find any loan files submitted under mobile number{' '}
-              <span className="font-semibold text-slate-700">{customerMobile}</span>.
+              We couldn't find any loan files submitted under identifier{' '}
+              <span className="font-semibold text-slate-700">{customerIdentifier}</span>.
             </p>
             <div className="mt-6">
               <Link
-                to="/apply"
+                to="/apply-for-loan"
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
               >
                 Start Loan Application

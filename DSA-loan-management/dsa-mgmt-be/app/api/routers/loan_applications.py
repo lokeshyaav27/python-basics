@@ -8,6 +8,10 @@ from app.models.loan_application import LoanApplication, Customer
 from app.models.agent import Agent
 from app.models.bank import Bank
 from app.models.product import Product
+from app.models.home_loan_detail import HomeLoanDetail
+from app.models.car_loan_detail import CarLoanDetail
+from app.models.personal_loan_detail import PersonalLoanDetail
+from app.models.client_general_detail import ClientGeneralDetail
 
 router = APIRouter()
 
@@ -32,6 +36,17 @@ class LoanApplicationUpdate(BaseModel):
     email: str
     mobile: str
     productId: Optional[int] = None
+
+
+class FullLoanApplicationPayload(BaseModel):
+    productId: int
+    name: str
+    email: str
+    mobile: str
+    clientGeneralDetails: Optional[dict] = None
+    homeLoanDetails: Optional[dict] = None
+    carLoanDetails: Optional[dict] = None
+    personalLoanDetails: Optional[dict] = None
 
 
 class AssignAgentPayload(BaseModel):
@@ -67,12 +82,56 @@ def _serialize(app: LoanApplication) -> dict:
         "productId": app.productId,
         "productName": app.product.name if app.product else None,
         "productImage": app.product.image if app.product else None,
+        "clientGeneralDetailTableId": app.clientGeneralDetailTableId,
+        "homeLoanDetailId": app.homeLoanDetailId,
+        "carLoanDetailId": app.carLoanDetailId,
+        "personalLoanDetailId": app.personalLoanDetailId,
+        "clientGeneralDetails": {
+            "name": app.clientGeneralDetail.name,
+            "age": app.clientGeneralDetail.age,
+            "gender": app.clientGeneralDetail.gender,
+            "location": app.clientGeneralDetail.location,
+            "employment_type": app.clientGeneralDetail.employment_type,
+            "monthly_income": float(app.clientGeneralDetail.monthly_income) if app.clientGeneralDetail.monthly_income is not None else None,
+            "monthly_obligation": float(app.clientGeneralDetail.monthly_obligation) if app.clientGeneralDetail.monthly_obligation is not None else None,
+            "existing_emi": float(app.clientGeneralDetail.existing_emi) if app.clientGeneralDetail.existing_emi is not None else None,
+            "cibil_score": app.clientGeneralDetail.cibil_score,
+            "loan_amount_required": float(app.clientGeneralDetail.loan_amount_required) if app.clientGeneralDetail.loan_amount_required is not None else None,
+            "preferred_tenure": app.clientGeneralDetail.preferred_tenure,
+            "isSalaried": app.clientGeneralDetail.isSalaried,
+        } if app.clientGeneralDetail else None,
+        "homeLoanDetails": {
+            "property_value": float(app.homeLoanDetail.property_value) if app.homeLoanDetail.property_value is not None else None,
+            "property_location": app.homeLoanDetail.property_location,
+            "propertyUsageType": app.homeLoanDetail.propertyUsageType,
+            "down_payment": float(app.homeLoanDetail.down_payment) if app.homeLoanDetail.down_payment is not None else None,
+            "isPartProperty": app.homeLoanDetail.isPartProperty,
+            "propertyRequirement": app.homeLoanDetail.propertyRequirement,
+            "propertyType": app.homeLoanDetail.propertyType,
+            "propertyStatus": app.homeLoanDetail.propertyStatus,
+            "femaleCoApplicant": app.homeLoanDetail.femaleCoApplicant,
+            "propertyInsurance": app.homeLoanDetail.propertyInsurance,
+            "applicantInsurance": app.homeLoanDetail.applicantInsurance,
+        } if app.homeLoanDetail else None,
+        "carLoanDetails": {
+            "new_or_used": app.carLoanDetail.new_or_used,
+            "car_value": float(app.carLoanDetail.car_value) if app.carLoanDetail.car_value is not None else None,
+            "down_payment": float(app.carLoanDetail.down_payment) if app.carLoanDetail.down_payment is not None else None,
+            "vehicle_age": app.carLoanDetail.vehicle_age,
+        } if app.carLoanDetail else None,
+        "personalLoanDetails": {
+            "loan_purpose": app.personalLoanDetail.loan_purpose,
+            "other": app.personalLoanDetail.other,
+            "required_amount": float(app.personalLoanDetail.required_amount) if app.personalLoanDetail.required_amount is not None else None,
+            "existing_obligations": float(app.personalLoanDetail.existing_obligations) if app.personalLoanDetail.existing_obligations is not None else None,
+        } if app.personalLoanDetail else None,
         "status": app.status,
         "description": app.description,
         "isActive": app.isActive,
     }
 
 
+@router.get("")
 @router.get("/")
 def list_loan_applications(
     agent_id: Optional[int] = None,
@@ -87,7 +146,12 @@ def list_loan_applications(
         query = query.filter(LoanApplication.agentId == agent_id)
     if mobile is not None and mobile.strip():
         m = mobile.strip()
-        query = query.filter((LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m))
+        query = query.filter(
+            (LoanApplication.mobile.ilike(f"%{m}%"))
+            | (LoanApplication.uniqueCustomerId.ilike(f"%{m}%"))
+            | (LoanApplication.email.ilike(f"%{m}%"))
+            | (LoanApplication.name.ilike(f"%{m}%"))
+        )
     applications = query.all()
     return [_serialize(a) for a in applications]
 
@@ -100,6 +164,104 @@ def get_loan_application(application_id: int, db: Session = Depends(get_db)):
     return _serialize(app)
 
 
+@router.post("/apply")
+def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Session = Depends(get_db)):
+    name = payload.name.strip()
+    email = payload.email.strip()
+    mobile = payload.mobile.strip()
+
+    if not name or not email or not mobile:
+        raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
+
+    # 1. Create client general details if provided
+    client_gen_id = None
+    if payload.clientGeneralDetails:
+        cgd_data = payload.clientGeneralDetails
+        cgd = ClientGeneralDetail(
+            name=name,
+            age=int(cgd_data.get("age")) if cgd_data.get("age") is not None and str(cgd_data.get("age")).isdigit() else None,
+            gender=str(cgd_data.get("gender") or "") or None,
+            location=str(cgd_data.get("location") or "") or None,
+            employment_type=str(cgd_data.get("employment_type") or "") or None,
+            monthly_income=cgd_data.get("monthly_income") or None,
+            monthly_obligation=cgd_data.get("monthly_obligation") or None,
+            existing_emi=cgd_data.get("existing_emi") or None,
+            cibil_score=int(cgd_data.get("cibil_score")) if cgd_data.get("cibil_score") is not None and str(cgd_data.get("cibil_score")).isdigit() else None,
+            loan_amount_required=cgd_data.get("loan_amount_required") or None,
+            preferred_tenure=int(cgd_data.get("preferred_tenure")) if cgd_data.get("preferred_tenure") is not None and str(cgd_data.get("preferred_tenure")).isdigit() else None,
+            isSalaried=bool(cgd_data.get("isSalaried", True)),
+        )
+        db.add(cgd)
+        db.flush()
+        client_gen_id = cgd.id
+
+    # 2. Create product specific details
+    home_loan_id = None
+    if payload.homeLoanDetails:
+        hld_data = payload.homeLoanDetails
+        hld = HomeLoanDetail(
+            property_value=hld_data.get("property_value") or None,
+            property_location=str(hld_data.get("property_location") or "") or None,
+            propertyUsageType=str(hld_data.get("propertyUsageType") or "") or None,
+            down_payment=hld_data.get("down_payment") or None,
+            isPartProperty=bool(hld_data.get("isPartProperty", False)),
+            propertyRequirement=str(hld_data.get("propertyRequirement") or "") or None,
+            propertyType=str(hld_data.get("propertyType") or "") or None,
+            propertyStatus=str(hld_data.get("propertyStatus") or "") or None,
+            femaleCoApplicant=bool(hld_data.get("femaleCoApplicant", False)),
+            propertyInsurance=bool(hld_data.get("propertyInsurance", False)),
+            applicantInsurance=bool(hld_data.get("applicantInsurance", False)),
+        )
+        db.add(hld)
+        db.flush()
+        home_loan_id = hld.id
+
+    car_loan_id = None
+    if payload.carLoanDetails:
+        cld_data = payload.carLoanDetails
+        cld = CarLoanDetail(
+            new_or_used=str(cld_data.get("new_or_used") or "") or None,
+            car_value=cld_data.get("car_value") or None,
+            down_payment=cld_data.get("down_payment") or None,
+            vehicle_age=int(cld_data.get("vehicle_age")) if cld_data.get("vehicle_age") is not None and str(cld_data.get("vehicle_age")).isdigit() else None,
+        )
+        db.add(cld)
+        db.flush()
+        car_loan_id = cld.id
+
+    personal_loan_id = None
+    if payload.personalLoanDetails:
+        pld_data = payload.personalLoanDetails
+        pld = PersonalLoanDetail(
+            loan_purpose=str(pld_data.get("loan_purpose") or "") or None,
+            other=str(pld_data.get("other") or "") or None,
+            required_amount=pld_data.get("required_amount") or None,
+            existing_obligations=pld_data.get("existing_obligations") or None,
+        )
+        db.add(pld)
+        db.flush()
+        personal_loan_id = pld.id
+
+    # 3. Create LoanApplication record
+    app = LoanApplication(
+        name=name,
+        email=email,
+        mobile=mobile,
+        uniqueCustomerId=mobile,
+        productId=payload.productId,
+        clientGeneralDetailTableId=client_gen_id,
+        homeLoanDetailId=home_loan_id,
+        carLoanDetailId=car_loan_id,
+        personalLoanDetailId=personal_loan_id,
+        status="not-started",
+    )
+    db.add(app)
+    db.commit()
+    db.refresh(app)
+    return {"status": "ok", "application": _serialize(app)}
+
+
+@router.post("")
 @router.post("/")
 def create_loan_application(payload: LoanApplicationCreate, db: Session = Depends(get_db)):
     name = payload.name.strip()

@@ -77,6 +77,56 @@ export async function deleteLoanApplication(id: number): Promise<{ status: strin
   return res.data
 }
 
+export type FullLoanApplicationData = {
+  productId: number
+  name: string
+  email: string
+  mobile: string
+  clientGeneralDetails?: {
+    age?: number | null
+    gender?: string | null
+    location?: string | null
+    employment_type?: string | null
+    monthly_income?: number | null
+    monthly_obligation?: number | null
+    existing_emi?: number | null
+    cibil_score?: number | null
+    loan_amount_required?: number | null
+    preferred_tenure?: number | null
+    isSalaried?: boolean
+  }
+  homeLoanDetails?: {
+    property_value?: number | null
+    property_location?: string | null
+    propertyUsageType?: string | null
+    down_payment?: number | null
+    isPartProperty?: boolean
+    propertyRequirement?: string | null
+    propertyType?: string | null
+    propertyStatus?: string | null
+    femaleCoApplicant?: boolean
+    propertyInsurance?: boolean
+    applicantInsurance?: boolean
+  }
+  carLoanDetails?: {
+    new_or_used?: string | null
+    car_value?: number | null
+    down_payment?: number | null
+    vehicle_age?: number | null
+  }
+  personalLoanDetails?: {
+    loan_purpose?: string | null
+    other?: string | null
+    required_amount?: number | null
+    existing_obligations?: number | null
+  }
+}
+
+export async function submitFullLoanApplication(payload: FullLoanApplicationData) {
+  const res = await axios.post(`${API_BASE_URL}/api/loan-applications/apply`, payload)
+  return res.data
+}
+
 export async function addLoanApplication(payload: LoanApplicationInput) {
   const res = await axios.post(`${API_BASE_URL}/api/auth/customer/add`, payload)
   return res.data

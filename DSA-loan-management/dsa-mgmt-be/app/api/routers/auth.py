@@ -69,6 +69,12 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
     name = str(payload.get('name') or '').strip()
     email = str(payload.get('email') or '').strip()
     mobile = str(payload.get('mobile') or '').strip()
+    product_id = payload.get('productId')
+    if product_id is not None:
+        try:
+            product_id = int(product_id)
+        except (ValueError, TypeError):
+            product_id = None
 
     if not name or not email or not mobile:
         raise HTTPException(status_code=400, detail='name, email and mobile are required')
@@ -78,7 +84,7 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
     try:
         existing = db.execute(
             text(
-                'SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM loan_applications WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
+                'SELECT id, email, name, mobile, uniqueCustomerId, productid, status, isactive FROM loan_applications WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
             ),
             {'mobile': mobile, 'unique_customer_id': unique_customer_id},
         ).mappings().fetchone()
@@ -86,24 +92,31 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
         if existing:
             if existing.get('isactive') is False:
                 raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
+            if product_id and not existing.get('productid'):
+                db.execute(
+                    text('UPDATE loan_applications SET productid = :product_id WHERE id = :id'),
+                    {'product_id': product_id, 'id': existing.get('id')}
+                )
+                db.commit()
             return {'status': 'ok', 'customer': dict(existing), 'created': False}
 
         db.execute(
             text(
-                'INSERT INTO loan_applications (email, name, mobile, uniqueCustomerId, agentid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, :status, true)'
+                'INSERT INTO loan_applications (email, name, mobile, uniqueCustomerId, agentid, bankid, productid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, NULL, :product_id, :status, true)'
             ),
             {
                 'email': email,
                 'name': name,
                 'mobile': mobile,
                 'unique_customer_id': unique_customer_id,
+                'product_id': product_id,
                 'status': 'not-started',
             },
         )
         db.commit()
 
         row = db.execute(
-            text('SELECT id, email, name, mobile, uniqueCustomerId, status, isactive FROM loan_applications WHERE mobile = :mobile'),
+            text('SELECT id, email, name, mobile, uniqueCustomerId, productid, status, isactive FROM loan_applications WHERE mobile = :mobile'),
             {'mobile': mobile},
         ).mappings().fetchone()
 

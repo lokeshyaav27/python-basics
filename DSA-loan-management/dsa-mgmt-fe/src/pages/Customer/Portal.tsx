@@ -6,12 +6,11 @@ import { useAuth } from '../../auth/AuthProvider'
 
 export default function CustomerPortal() {
   const { user } = useAuth()
-  const customerMobile = user?.mobile || ''
+  const customerIdentifier = user?.mobile || user?.email || user?.name || ''
 
   const { data: loans = [], isLoading } = useQuery({
-    queryKey: ['customer-loans', customerMobile],
-    queryFn: () => fetchCustomerLoanApplications(customerMobile),
-    enabled: !!customerMobile,
+    queryKey: ['customer-loans', customerIdentifier],
+    queryFn: () => fetchCustomerLoanApplications(customerIdentifier),
   })
 
   const approved = loans.filter((l: any) => l.status.toLowerCase() === 'approved').length
@@ -41,10 +40,10 @@ export default function CustomerPortal() {
               View My Loans ({loans.length})
             </Link>
             <Link
-              to="/apply"
+              to="/apply-for-loan"
               className="rounded-xl bg-blue-500/30 border border-white/20 px-5 py-3 text-sm font-bold text-white hover:bg-white/10 transition"
             >
-              + Apply New
+              + Apply New Loan
             </Link>
           </div>
         </div>
