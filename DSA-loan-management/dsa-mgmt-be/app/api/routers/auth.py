@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 from typing import Dict
 
 from app.db.session import SessionLocal
 from app.models.agent import Agent
+from app.models.loan_application import LoanApplication
 
 router = APIRouter()
 
@@ -23,20 +23,18 @@ def request_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     if not mobile:
         raise HTTPException(status_code=400, detail='mobile is required')
 
-    try:
-        # use lowercase unquoted column name to match DB (Postgres folds unquoted identifiers to lowercase)
-        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM loan_applications WHERE mobile = :mobile')
-        row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+    m = str(mobile).strip()
+    app = db.query(LoanApplication).filter(
+        (LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m)
+    ).first()
 
-    if not row:
+    if not app:
         raise HTTPException(status_code=404, detail='customer not found')
 
-    if row.get('isactive') is False:
+    if app.isActive is False:
         raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
-    # In production, send OTP via SMS. Here we just return success.
+    # Fixed demo OTP. In production, send via SMS gateway.
     return {'detail': 'otp_sent'}
 
 
@@ -46,22 +44,31 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     otp = payload.get('otp')
     if not mobile or not otp:
         raise HTTPException(status_code=400, detail='mobile and otp are required')
-    if str(otp) != '1234':
+    if str(otp).strip() != '1234':
         raise HTTPException(status_code=400, detail='invalid otp')
 
-    try:
-        q = text('SELECT id, email, name, mobile, uniquecustomerid, isactive FROM loan_applications WHERE mobile = :mobile')
-        row = db.execute(q, {'mobile': mobile}).mappings().fetchone()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+    m = str(mobile).strip()
+    app = db.query(LoanApplication).filter(
+        (LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m)
+    ).first()
 
-    if not row:
+    if not app:
         raise HTTPException(status_code=404, detail='customer not found')
 
-    if row.get('isactive') is False:
+    if app.isActive is False:
         raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
-    return {'status': 'ok', 'customer': dict(row)}
+    return {
+        'status': 'ok',
+        'customer': {
+            'id': app.id,
+            'email': app.email,
+            'name': app.name,
+            'mobile': app.mobile,
+            'uniqueCustomerId': app.uniqueCustomerId,
+            'isActive': app.isActive,
+        }
+    }
 
 
 @router.post('/customer/add')
@@ -81,54 +88,59 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
 
     unique_customer_id = str(payload.get('uniqueCustomerId') or mobile).strip()
 
-    try:
-        existing = db.execute(
-            text(
-                'SELECT id, email, name, mobile, uniqueCustomerId, productid, status, isactive FROM loan_applications WHERE mobile = :mobile OR uniqueCustomerId = :unique_customer_id'
-            ),
-            {'mobile': mobile, 'unique_customer_id': unique_customer_id},
-        ).mappings().fetchone()
+    existing = db.query(LoanApplication).filter(
+        (LoanApplication.mobile == mobile) | (LoanApplication.uniqueCustomerId == unique_customer_id)
+    ).first()
 
-        if existing:
-            if existing.get('isactive') is False:
-                raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
-            if product_id and not existing.get('productid'):
-                db.execute(
-                    text('UPDATE loan_applications SET productid = :product_id WHERE id = :id'),
-                    {'product_id': product_id, 'id': existing.get('id')}
-                )
-                db.commit()
-            return {'status': 'ok', 'customer': dict(existing), 'created': False}
-
-        db.execute(
-            text(
-                'INSERT INTO loan_applications (email, name, mobile, uniqueCustomerId, agentid, bankid, productid, status, isactive) VALUES (:email, :name, :mobile, :unique_customer_id, NULL, NULL, :product_id, :status, true)'
-            ),
-            {
-                'email': email,
-                'name': name,
-                'mobile': mobile,
-                'unique_customer_id': unique_customer_id,
-                'product_id': product_id,
-                'status': 'not-started',
+    if existing:
+        if existing.isActive is False:
+            raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
+        if product_id and not existing.productId:
+            existing.productId = product_id
+            db.commit()
+            db.refresh(existing)
+        return {
+            'status': 'ok',
+            'customer': {
+                'id': existing.id,
+                'email': existing.email,
+                'name': existing.name,
+                'mobile': existing.mobile,
+                'uniqueCustomerId': existing.uniqueCustomerId,
+                'productId': existing.productId,
+                'status': existing.status,
+                'isActive': existing.isActive,
             },
-        )
-        db.commit()
+            'created': False
+        }
 
-        row = db.execute(
-            text('SELECT id, email, name, mobile, uniqueCustomerId, productid, status, isactive FROM loan_applications WHERE mobile = :mobile'),
-            {'mobile': mobile},
-        ).mappings().fetchone()
+    new_app = LoanApplication(
+        email=email,
+        name=name,
+        mobile=mobile,
+        uniqueCustomerId=unique_customer_id,
+        productId=product_id,
+        status='not-started',
+        isActive=True,
+    )
+    db.add(new_app)
+    db.commit()
+    db.refresh(new_app)
 
-        if not row:
-            raise HTTPException(status_code=500, detail='customer creation failed')
-
-        return {'status': 'ok', 'customer': dict(row), 'created': True}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+    return {
+        'status': 'ok',
+        'customer': {
+            'id': new_app.id,
+            'email': new_app.email,
+            'name': new_app.name,
+            'mobile': new_app.mobile,
+            'uniqueCustomerId': new_app.uniqueCustomerId,
+            'productId': new_app.productId,
+            'status': new_app.status,
+            'isActive': new_app.isActive,
+        },
+        'created': True
+    }
 
 
 @router.post('/agent-login')
@@ -138,19 +150,34 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
     if not email or not password:
         raise HTTPException(status_code=400, detail='email and password are required')
 
-    try:
-        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo, isactive FROM agents WHERE email = :email AND password = :password AND isadmin = false')
-        row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+    e = str(email).strip().lower()
+    p = str(password).strip()
 
-    if not row:
+    agent = db.query(Agent).filter(
+        Agent.email.ilike(e),
+        Agent.password == p,
+        Agent.isAdmin == False,
+    ).first()
+
+    if not agent:
         raise HTTPException(status_code=401, detail='invalid credentials')
 
-    if row.get('isactive') is False:
+    if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
-    return {'status': 'ok', 'agent': dict(row)}
+    return {
+        'status': 'ok',
+        'agent': {
+            'id': agent.id,
+            'name': agent.name,
+            'email': agent.email,
+            'mobile': agent.mobile,
+            'isAdmin': agent.isAdmin,
+            'tempPasswordReset': agent.tempPasswordReset,
+            'photo': agent.photo,
+            'isActive': agent.isActive,
+        }
+    }
 
 
 @router.post('/admin-login')
@@ -160,19 +187,34 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
     if not email or not password:
         raise HTTPException(status_code=400, detail='email and password are required')
 
-    try:
-        q = text('SELECT id, name, email, mobile, isadmin, temppasswordreset, photo, isactive FROM agents WHERE email = :email AND password = :password AND isadmin = true')
-        row = db.execute(q, {'email': email, 'password': password}).mappings().fetchone()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'db error: {str(e)}')
+    e = str(email).strip().lower()
+    p = str(password).strip()
 
-    if not row:
+    agent = db.query(Agent).filter(
+        Agent.email.ilike(e),
+        Agent.password == p,
+        Agent.isAdmin == True,
+    ).first()
+
+    if not agent:
         raise HTTPException(status_code=401, detail='invalid credentials')
 
-    if row.get('isactive') is False:
+    if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
-    return {'status': 'ok', 'admin': dict(row)}
+    return {
+        'status': 'ok',
+        'admin': {
+            'id': agent.id,
+            'name': agent.name,
+            'email': agent.email,
+            'mobile': agent.mobile,
+            'isAdmin': agent.isAdmin,
+            'tempPasswordReset': agent.tempPasswordReset,
+            'photo': agent.photo,
+            'isActive': agent.isActive,
+        }
+    }
 
 
 @router.post('/agent/reset-password')

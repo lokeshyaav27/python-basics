@@ -4,6 +4,7 @@ from app.models.base import Base
 
 class ClientGeneralDetail(Base):
     __tablename__ = "client_general_details"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=True)
     age = Column(Integer, nullable=True)
@@ -16,4 +17,4 @@ class ClientGeneralDetail(Base):
     cibil_score = Column(Integer, nullable=True)
     loan_amount_required = Column(Numeric(12, 2), nullable=True)
     preferred_tenure = Column(Integer, nullable=True)
-    isSalaried = Column("issalaried", Boolean, nullable=True)
+    isSalaried = Column("is_salaried", Boolean, nullable=True, default=True)

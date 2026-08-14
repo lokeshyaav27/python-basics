@@ -131,14 +131,3 @@ export async function addLoanApplication(payload: LoanApplicationInput) {
   const res = await axios.post(`${API_BASE_URL}/api/auth/customer/add`, payload)
   return res.data
 }
-
-// Backward-compatibility aliases
-export type Customer = LoanApplication
-export type CustomerInput = LoanApplicationInput
-export const fetchCustomers = fetchLoanApplications
-export const assignCustomerAgent = assignLoanApplicationAgent
-export const updateCustomerStatus = updateLoanApplicationStatus
-export const createCustomer = createLoanApplication
-export const updateCustomer = updateLoanApplication
-export const deleteCustomer = deleteLoanApplication
-export const addCustomer = addLoanApplication

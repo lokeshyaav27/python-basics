@@ -4,6 +4,7 @@ from app.models.base import Base
 
 class PersonalLoanDetail(Base):
     __tablename__ = "personal_loan_details"
+
     id = Column(Integer, primary_key=True, index=True)
     loan_purpose = Column(String(128), nullable=True)
     other = Column(String(255), nullable=True)

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 from app.db.session import SessionLocal
-from app.models.loan_application import LoanApplication, Customer
+from app.models.loan_application import LoanApplication
 from app.models.agent import Agent
 from app.models.bank import Bank
 from app.models.product import Product
@@ -57,11 +57,6 @@ class ApplicationStatusPayload(BaseModel):
     status: str
     bankId: Optional[int] = None
     description: Optional[str] = None
-
-
-# Backward compatibility aliases
-CustomerCreate = LoanApplicationCreate
-CustomerUpdate = LoanApplicationUpdate
 
 
 def _serialize(app: LoanApplication) -> dict:
@@ -271,12 +266,6 @@ def create_loan_application(payload: LoanApplicationCreate, db: Session = Depend
     if not name or not email or not mobile:
         raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
 
-    existing = db.query(LoanApplication).filter(
-        (LoanApplication.mobile == mobile) | (LoanApplication.email == email)
-    ).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="An application with this mobile or email already exists")
-
     app = LoanApplication(
         name=name,
         email=email,
@@ -307,13 +296,6 @@ def update_loan_application(
 
     if not name or not email or not mobile:
         raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
-
-    conflict = db.query(LoanApplication).filter(
-        ((LoanApplication.mobile == mobile) | (LoanApplication.email == email)),
-        LoanApplication.id != application_id
-    ).first()
-    if conflict:
-        raise HTTPException(status_code=400, detail="Another application with this mobile or email already exists")
 
     app.name = name
     app.email = email

@@ -9,7 +9,6 @@ import PrivacyPolicy from './pages/Public/PrivacyPolicy'
 import TermsOfUse from './pages/Public/TermsOfUse'
 import Partners from './pages/Public/Partners'
 import ProductsCatalog from './pages/Public/ProductsCatalog'
-import Login from './pages/Public/Login'
 import CustomerLogin from './pages/Public/CustomerLogin'
 import AgentLogin from './pages/Public/AgentLogin'
 import AdminLogin from './pages/Public/AdminLogin'
@@ -20,7 +19,6 @@ import BanksPage from './pages/Admin/Banks'
 import AgentsPage from './pages/Admin/Agents'
 import AdminLoanApplicationsPage from './pages/Admin/LoanApplications'
 import AgentLoanApplicationsPage from './pages/Agent/LoanApplications'
-import AgentCustomerDetail from './pages/Agent/CustomerDetail'
 import CustomerPortal from './pages/Customer/Portal'
 import CustomerLoanList from './pages/Customer/LoanList'
 import LoanDetail from './pages/Customer/LoanDetail'
@@ -85,132 +83,123 @@ export default function App() {
 
         <div className="flex-1 flex flex-col">
           <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/why-choose-us" element={<WhyChooseUs />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/products" element={<ProductsCatalog />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/faqs" element={<Faqs />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-use" element={<TermsOfUse />} />
-          {/* legacy single login removed; new dedicated login pages */}
-          <Route path="/customer-login" element={<CustomerLogin />} />
-          <Route path="/agent-login" element={<AgentLogin />} />
-          <Route path="/admin-login" element={<AdminLogin />} />
-          <Route path="/apply-for-loan" element={<ApplyForLoan />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/why-choose-us" element={<WhyChooseUs />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/products" element={<ProductsCatalog />} />
+            <Route path="/partners" element={<Partners />} />
+            <Route path="/faqs" element={<Faqs />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            
+            {/* Dedicated Login Pages */}
+            <Route path="/customer-login" element={<CustomerLogin />} />
+            <Route path="/agent-login" element={<AgentLogin />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            
+            {/* Multi-step Loan Application (Public & Customer) */}
+            <Route path="/apply-for-loan" element={<ApplyForLoan />} />
 
-          {/* Admin routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role={'admin'}>
-                <ProtectedLayout role={'admin'}>
-                  <AdminDashboard />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/products"
-            element={
-              <ProtectedRoute role={'admin'}>
-                <ProtectedLayout role={'admin'}>
-                  <ProductsPage />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/banks"
-            element={
-              <ProtectedRoute role={'admin'}>
-                <ProtectedLayout role={'admin'}>
-                  <BanksPage />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/agents"
-            element={
-              <ProtectedRoute role={'admin'}>
-                <ProtectedLayout role={'admin'}>
-                  <AgentsPage />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/loan-applications"
-            element={
-              <ProtectedRoute role={'admin'}>
-                <ProtectedLayout role={'admin'}>
-                  <AdminLoanApplicationsPage />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/admin/customers" element={<Navigate to="/admin/loan-applications" replace />} />
+            {/* Admin routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <AdminDashboard />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <ProductsPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/banks"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <BanksPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/agents"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <AgentsPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/loan-applications"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <AdminLoanApplicationsPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Agent routes */}
-          <Route
-            path="/agent/loan-applications"
-            element={
-              <ProtectedRoute role={'agent'}>
-                <ProtectedLayout role={'agent'}>
-                  <AgentLoanApplicationsPage />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/agent/customers" element={<Navigate to="/agent/loan-applications" replace />} />
-          <Route
-            path="/agent/customers/:id"
-            element={
-              <ProtectedRoute role={'agent'}>
-                <ProtectedLayout role={'agent'}>
-                  <AgentCustomerDetail />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Agent routes */}
+            <Route
+              path="/agent/loan-applications"
+              element={
+                <ProtectedRoute role={'agent'}>
+                  <ProtectedLayout role={'agent'}>
+                    <AgentLoanApplicationsPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Customer routes */}
-          <Route
-            path="/customer"
-            element={
-              <ProtectedRoute role={'customer'}>
-                <ProtectedLayout role={'customer'}>
-                  <CustomerPortal />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/loans"
-            element={
-              <ProtectedRoute role={'customer'}>
-                <ProtectedLayout role={'customer'}>
-                  <CustomerLoanList />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/loans/:id"
-            element={
-              <ProtectedRoute role={'customer'}>
-                <ProtectedLayout role={'customer'}>
-                  <LoanDetail />
-                </ProtectedLayout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Customer routes */}
+            <Route
+              path="/customer"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <CustomerPortal />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/loans"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <CustomerLoanList />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/loans/:id"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <LoanDetail />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/404" element={<NotFound />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Routes>
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
+          </Routes>
         </div>
 
         {!authUser && <Footer />}

@@ -6,27 +6,23 @@ from app.models.base import Base
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-app = FastAPI(title="DSA Mgmt BE")
+app = FastAPI(title="DSA Loan Management Backend")
 
-# mount static files for product images inside this service folder (dsa-mgmt-be/dsa-file-storage)
+# Mount static file storage directories
 project_root = Path(__file__).resolve().parents[1]
-static_dir = project_root / 'dsa-file-storage' / 'product-images'
-static_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/static/product-images", StaticFiles(directory=str(static_dir)), name="product-images")
-# mount static files for bank logos
-bank_logo_dir = project_root / 'dsa-file-storage' / 'bank-logo-images'
-bank_logo_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/static/bank-logo-images", StaticFiles(directory=str(bank_logo_dir)), name="bank-logo-images")
-# mount static files for agent photos
-agent_photo_dir = project_root / 'dsa-file-storage' / 'agent-photos'
-agent_photo_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/static/agent-photos", StaticFiles(directory=str(agent_photo_dir)), name="agent-photos")
-# mount static files for bank policy documents
-bank_doc_dir = project_root / 'dsa-file-storage' / 'bank-documents'
-bank_doc_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/static/bank-documents", StaticFiles(directory=str(bank_doc_dir)), name="bank-documents")
+storage_base = project_root / 'dsa-file-storage'
 
-# Allow CORS for frontend dev server(s)
+for subfolder, endpoint in [
+    ('product-images', '/static/product-images'),
+    ('bank-logo-images', '/static/bank-logo-images'),
+    ('agent-photos', '/static/agent-photos'),
+    ('bank-documents', '/static/bank-documents'),
+]:
+    target_dir = storage_base / subfolder
+    target_dir.mkdir(parents=True, exist_ok=True)
+    app.mount(endpoint, StaticFiles(directory=str(target_dir)), name=subfolder)
+
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -40,22 +36,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# API Routers
 app.include_router(api_routers.products.router, prefix="/api/products", tags=["products"])
-from app.api.routers import files as file_router
-app.include_router(file_router.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.banks.router, prefix="/api/banks", tags=["banks"])
-app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_routers.agents.router, prefix="/api/agents", tags=["agents"])
+app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(api_routers.files.router, prefix="/api/files", tags=["files"])
 app.include_router(api_routers.loan_applications.router, prefix="/api/loan-applications", tags=["loan-applications"])
-app.include_router(api_routers.loan_applications.router, prefix="/api/customers", tags=["customers"])
 
 
 @app.on_event("startup")
 def on_startup():
-    # Create DB tables from models (development convenience)
+    # Ensure tables are registered and created
     Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
 def root():
-    return {"status": "ok", "service": "dsa-mgmt-be"}
+    return {"status": "ok", "service": "dsa-loan-mgmt-be"}

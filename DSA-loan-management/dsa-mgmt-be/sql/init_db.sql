@@ -1,22 +1,23 @@
--- SQL script to create initial schema for DSA Loan Platform
--- Run: psql -U admin -d "dsa-mgmt" -f init_db.sql
+-- ==============================================================================
+-- DSA Loan Management Platform Database Schema (PostgreSQL)
+-- ==============================================================================
 
 CREATE TABLE IF NOT EXISTS products (
     id serial PRIMARY KEY,
     name varchar(255) NOT NULL,
     description text NOT NULL,
     image varchar(1024),
-    isactive boolean NOT NULL DEFAULT true
+    is_active boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS banks (
     id serial PRIMARY KEY,
     name varchar(255) NOT NULL,
-    isnationalize boolean NOT NULL DEFAULT false,
-    isprivate boolean NOT NULL DEFAULT false,
-    isnbfc boolean NOT NULL DEFAULT false,
+    is_nationalize boolean NOT NULL DEFAULT false,
+    is_private boolean NOT NULL DEFAULT false,
+    is_nbfc boolean NOT NULL DEFAULT false,
     logo varchar(1024),
-    isactive boolean NOT NULL DEFAULT true
+    is_active boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS agents (
@@ -24,22 +25,22 @@ CREATE TABLE IF NOT EXISTS agents (
     name varchar(255) NOT NULL,
     email varchar(255) NOT NULL UNIQUE,
     mobile varchar(32) NOT NULL,
-    temppassword varchar(255),
+    temp_password varchar(255),
     password varchar(255),
-    temppasswordreset boolean NOT NULL DEFAULT false,
-    isadmin boolean NOT NULL DEFAULT false,
+    temp_password_reset boolean NOT NULL DEFAULT false,
+    is_admin boolean NOT NULL DEFAULT false,
     photo varchar(1024),
-    isactive boolean NOT NULL DEFAULT true
+    is_active boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS product_bank_links (
     id serial PRIMARY KEY,
-    bankid integer REFERENCES banks(id) NOT NULL,
-    productid integer REFERENCES products(id) NOT NULL,
+    bank_id integer REFERENCES banks(id) ON DELETE CASCADE NOT NULL,
+    product_id integer REFERENCES products(id) ON DELETE CASCADE NOT NULL,
     commission numeric(10,2),
-    policydocument varchar(1024)
+    policy_document varchar(1024),
+    is_active boolean NOT NULL DEFAULT true
 );
-
 
 CREATE TABLE IF NOT EXISTS client_general_details (
     id serial PRIMARY KEY,
@@ -54,22 +55,22 @@ CREATE TABLE IF NOT EXISTS client_general_details (
     cibil_score integer,
     loan_amount_required numeric(12,2),
     preferred_tenure integer,
-    issalaried boolean
+    is_salaried boolean DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS home_loan_details (
     id serial PRIMARY KEY,
     property_value numeric(14,2),
     property_location varchar(255),
-    propertyusagetype varchar(64),
+    property_usage_type varchar(64),
     down_payment numeric(14,2),
-    ispartproperty boolean,
-    propertyrequirement varchar(128),
-    propertytype varchar(64),
-    propertystatus varchar(64),
-    femalecoapplicant boolean,
-    propertyinsurance boolean,
-    applicantinsurance boolean
+    is_part_property boolean DEFAULT false,
+    property_requirement varchar(128),
+    property_type varchar(64),
+    property_status varchar(64),
+    female_co_applicant boolean DEFAULT false,
+    property_insurance boolean DEFAULT true,
+    applicant_insurance boolean DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS car_loan_details (
@@ -77,7 +78,7 @@ CREATE TABLE IF NOT EXISTS car_loan_details (
     new_or_used varchar(32),
     car_value numeric(14,2),
     down_payment numeric(14,2),
-    vehicle_age integer
+    vehicle_age integer DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS personal_loan_details (
@@ -93,20 +94,20 @@ CREATE TABLE IF NOT EXISTS loan_applications (
     email varchar(255) NOT NULL,
     name varchar(255) NOT NULL,
     mobile varchar(32) NOT NULL,
-    uniqueCustomerId varchar(32) NOT NULL,
-    agentid integer REFERENCES agents(id),
-    bankid integer REFERENCES banks(id),
-    productid integer REFERENCES products(id),
-    homeloandetailid integer REFERENCES home_loan_details(id),
-    carloandetailid integer REFERENCES car_loan_details(id),
-    personalloandetailid integer REFERENCES personal_loan_details(id),
-    clientgeneraldetailstableid integer REFERENCES client_general_details(id),
+    unique_customer_id varchar(32) NOT NULL,
+    agent_id integer REFERENCES agents(id) ON DELETE SET NULL,
+    bank_id integer REFERENCES banks(id) ON DELETE SET NULL,
+    product_id integer REFERENCES products(id) ON DELETE SET NULL,
+    home_loan_detail_id integer REFERENCES home_loan_details(id) ON DELETE SET NULL,
+    car_loan_detail_id integer REFERENCES car_loan_details(id) ON DELETE SET NULL,
+    personal_loan_detail_id integer REFERENCES personal_loan_details(id) ON DELETE SET NULL,
+    client_general_detail_id integer REFERENCES client_general_details(id) ON DELETE SET NULL,
     status varchar(32) NOT NULL DEFAULT 'not-started',
     description text,
-    isactive boolean NOT NULL DEFAULT true
+    is_active boolean NOT NULL DEFAULT true
 );
 
--- Optional: seed an admin user
-INSERT INTO agents (name, email, mobile, temppassword, temppasswordreset, isadmin)
-VALUES ('admin','admin@example.com','0000000000','admin',false,true)
+-- Seed Default Admin
+INSERT INTO agents (name, email, mobile, temp_password, password, temp_password_reset, is_admin, is_active)
+VALUES ('Admin', 'admin@example.com', '0000000000', 'admin', '$2b$12$e6fK89t1fJg3wY7B7z8HNu9W7Yp7o3dF4L8M1k9Z2Q5x6C7v8B9n0', true, true, true)
 ON CONFLICT (email) DO NOTHING;
