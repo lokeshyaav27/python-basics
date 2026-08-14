@@ -1,6 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchBanks, createBank, updateBank, deleteBank } from '../../services/banks'
+import {
+  fetchBanks,
+  createBank,
+  updateBank,
+  deleteBank,
+  fetchBankProducts,
+  linkBankProduct,
+  BankProductLink,
+} from '../../services/banks'
 import { message } from 'antd'
 
 type Bank = {
@@ -107,6 +115,7 @@ export default function BanksPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [showView, setShowView] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id?: number }>({ open: false })
+  const [linkModal, setLinkModal] = useState<{ open: boolean; bank: Bank | null }>({ open: false, bank: null })
   const [active, setActive] = useState<Bank | null>(null)
 
   const [form, setForm] = useState(BLANK_FORM)
@@ -136,6 +145,10 @@ export default function BanksPage() {
   function openView(b: Bank) {
     setActive(b)
     setShowView(true)
+  }
+
+  function openLinkProducts(b: Bank) {
+    setLinkModal({ open: true, bank: b })
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -189,7 +202,7 @@ export default function BanksPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Banks & Lending Partners</h2>
-          <p className="text-sm text-slate-500">Manage partner banks, financial institutions, and NBFCs</p>
+          <p className="text-sm text-slate-500">Manage partner banks, financial institutions, and product linkages</p>
         </div>
         <button
           onClick={openAdd}
@@ -251,22 +264,29 @@ export default function BanksPage() {
 
                   {/* Actions Column */}
                   <td className="p-3">
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openLinkProducts(b)}
+                        className="rounded px-2.5 py-1 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1"
+                        title="Link loan products & policy documents"
+                      >
+                        <span>🔗</span> Link Products
+                      </button>
                       <button
                         onClick={() => openView(b)}
-                        className="rounded px-3 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
                       >
                         View
                       </button>
                       <button
                         onClick={() => openEdit(b)}
-                        className="rounded px-3 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => setConfirmDelete({ open: true, id: b.id })}
-                        className="rounded px-3 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
+                        className="rounded px-2.5 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
                       >
                         Delete
                       </button>
@@ -278,6 +298,14 @@ export default function BanksPage() {
           </tbody>
         </table>
       </div>
+
+      {/* ── Link Products Modal ─────────────────────────────────────────── */}
+      {linkModal.open && linkModal.bank && (
+        <LinkProductsModal
+          bank={linkModal.bank}
+          onClose={() => setLinkModal({ open: false, bank: null })}
+        />
+      )}
 
       {/* ── Add Modal ───────────────────────────────────────────────────── */}
       {showAdd && (
@@ -585,4 +613,256 @@ function ModalFooter({
     </div>
   )
 }
+
+// ── Link Products Modal ───────────────────────────────────────────────────────
+
+function LinkProductsModal({ bank, onClose }: { bank: Bank; onClose: () => void }) {
+  const qc = useQueryClient()
+  const { data: products = [], isLoading, refetch } = useQuery<BankProductLink[]>({
+    queryKey: ['bank-products', bank.id],
+    queryFn: () => fetchBankProducts(bank.id),
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[88vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
+          <div className="flex items-center gap-3">
+            <BankLogo logo={bank.logo} name={bank.name} size="md" />
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Link Products — {bank.name}</h3>
+              <p className="text-xs text-slate-500">Configure loan products, DSA payout commission rates, and bank policy documents</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 text-xl leading-none transition">
+            ✕
+          </button>
+        </div>
+
+        {/* Modal Body / Table */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="py-12 text-center text-sm text-slate-400">Loading products & bank linkages…</div>
+          ) : products.length === 0 ? (
+            <div className="py-12 text-center text-sm text-slate-400">No active products available to link.</div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+              <table className="w-full table-auto">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="p-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-14">Link</th>
+                    <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Product</th>
+                    <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-44">Commission for DSA (%)</th>
+                    <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Policy Document</th>
+                    <th className="p-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 w-24">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {products.map((p) => (
+                    <ProductLinkRow
+                      key={p.productId}
+                      bankId={bank.id}
+                      item={p}
+                      onUpdated={() => {
+                        qc.invalidateQueries({ queryKey: ['bank-products', bank.id] })
+                        refetch()
+                      }}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3.5">
+          <div className="text-xs text-slate-500">
+            ℹ️ Check the box for products offered by this bank. Upload policy guidelines (PDF/DOC) for agent reference.
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg bg-slate-800 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProductLinkRow({
+  bankId,
+  item,
+  onUpdated,
+}: {
+  bankId: number
+  item: BankProductLink
+  onUpdated: () => void
+}) {
+  const [isLinked, setIsLinked] = useState(item.isLinked)
+  const [commission, setCommission] = useState(item.commission !== null && item.commission !== undefined ? String(item.commission) : '')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [removeDoc, setRemoveDoc] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    setIsLinked(item.isLinked)
+    setCommission(item.commission !== null && item.commission !== undefined ? String(item.commission) : '')
+    setSelectedFile(null)
+    setRemoveDoc(false)
+  }, [item])
+
+  async function handleSave() {
+    setIsSaving(true)
+    try {
+      const commNum = commission.trim() === '' ? null : parseFloat(commission)
+      if (commission.trim() !== '' && isNaN(commNum!)) {
+        message.error('Please enter a valid numeric commission percentage')
+        setIsSaving(false)
+        return
+      }
+
+      await linkBankProduct(bankId, item.productId, {
+        is_linked: isLinked,
+        commission: commNum,
+        file: selectedFile,
+        remove_document: removeDoc,
+      })
+
+      message.success(`${item.productName} link updated successfully`)
+      setSelectedFile(null)
+      setRemoveDoc(false)
+      onUpdated()
+    } catch (err: any) {
+      message.error(err?.response?.data?.detail || 'Failed to update product link')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <tr className={`transition ${isLinked ? 'bg-indigo-50/30 hover:bg-indigo-50/50' : 'hover:bg-slate-50 opacity-70'}`}>
+      {/* Checkbox */}
+      <td className="p-3 text-center">
+        <input
+          type="checkbox"
+          checked={isLinked}
+          onChange={(e) => setIsLinked(e.target.checked)}
+          className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+        />
+      </td>
+
+      {/* Product Info */}
+      <td className="p-3">
+        <div className="flex items-center gap-3">
+          {item.productImage ? (
+            <img
+              src={`${API_BASE_URL}/static/product-images/${item.productImage}`}
+              alt={item.productName}
+              className="h-10 w-10 rounded-lg object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+              {item.productName.charAt(0)}
+            </div>
+          )}
+          <div>
+            <div className="text-sm font-semibold text-slate-800">{item.productName}</div>
+            <div className="text-xs text-slate-500 line-clamp-1 max-w-xs">{item.productDescription}</div>
+          </div>
+        </div>
+      </td>
+
+      {/* Commission Input */}
+      <td className="p-3">
+        <div className="relative">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            placeholder="e.g. 2.50"
+            disabled={!isLinked}
+            value={commission}
+            onChange={(e) => setCommission(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 disabled:bg-slate-100 disabled:text-slate-400 transition"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
+        </div>
+      </td>
+
+      {/* Policy Document Upload */}
+      <td className="p-3">
+        <div className="space-y-1.5">
+          {item.policyDocument && !removeDoc ? (
+            <div className="flex items-center gap-2">
+              <a
+                href={`${API_BASE_URL}/static/bank-documents/${item.policyDocument}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+              >
+                <span>📄</span> View Policy Doc
+              </a>
+              <button
+                type="button"
+                onClick={() => setRemoveDoc(true)}
+                className="text-xs text-red-600 hover:underline"
+                title="Remove policy document"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400">
+              {removeDoc ? <span className="text-amber-600 font-medium">Doc marked for removal</span> : 'No policy uploaded'}
+            </div>
+          )}
+
+          {/* File input for new upload */}
+          <div>
+            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition">
+              <span>📤</span> {selectedFile ? selectedFile.name : item.policyDocument ? 'Replace Policy Doc' : 'Upload Policy Doc'}
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setSelectedFile(e.target.files[0])
+                    setRemoveDoc(false)
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+            {selectedFile && (
+              <button
+                type="button"
+                onClick={() => setSelectedFile(null)}
+                className="ml-1 text-[11px] text-red-500 hover:underline"
+              >
+                Cancel file
+              </button>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* Action Button */}
+      <td className="p-3 text-center">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition"
+        >
+          {isSaving ? 'Saving…' : 'Save'}
+        </button>
+      </td>
+    </tr>
+  )
+}
+
 

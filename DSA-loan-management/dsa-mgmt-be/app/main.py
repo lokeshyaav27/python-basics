@@ -21,6 +21,10 @@ app.mount("/static/bank-logo-images", StaticFiles(directory=str(bank_logo_dir)),
 agent_photo_dir = project_root / 'dsa-file-storage' / 'agent-photos'
 agent_photo_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static/agent-photos", StaticFiles(directory=str(agent_photo_dir)), name="agent-photos")
+# mount static files for bank policy documents
+bank_doc_dir = project_root / 'dsa-file-storage' / 'bank-documents'
+bank_doc_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static/bank-documents", StaticFiles(directory=str(bank_doc_dir)), name="bank-documents")
 
 # Allow CORS for frontend dev server(s)
 app.add_middleware(

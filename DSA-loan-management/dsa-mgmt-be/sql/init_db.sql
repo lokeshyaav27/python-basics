@@ -36,15 +36,10 @@ CREATE TABLE IF NOT EXISTS product_bank_links (
     id serial PRIMARY KEY,
     bankid integer REFERENCES banks(id) NOT NULL,
     productid integer REFERENCES products(id) NOT NULL,
-    commission numeric(10,2)
+    commission numeric(10,2),
+    policydocument varchar(1024)
 );
 
-CREATE TABLE IF NOT EXISTS bank_documents (
-    id serial PRIMARY KEY,
-    productbanklinkid integer REFERENCES product_bank_links(id) NOT NULL,
-    nameofdocuments varchar(255) NOT NULL,
-    documentlocation varchar(1024) NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS client_general_details (
     id serial PRIMARY KEY,
