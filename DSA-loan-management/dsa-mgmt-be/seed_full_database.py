@@ -66,6 +66,11 @@ def copy_static_assets():
 def seed_database():
     copy_static_assets()
 
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.commit()
+
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 

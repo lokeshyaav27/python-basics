@@ -14,7 +14,7 @@ const reasons = [
   },
   {
     icon: '⏱️',
-    title: '48-Hour Sanctions',
+    title: '48-Hour Approvals',
     description: 'Direct digital API integrations and prioritized DSA processing channels cut down traditional approval times from 3 weeks to under 48 hours.',
   },
   {

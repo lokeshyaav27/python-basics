@@ -9,3 +9,6 @@ pydantic-settings
 pytest
 Pillow
 python-multipart
+sentence-transformers
+PyMuPDF
+pgvector

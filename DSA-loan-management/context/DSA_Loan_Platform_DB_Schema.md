@@ -65,6 +65,8 @@ Links a Product with a Bank and sets DSA payout commission rate.
 
 ---
 
+---
+
 ## 5. Bank Document Table (Multi-Document Support)
 
 **Table:** `bank_documents`
@@ -81,7 +83,33 @@ Allows attaching multiple scheme/guideline documents per bank-product offering (
 
 ---
 
-## 6. Client General Detail Table
+## 6. Bank Document Chunks Table (pgvector Vector Table)
+
+**Table:** `bank_document_chunks`
+
+Hybrid relational + vector storage for document text excerpts and 384-dimensional embeddings generated with `sentence-transformers` (`all-MiniLM-L6-v2`) via `PyMuPDF`.
+
+| Field | Type | Notes |
+|---|---|---|
+| id | serial (PK) | Auto-increment primary key |
+| bank_document_id | integer (FK) | References `bank_documents(id)` ON DELETE CASCADE |
+| bank_id | integer (FK) | References `banks(id)` ON DELETE CASCADE |
+| product_id | integer (FK) | References `products(id)` ON DELETE CASCADE |
+| chunk_index | integer | Sequential chunk order in document |
+| page_number | integer | Originating page in PDF/doc |
+| chunk_text | text | Actual text segment (~1000 characters with 150 char overlap) |
+| embedding | vector(384) | 384-dimensional dense semantic embedding |
+| created_at | timestamp | Default `CURRENT_TIMESTAMP` |
+
+**Vector Index:**
+```sql
+CREATE INDEX idx_bank_document_chunks_embedding 
+ON bank_document_chunks USING hnsw (embedding vector_cosine_ops);
+```
+
+---
+
+## 7. Client General Detail Table
 
 **Table:** `client_general_details`
 

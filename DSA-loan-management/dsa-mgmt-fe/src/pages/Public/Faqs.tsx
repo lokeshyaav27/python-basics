@@ -20,7 +20,7 @@ const allFaqs = [
   {
     category: 'Documentation & Approval',
     question: 'How fast can I get loan approval and disbursement?',
-    answer: 'Personal loans can be sanctioned and disbursed within 24 to 48 hours. Home loans and Car loans typically take 3 to 5 working days depending on property legal verification and valuation readiness.',
+    answer: 'Personal loans can be approved and disbursed within 24 to 48 hours. Home loans and Car loans typically take 3 to 5 working days depending on property legal verification and valuation readiness.',
   },
   {
     category: 'Eligibility & Rates',

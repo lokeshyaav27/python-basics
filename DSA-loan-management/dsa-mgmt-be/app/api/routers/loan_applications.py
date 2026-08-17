@@ -446,6 +446,28 @@ def assign_agent(
     return _serialize(app)
 
 
+def _is_application_complete(app: LoanApplication) -> tuple[bool, str]:
+    if not app.clientGeneralDetail:
+        return False, "Customer personal and financial details have not been filled."
+    
+    cgd = app.clientGeneralDetail
+    if not cgd.name or cgd.age is None or not cgd.gender or not cgd.location or cgd.monthly_income is None or cgd.loan_amount_required is None or cgd.preferred_tenure is None:
+        return False, "Customer personal/financial profile is incomplete. Please complete all fields."
+
+    pname = (app.product.name or "").lower() if app.product else ""
+    if "home" in pname:
+        if not app.homeLoanDetail or app.homeLoanDetail.property_value is None or not app.homeLoanDetail.property_location:
+            return False, "Home loan property details have not been completed."
+    elif "car" in pname:
+        if not app.carLoanDetail or app.carLoanDetail.car_value is None or not app.carLoanDetail.new_or_used:
+            return False, "Car loan vehicle details have not been completed."
+    elif "personal" in pname:
+        if not app.personalLoanDetail or app.personalLoanDetail.required_amount is None or not app.personalLoanDetail.loan_purpose:
+            return False, "Personal loan purpose and amount details have not been completed."
+
+    return True, ""
+
+
 @router.put("/{application_id}/status")
 def update_application_status(
     application_id: int,
@@ -466,6 +488,13 @@ def update_application_status(
     raw_status = (payload.status or "").strip().lower() if payload.status else None
 
     if raw_status == "approved":
+        is_complete, reason = _is_application_complete(app)
+        if not is_complete:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot approve and forward application: {reason}"
+            )
+
         if payload.bankId is not None:
             bank = db.query(Bank).filter(Bank.id == payload.bankId).first()
             if not bank:

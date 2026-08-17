@@ -31,7 +31,7 @@ export default function ContactUs() {
           Speak to a Loan Advisor
         </h1>
         <p className="mt-3 text-base text-slate-500 max-w-xl mx-auto">
-          Have questions regarding interest rates, eligibility, or loan sanctions? Reach out and our specialists will guide you.
+          Have questions regarding interest rates, eligibility, or loan approvals? Reach out and our specialists will guide you.
         </p>
       </div>
 

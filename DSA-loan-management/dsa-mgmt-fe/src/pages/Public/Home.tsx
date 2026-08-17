@@ -229,7 +229,7 @@ function ProductCarousel({ products }: { products: any[] }) {
                   </div>
                 )}
                 <span className="rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1">
-                  Instant Sanction
+                  Fast Processing
                 </span>
               </div>
 
@@ -342,7 +342,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">Premier Lending Partner</h4>
-                      <p className="text-[11px] text-blue-200">Verified Banks & Direct Sanctions</p>
+                      <p className="text-[11px] text-blue-200">Verified Banks & Direct Integration</p>
                     </div>
                   </div>
                   <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2.5 py-0.5 font-bold">
@@ -472,8 +472,8 @@ export default function Home() {
               },
               {
                 step: '04',
-                title: 'Sanction & Payout',
-                desc: 'Get your loan approved and funds directly credited into your account.',
+                title: 'Approval & Payout',
+                desc: 'Get your loan forwarded to bank and funds directly credited into your account.',
                 icon: '🎉',
               },
             ].map((item) => (
@@ -504,7 +504,7 @@ export default function Home() {
               Our Banking Partners
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Top financial institutions offering verified rates and fast sanctions through our DSA network.
+              Top financial institutions offering verified rates and fast processing through our DSA network.
             </p>
           </div>
 

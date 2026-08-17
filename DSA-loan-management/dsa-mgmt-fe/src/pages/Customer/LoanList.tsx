@@ -76,7 +76,7 @@ export default function CustomerLoanList() {
               My Loan Applications
             </h1>
             <p className="mt-1.5 text-sm text-slate-300 max-w-xl">
-              Track real-time progress, approval sanctions, and bank updates for all your submitted loan applications.
+              Track real-time progress, bank recommendations, and approval updates for all your submitted loan applications.
             </p>
           </div>
 
@@ -190,7 +190,7 @@ export default function CustomerLoanList() {
                         )}
                         <div>
                           <div className="text-xs font-bold text-emerald-900">
-                            Sanctioned by {loan.bankName || 'Partner Bank'}
+                            Approved & Forwarded to {loan.bankName || 'Partner Bank'}
                           </div>
                           {loan.description && (
                             <p className="text-xs text-emerald-700 mt-0.5">{loan.description}</p>

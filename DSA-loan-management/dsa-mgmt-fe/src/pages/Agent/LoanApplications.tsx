@@ -41,7 +41,7 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   if (s === 'approved') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
-        <span>✅</span> Approved {bankName ? `(${bankName})` : ''}
+        <span>✅</span> Forwarded to {bankName || 'Partner Bank'}
       </span>
     )
   }
@@ -58,6 +58,63 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
       <span>⏳</span> Pending Review
     </span>
   )
+}
+
+export function checkApplicationCompleteness(app: any): { isComplete: boolean; message: string } {
+  if (!app) return { isComplete: false, message: 'Application details missing' }
+  const missing: string[] = []
+
+  const cgd = app.clientGeneralDetails
+  if (!cgd) {
+    missing.push('Personal Details')
+  } else {
+    if (!cgd.name) missing.push('Applicant Name')
+    if (cgd.age == null) missing.push('Age')
+    if (!cgd.gender) missing.push('Gender')
+    if (!cgd.location) missing.push('Location')
+    if (cgd.monthly_income == null && cgd.monthlyIncome == null) missing.push('Monthly Income')
+    if (cgd.cibil_score == null && cgd.cibilScore == null) missing.push('CIBIL Score')
+    if (cgd.loan_amount_required == null && cgd.loanAmountRequired == null) missing.push('Required Loan Amount')
+    if (cgd.preferred_tenure == null && cgd.preferredTenure == null) missing.push('Preferred Tenure')
+  }
+
+  const pName = (app.productName || '').toLowerCase()
+  if (pName.includes('home')) {
+    const hd = app.homeLoanDetails
+    if (!hd) {
+      missing.push('Home Loan Details')
+    } else {
+      if (hd.property_value == null && hd.propertyValue == null) missing.push('Property Value')
+      if (hd.down_payment == null && hd.downPayment == null) missing.push('Down Payment')
+      if (!hd.property_location && !hd.propertyLocation) missing.push('Property Location')
+    }
+  } else if (pName.includes('car')) {
+    const cd = app.carLoanDetails
+    if (!cd) {
+      missing.push('Car Loan Details')
+    } else {
+      if (!cd.new_or_used && !cd.newOrUsed) missing.push('New/Used Car')
+      if (cd.car_value == null && cd.carValue == null) missing.push('Car Value')
+      if (cd.down_payment == null && cd.downPayment == null) missing.push('Down Payment')
+    }
+  } else if (pName.includes('personal')) {
+    const pd = app.personalLoanDetails
+    if (!pd) {
+      missing.push('Personal Loan Details')
+    } else {
+      if (!pd.loan_purpose && !pd.loanPurpose) missing.push('Loan Purpose')
+      if (pd.required_amount == null && pd.requiredAmount == null) missing.push('Required Amount')
+    }
+  }
+
+  if (missing.length === 0) {
+    return { isComplete: true, message: 'All personal, financial & loan details completed.' }
+  }
+
+  return {
+    isComplete: false,
+    message: `Cannot approve: Customer has not filled required ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` +${missing.length - 3} more` : ''}.`,
+  }
 }
 
 export default function AgentLoanApplicationsPage() {
@@ -258,14 +315,36 @@ export default function AgentLoanApplicationsPage() {
                         </button>
                       ) : (
                         <>
-                          {/* Approve Button */}
-                          <button
-                            onClick={() => openApprove(c)}
-                            className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
-                            title="Approve loan application"
-                          >
-                            <span>✅</span> Approve
-                          </button>
+                          {/* Approve & Forward Button */}
+                          {(() => {
+                            const comp = checkApplicationCompleteness(c)
+                            if (comp.isComplete) {
+                              return (
+                                <button
+                                  onClick={() => openApprove(c)}
+                                  className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
+                                  title="Approve & Forward application to partner bank"
+                                >
+                                  <span>✅</span> Approve & Forward
+                                </button>
+                              )
+                            }
+                            return (
+                              <div className="relative group inline-block">
+                                <button
+                                  disabled
+                                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400 border border-slate-200 cursor-not-allowed flex items-center gap-1 opacity-60"
+                                  title={comp.message}
+                                >
+                                  <span>⚠️</span> Approve
+                                </button>
+                                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-64 rounded-xl bg-slate-900 px-3 py-2 text-center text-xs font-medium text-white shadow-2xl group-hover:block z-30 leading-tight">
+                                  {comp.message}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                                </div>
+                              </div>
+                            )
+                          })()}
 
                           {/* Reject Button */}
                           <button
@@ -301,7 +380,7 @@ export default function AgentLoanApplicationsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 bg-emerald-50/50">
               <div className="flex items-center gap-2">
                 <span className="text-xl">✅</span>
-                <h3 className="text-lg font-bold text-slate-800">Approve Loan Application</h3>
+                <h3 className="text-lg font-bold text-slate-800">Approve & Forward Application to Bank</h3>
               </div>
               <button
                 onClick={() => setApproveModal({ open: false, application: null })}
@@ -324,7 +403,7 @@ export default function AgentLoanApplicationsPage() {
               {/* Select Bank */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Select Approving Bank / Partner <span className="text-red-500">*</span>
+                  Select Partner Bank to Forward Application <span className="text-red-500">*</span>
                 </label>
                 {banks.length === 0 ? (
                   <div className="text-xs text-slate-400">No active banks found in system.</div>
@@ -370,22 +449,22 @@ export default function AgentLoanApplicationsPage() {
               {/* Approval Remarks / Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Approval Notes / Sanction Details (optional)
+                  DSA Recommendation Notes & Reference (optional)
                 </label>
                 <textarea
                   rows={3}
                   value={approveRemarks}
                   onChange={(e) => setApproveRemarks(e.target.value)}
-                  placeholder="e.g. Sanctioned ₹25,00,000 at 8.50% ROI. Reference No: HDFC-2026-9812"
+                  placeholder="e.g. Recommended ₹25,00,000 at 8.50% ROI to HDFC Bank. Lead ref: DSA-2026-9812"
                   className="w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none"
                 />
               </div>
 
               {/* Permanent Decision Warning */}
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-start gap-2">
-                <span className="text-base">⚠️</span>
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 flex items-start gap-2">
+                <span className="text-base">ℹ️</span>
                 <div>
-                  <span className="font-bold">Permanent Decision:</span> Once approved, this application is sanctioned and cannot be modified or reversed.
+                  <span className="font-bold">Forwarding to Bank:</span> Once approved, this application is forwarded to the partner bank for processing and cannot be modified or reversed.
                 </div>
               </div>
 
@@ -403,7 +482,7 @@ export default function AgentLoanApplicationsPage() {
                   disabled={statusMutation.isPending}
                   className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
                 >
-                  {statusMutation.isPending ? 'Approving…' : 'Confirm & Approve'}
+                  {statusMutation.isPending ? 'Forwarding…' : 'Confirm & Forward to Bank'}
                 </button>
               </div>
             </form>

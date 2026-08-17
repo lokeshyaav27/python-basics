@@ -49,6 +49,10 @@ app.include_router(api_routers.rag.router, prefix="/api/rag", tags=["rag"])
 
 @app.on_event("startup")
 def on_startup():
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.commit()
     # Ensure tables are registered and created
     Base.metadata.create_all(bind=engine)
 

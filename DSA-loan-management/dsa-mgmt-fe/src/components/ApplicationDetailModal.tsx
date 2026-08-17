@@ -203,7 +203,7 @@ export default function ApplicationDetailModal({
 
         {/* Modal Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Status / Sanction Banner */}
+          {/* Status / Forwarded Partner Banner */}
           {application.status === 'approved' && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
               <div className="flex items-center gap-3">
@@ -220,12 +220,12 @@ export default function ApplicationDetailModal({
                 )}
                 <div>
                   <h4 className="text-sm font-bold text-emerald-900">
-                    Sanctioned by {application.bankName || 'Partner Bank'}
+                    Approved & Forwarded to {application.bankName || 'Partner Bank'}
                   </h4>
                   {application.description ? (
                     <p className="text-xs text-emerald-700 mt-0.5">{application.description}</p>
                   ) : (
-                    <p className="text-xs text-emerald-700 mt-0.5">Loan approved with priority processing terms.</p>
+                    <p className="text-xs text-emerald-700 mt-0.5">Application forwarded to partner bank for processing.</p>
                   )}
                 </div>
               </div>

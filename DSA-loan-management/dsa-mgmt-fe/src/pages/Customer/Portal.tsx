@@ -66,7 +66,7 @@ export default function CustomerPortal() {
             <span className="text-2xl">🎉</span>
           </div>
           <div className="mt-3 text-3xl font-bold text-emerald-700">{approved}</div>
-          <div className="mt-2 text-xs text-emerald-600">Bank sanctions granted</div>
+          <div className="mt-2 text-xs text-emerald-600">Forwarded to partner banks</div>
         </div>
 
         <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-6 shadow-sm">

@@ -95,7 +95,7 @@ export default function Partners() {
 
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
                   <span>Direct Integration</span>
-                  <span>Fast Sanctions ✓</span>
+                  <span>Fast Approvals ✓</span>
                 </div>
               </div>
             )
