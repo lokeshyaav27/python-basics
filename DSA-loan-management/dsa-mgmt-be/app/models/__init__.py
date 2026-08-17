@@ -2,6 +2,7 @@ from app.models.base import Base
 from app.models.product import Product
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
+from app.models.bank_document import BankDocument
 from app.models.agent import Agent
 from app.models.client_general_detail import ClientGeneralDetail
 from app.models.home_loan_detail import HomeLoanDetail
@@ -15,6 +16,7 @@ __all__ = [
     "Product",
     "Bank",
     "ProductBankLink",
+    "BankDocument",
     "Agent",
     "ClientGeneralDetail",
     "HomeLoanDetail",

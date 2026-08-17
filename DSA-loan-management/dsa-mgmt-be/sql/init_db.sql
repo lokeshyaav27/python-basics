@@ -38,8 +38,15 @@ CREATE TABLE IF NOT EXISTS product_bank_links (
     bank_id integer REFERENCES banks(id) ON DELETE CASCADE NOT NULL,
     product_id integer REFERENCES products(id) ON DELETE CASCADE NOT NULL,
     commission numeric(10,2),
-    policy_document varchar(1024),
     is_active boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS bank_documents (
+    id serial PRIMARY KEY,
+    product_bank_link_id integer REFERENCES product_bank_links(id) ON DELETE CASCADE NOT NULL,
+    document_name varchar(255) NOT NULL,
+    document_location varchar(1024) NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS client_general_details (

@@ -7,7 +7,10 @@ import {
   deleteBank,
   fetchBankProducts,
   linkBankProduct,
+  uploadBankProductDocument,
+  deleteBankProductDocument,
   BankProductLink,
+  BankDocumentItem,
 } from '../../services/banks'
 import { message } from 'antd'
 
@@ -617,7 +620,7 @@ function BankViewModal({
                   <tr>
                     <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Product</th>
                     <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 w-36">DSA Commission</th>
-                    <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Policy Document</th>
+                    <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Policy & Scheme Documents</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -655,19 +658,26 @@ function BankViewModal({
                         )}
                       </td>
 
-                      {/* Policy Document Link */}
+                      {/* Policy & Scheme Documents List */}
                       <td className="p-3">
-                        {p.policyDocument ? (
-                          <a
-                            href={`${API_BASE_URL}/static/bank-documents/${p.policyDocument}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-sm"
-                          >
-                            <span>📄</span> View Policy Doc
-                          </a>
+                        {p.documents && p.documents.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {p.documents.map((doc) => (
+                              <a
+                                key={doc.id || doc.fileName}
+                                href={`${API_BASE_URL}/static/bank-documents/${doc.fileName}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-2xs"
+                                title={doc.name}
+                              >
+                                <span>📄</span>
+                                <span className="max-w-[180px] truncate">{doc.name}</span>
+                              </a>
+                            ))}
+                          </div>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">No policy uploaded</span>
+                          <span className="text-xs text-slate-400 italic">No documents uploaded</span>
                         )}
                       </td>
                     </tr>
@@ -824,19 +834,26 @@ function ProductLinkRow({
   onUpdated: () => void
 }) {
   const [isLinked, setIsLinked] = useState(item.isLinked)
-  const [commission, setCommission] = useState(item.commission !== null && item.commission !== undefined ? String(item.commission) : '')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [removeDoc, setRemoveDoc] = useState(false)
+  const [commission, setCommission] = useState(
+    item.commission !== null && item.commission !== undefined ? String(item.commission) : ''
+  )
   const [isSaving, setIsSaving] = useState(false)
+
+  // Document upload state
+  const [showDocUpload, setShowDocUpload] = useState(false)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [docTitle, setDocTitle] = useState('')
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false)
+  const [deletingDocId, setDeletingDocId] = useState<number | null>(null)
 
   useEffect(() => {
     setIsLinked(item.isLinked)
-    setCommission(item.commission !== null && item.commission !== undefined ? String(item.commission) : '')
-    setSelectedFile(null)
-    setRemoveDoc(false)
+    setCommission(
+      item.commission !== null && item.commission !== undefined ? String(item.commission) : ''
+    )
   }, [item])
 
-  async function handleSave() {
+  async function handleSaveLink() {
     setIsSaving(true)
     try {
       const commNum = commission.trim() === '' ? null : parseFloat(commission)
@@ -849,13 +866,9 @@ function ProductLinkRow({
       await linkBankProduct(bankId, item.productId, {
         is_linked: isLinked,
         commission: commNum,
-        file: selectedFile,
-        remove_document: removeDoc,
       })
 
-      message.success(`${item.productName} link updated successfully`)
-      setSelectedFile(null)
-      setRemoveDoc(false)
+      message.success(`${item.productName} configuration saved`)
       onUpdated()
     } catch (err: any) {
       message.error(err?.response?.data?.detail || 'Failed to update product link')
@@ -864,10 +877,52 @@ function ProductLinkRow({
     }
   }
 
+  async function handleUploadDocument(e: React.FormEvent) {
+    e.preventDefault()
+    if (!uploadFile) {
+      message.error('Please select a file to upload')
+      return
+    }
+
+    setIsUploadingDoc(true)
+    try {
+      await uploadBankProductDocument(bankId, item.productId, uploadFile, docTitle.trim() || uploadFile.name)
+      message.success('Document uploaded successfully')
+      setUploadFile(null)
+      setDocTitle('')
+      setShowDocUpload(false)
+      onUpdated()
+    } catch (err: any) {
+      message.error(err?.response?.data?.detail || 'Failed to upload document')
+    } finally {
+      setIsUploadingDoc(false)
+    }
+  }
+
+  async function handleDeleteDocument(documentId: number, docName: string) {
+    if (!window.confirm(`Delete document "${docName}"?`)) return
+    setDeletingDocId(documentId)
+    try {
+      await deleteBankProductDocument(bankId, item.productId, documentId)
+      message.success(`Document "${docName}" removed`)
+      onUpdated()
+    } catch (err: any) {
+      message.error(err?.response?.data?.detail || 'Failed to delete document')
+    } finally {
+      setDeletingDocId(null)
+    }
+  }
+
+  const docs = item.documents || []
+
   return (
-    <tr className={`transition ${isLinked ? 'bg-indigo-50/30 hover:bg-indigo-50/50' : 'hover:bg-slate-50 opacity-70'}`}>
+    <tr
+      className={`transition ${
+        isLinked ? 'bg-indigo-50/20 hover:bg-indigo-50/40' : 'hover:bg-slate-50 opacity-70'
+      }`}
+    >
       {/* Checkbox */}
-      <td className="p-3 text-center">
+      <td className="p-3 text-center align-top pt-4">
         <input
           type="checkbox"
           checked={isLinked}
@@ -877,7 +932,7 @@ function ProductLinkRow({
       </td>
 
       {/* Product Info */}
-      <td className="p-3">
+      <td className="p-3 align-top pt-4">
         <div className="flex items-center gap-3">
           {item.productImage ? (
             <img
@@ -898,7 +953,7 @@ function ProductLinkRow({
       </td>
 
       {/* Commission Input */}
-      <td className="p-3">
+      <td className="p-3 align-top pt-4">
         <div className="relative">
           <input
             type="number"
@@ -915,69 +970,118 @@ function ProductLinkRow({
         </div>
       </td>
 
-      {/* Policy Document Upload */}
-      <td className="p-3">
-        <div className="space-y-1.5">
-          {item.policyDocument && !removeDoc ? (
-            <div className="flex items-center gap-2">
-              <a
-                href={`${API_BASE_URL}/static/bank-documents/${item.policyDocument}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
-              >
-                <span>📄</span> View Policy Doc
-              </a>
-              <button
-                type="button"
-                onClick={() => setRemoveDoc(true)}
-                className="text-xs text-red-600 hover:underline"
-                title="Remove policy document"
-              >
-                Remove
-              </button>
+      {/* Multi-Document Management */}
+      <td className="p-3 align-top">
+        <div className="space-y-2">
+          {/* Document Pills List */}
+          {docs.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {docs.map((doc) => (
+                <div
+                  key={doc.id || doc.fileName}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs shadow-2xs hover:border-slate-300 transition"
+                >
+                  <a
+                    href={`${API_BASE_URL}/static/bank-documents/${doc.fileName}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-blue-700 font-medium hover:underline truncate"
+                    title={doc.name}
+                  >
+                    <span>📄</span>
+                    <span className="truncate max-w-[200px]">{doc.name}</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                    disabled={deletingDocId === doc.id}
+                    className="text-slate-400 hover:text-red-600 text-xs px-1 font-bold leading-none transition"
+                    title="Delete document"
+                  >
+                    {deletingDocId === doc.id ? '…' : '✕'}
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="text-xs text-slate-400">
-              {removeDoc ? <span className="text-amber-600 font-medium">Doc marked for removal</span> : 'No policy uploaded'}
-            </div>
+            <div className="text-xs text-slate-400 italic">No documents attached</div>
           )}
 
-          {/* File input for new upload */}
-          <div>
-            <label className="inline-flex items-center gap-1.5 cursor-pointer rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition">
-              <span>📤</span> {selectedFile ? selectedFile.name : item.policyDocument ? 'Replace Policy Doc' : 'Upload Policy Doc'}
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setSelectedFile(e.target.files[0])
-                    setRemoveDoc(false)
-                  }
-                }}
-                className="hidden"
-              />
-            </label>
-            {selectedFile && (
-              <button
-                type="button"
-                onClick={() => setSelectedFile(null)}
-                className="ml-1 text-[11px] text-red-500 hover:underline"
-              >
-                Cancel file
-              </button>
-            )}
-          </div>
+          {/* Inline Upload Toggle & Widget */}
+          {isLinked && (
+            <div>
+              {!showDocUpload ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDocUpload(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline mt-1"
+                >
+                  <span>+</span> Upload New Document
+                </button>
+              ) : (
+                <form
+                  onSubmit={handleUploadDocument}
+                  className="mt-2 rounded-xl border border-indigo-200 bg-indigo-50/50 p-2.5 space-y-2 text-xs"
+                >
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Document Title / Scheme Name
+                    </label>
+                    <input
+                      type="text"
+                      value={docTitle}
+                      onChange={(e) => setDocTitle(e.target.value)}
+                      placeholder="e.g. Interest Rate Matrix 2026"
+                      className="w-full rounded-md border border-slate-300 p-1.5 text-xs bg-white outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Choose File (PDF/DOC/Image)
+                    </label>
+                    <input
+                      type="file"
+                      required
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
+                      className="text-xs w-full"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDocUpload(false)
+                        setUploadFile(null)
+                        setDocTitle('')
+                      }}
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUploadingDoc || !uploadFile}
+                      className="rounded-md bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {isUploadingDoc ? 'Uploading…' : 'Upload'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
         </div>
       </td>
 
       {/* Action Button */}
-      <td className="p-3 text-center">
+      <td className="p-3 text-center align-top pt-4">
         <button
-          onClick={handleSave}
+          onClick={handleSaveLink}
           disabled={isSaving}
-          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition"
+          className="rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition"
         >
           {isSaving ? 'Saving…' : 'Save'}
         </button>

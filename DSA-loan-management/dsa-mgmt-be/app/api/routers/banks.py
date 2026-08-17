@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 from app.models.bank import Bank
 from app.models.product import Product
 from app.models.product_bank_link import ProductBankLink
+from app.models.bank_document import BankDocument
 from app.schemas.bank import BankCreate, BankRead
 from pathlib import Path
 from io import BytesIO
@@ -173,6 +174,18 @@ def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
     result = []
     for p in products:
         link = links_map.get(p.id)
+        docs = []
+        if link:
+            # Query multiple documents from bank_documents table
+            db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).order_by(BankDocument.id.asc()).all()
+            for d in db_docs:
+                docs.append({
+                    "id": d.id,
+                    "name": d.documentName,
+                    "fileName": d.documentLocation,
+                    "createdAt": d.createdAt.isoformat() if d.createdAt else None,
+                })
+
         result.append({
             "productId": p.id,
             "productName": p.name,
@@ -181,7 +194,7 @@ def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
             "isLinked": link is not None,
             "linkId": link.id if link else None,
             "commission": float(link.commission) if (link and link.commission is not None) else None,
-            "policyDocument": link.policyDocument if link else None,
+            "documents": docs,
         })
     return result
 
@@ -192,8 +205,6 @@ def link_bank_product(
     product_id: int,
     is_linked: bool = Form(...),
     commission: Optional[float] = Form(None),
-    file: UploadFile | None = File(None),
-    remove_document: bool = Form(False),
     db: Session = Depends(get_db),
 ):
     bank = db.query(Bank).filter(Bank.id == bank_id).first()
@@ -211,16 +222,18 @@ def link_bank_product(
 
     storage = get_document_storage()
 
-    # If unlinking, delete the link record and remove policy doc
+    # If unlinking, delete the link record and attached documents
     if not is_linked:
         if link:
-            if link.policyDocument:
-                old = storage / link.policyDocument
-                if old.exists():
-                    try:
-                        old.unlink()
-                    except Exception:
-                        pass
+            # Delete attached bank_documents
+            attached_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
+            for doc in attached_docs:
+                try:
+                    (storage / doc.documentLocation).unlink(missing_ok=True)
+                except Exception:
+                    pass
+                db.delete(doc)
+
             db.delete(link)
             db.commit()
         return {"status": "ok", "isLinked": False}
@@ -229,45 +242,117 @@ def link_bank_product(
     if not link:
         link = ProductBankLink(bankId=bank_id, productId=product_id)
         db.add(link)
+        db.flush()
 
     if commission is not None:
         link.commission = commission
 
-    if file is not None:
-        contents = file.file.read()
-        size_limit = 10 * 1024 * 1024  # 10MB limit for policy documents
-        if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail="Document too large; max 10MB")
-
-        ext = os.path.splitext(file.filename or "")[1].lower() or ".pdf"
-        fname = f"{uuid4().hex}{ext}"
-        with open(storage / fname, "wb") as f:
-            f.write(contents)
-
-        if link.policyDocument:
-            old = storage / link.policyDocument
-            if old.exists():
-                try:
-                    old.unlink()
-                except Exception:
-                    pass
-        link.policyDocument = fname
-    elif remove_document and link.policyDocument:
-        old = storage / link.policyDocument
-        if old.exists():
-            try:
-                old.unlink()
-            except Exception:
-                pass
-        link.policyDocument = None
-
     db.commit()
     db.refresh(link)
+
+    # Fetch all docs
+    db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
+    docs = [{"id": d.id, "name": d.documentName, "fileName": d.documentLocation} for d in db_docs]
 
     return {
         "status": "ok",
         "isLinked": True,
         "linkId": link.id,
         "commission": float(link.commission) if link.commission is not None else None,
-        "policyDocument": link.policyDocument,
+        "documents": docs,
     }
+
+
+@router.post("/{bank_id}/products/{product_id}/documents")
+def upload_bank_product_document(
+    bank_id: int,
+    product_id: int,
+    file: UploadFile = File(...),
+    document_name: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    bank = db.query(Bank).filter(Bank.id == bank_id).first()
+    if not bank:
+        raise HTTPException(status_code=404, detail="Bank not found")
+
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Get or create link
+    link = db.query(ProductBankLink).filter(
+        ProductBankLink.bankId == bank_id,
+        ProductBankLink.productId == product_id,
+    ).first()
+
+    if not link:
+        link = ProductBankLink(bankId=bank_id, productId=product_id)
+        db.add(link)
+        db.flush()
+
+    contents = file.file.read()
+    size_limit = 20 * 1024 * 1024  # 20MB limit
+    if len(contents) > size_limit:
+        raise HTTPException(status_code=400, detail="Document too large; max 20MB")
+
+    storage = get_document_storage()
+    orig_name = file.filename or "document.pdf"
+    doc_title = document_name.strip() if (document_name and document_name.strip()) else orig_name
+
+    ext = os.path.splitext(orig_name)[1].lower() or ".pdf"
+    fname = f"{uuid4().hex}{ext}"
+    with open(storage / fname, "wb") as f:
+        f.write(contents)
+
+    new_doc = BankDocument(
+        productBankLinkId=link.id,
+        documentName=doc_title,
+        documentLocation=fname,
+    )
+    db.add(new_doc)
+    db.commit()
+    db.refresh(new_doc)
+
+    return {
+        "status": "ok",
+        "document": {
+            "id": new_doc.id,
+            "name": new_doc.documentName,
+            "fileName": new_doc.documentLocation,
+            "createdAt": new_doc.createdAt.isoformat() if new_doc.createdAt else None,
+        }
+    }
+
+
+@router.delete("/{bank_id}/products/{product_id}/documents/{document_id}")
+def delete_bank_product_document(
+    bank_id: int,
+    product_id: int,
+    document_id: int,
+    db: Session = Depends(get_db),
+):
+    link = db.query(ProductBankLink).filter(
+        ProductBankLink.bankId == bank_id,
+        ProductBankLink.productId == product_id,
+    ).first()
+
+    if not link:
+        raise HTTPException(status_code=404, detail="Product link not found")
+
+    doc = db.query(BankDocument).filter(
+        BankDocument.id == document_id,
+        BankDocument.productBankLinkId == link.id,
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    storage = get_document_storage()
+    try:
+        (storage / doc.documentLocation).unlink(missing_ok=True)
+    except Exception:
+        pass
+
+    db.delete(doc)
+    db.commit()
+    return {"status": "ok"}

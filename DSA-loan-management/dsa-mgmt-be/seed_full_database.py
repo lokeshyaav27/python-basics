@@ -13,6 +13,7 @@ from app.models.base import Base
 from app.models.product import Product
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
+from app.models.bank_document import BankDocument
 from app.models.agent import Agent
 from app.models.client_general_detail import ClientGeneralDetail
 from app.models.home_loan_detail import HomeLoanDetail
@@ -72,6 +73,7 @@ def seed_database():
         # Clean existing data in logical order
         print("Cleaning existing database records...")
         db.query(LoanApplication).delete()
+        db.query(BankDocument).delete()
         db.query(ProductBankLink).delete()
         db.query(ClientGeneralDetail).delete()
         db.query(HomeLoanDetail).delete()
@@ -128,24 +130,60 @@ def seed_database():
             db.refresh(b)
         print(f"Created {len(banks)} institutions: {[b.name for b in banks]}")
 
-        # ── 3. Link Banks with Multiple Products & Random Commission ─────
-        print("\n--- Seeding Product-Bank Links ---")
+        # ── 3. Link Banks with Multiple Products & Multi-Documents ───────
+        print("\n--- Seeding Product-Bank Links & Multiple Documents ---")
+        base_dir = Path(__file__).resolve().parent
+        doc_dir = base_dir / "dsa-file-storage" / "bank-documents"
+        doc_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create dummy document files
+        sample_doc_files = {
+            "policy_guidelines.pdf": b"%PDF-1.4 Mock Policy Guidelines Document for Bank Scheme",
+            "rate_matrix_2026.pdf": b"%PDF-1.4 Mock Interest Rate and ROI Concession Matrix 2026",
+            "kyc_checklist.pdf": b"%PDF-1.4 Mock Mandatory KYC and Income Verification Checklist",
+        }
+        for f_name, content in sample_doc_files.items():
+            f_path = doc_dir / f_name
+            if not f_path.exists():
+                f_path.write_bytes(content)
+
         links = []
         commissions = [Decimal("0.75"), Decimal("1.00"), Decimal("1.25"), Decimal("1.50"), Decimal("1.75"), Decimal("2.00")]
         for bank in banks:
-            # Link to at least 2 or all 3 products
             for prod in products:
                 comm = random.choice(commissions)
-                links.append(ProductBankLink(
+                link = ProductBankLink(
                     bankId=bank.id,
                     productId=prod.id,
                     commission=comm,
-                    policyDocument=None,
                     isActive=True,
-                ))
+                )
+                links.append(link)
         db.add_all(links)
         db.commit()
-        print(f"Created {len(links)} product-bank links with custom commissions.")
+
+        # Add multiple documents per link
+        bank_docs = []
+        for link in links:
+            db.refresh(link)
+            bank_docs.append(BankDocument(
+                productBankLinkId=link.id,
+                documentName="Policy & Scheme Guidelines 2026",
+                documentLocation="policy_guidelines.pdf",
+            ))
+            bank_docs.append(BankDocument(
+                productBankLinkId=link.id,
+                documentName="Interest Rate & ROI Matrix",
+                documentLocation="rate_matrix_2026.pdf",
+            ))
+            bank_docs.append(BankDocument(
+                productBankLinkId=link.id,
+                documentName="KYC & Document Checklist",
+                documentLocation="kyc_checklist.pdf",
+            ))
+        db.add_all(bank_docs)
+        db.commit()
+        print(f"Created {len(links)} product-bank links and {len(bank_docs)} attached documents.")
 
         # ── 4. Create 8 Agents (2 Admins + 6 Regular Agents) ─────────────
         print("\n--- Seeding 8 Agents (2 Admins + 6 Regular Agents) ---")
