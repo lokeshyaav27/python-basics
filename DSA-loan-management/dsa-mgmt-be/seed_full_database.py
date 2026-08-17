@@ -130,23 +130,8 @@ def seed_database():
             db.refresh(b)
         print(f"Created {len(banks)} institutions: {[b.name for b in banks]}")
 
-        # ── 3. Link Banks with Multiple Products & Multi-Documents ───────
-        print("\n--- Seeding Product-Bank Links & Multiple Documents ---")
-        base_dir = Path(__file__).resolve().parent
-        doc_dir = base_dir / "dsa-file-storage" / "bank-documents"
-        doc_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create dummy document files
-        sample_doc_files = {
-            "policy_guidelines.pdf": b"%PDF-1.4 Mock Policy Guidelines Document for Bank Scheme",
-            "rate_matrix_2026.pdf": b"%PDF-1.4 Mock Interest Rate and ROI Concession Matrix 2026",
-            "kyc_checklist.pdf": b"%PDF-1.4 Mock Mandatory KYC and Income Verification Checklist",
-        }
-        for f_name, content in sample_doc_files.items():
-            f_path = doc_dir / f_name
-            if not f_path.exists():
-                f_path.write_bytes(content)
-
+        # ── 3. Link Banks with Multiple Products (No Documents) ──────────
+        print("\n--- Seeding Product-Bank Links ---")
         links = []
         commissions = [Decimal("0.75"), Decimal("1.00"), Decimal("1.25"), Decimal("1.50"), Decimal("1.75"), Decimal("2.00")]
         for bank in banks:
@@ -161,29 +146,7 @@ def seed_database():
                 links.append(link)
         db.add_all(links)
         db.commit()
-
-        # Add multiple documents per link
-        bank_docs = []
-        for link in links:
-            db.refresh(link)
-            bank_docs.append(BankDocument(
-                productBankLinkId=link.id,
-                documentName="Policy & Scheme Guidelines 2026",
-                documentLocation="policy_guidelines.pdf",
-            ))
-            bank_docs.append(BankDocument(
-                productBankLinkId=link.id,
-                documentName="Interest Rate & ROI Matrix",
-                documentLocation="rate_matrix_2026.pdf",
-            ))
-            bank_docs.append(BankDocument(
-                productBankLinkId=link.id,
-                documentName="KYC & Document Checklist",
-                documentLocation="kyc_checklist.pdf",
-            ))
-        db.add_all(bank_docs)
-        db.commit()
-        print(f"Created {len(links)} product-bank links and {len(bank_docs)} attached documents.")
+        print(f"Created {len(links)} product-bank links with custom commissions.")
 
         # ── 4. Create 8 Agents (2 Admins + 6 Regular Agents) ─────────────
         print("\n--- Seeding 8 Agents (2 Admins + 6 Regular Agents) ---")
@@ -221,8 +184,8 @@ def seed_database():
         regular_agents = [a for a in created_agents if not a.isAdmin]
         print(f"Created {len(created_agents)} agents ({len([a for a in created_agents if a.isAdmin])} Admins, {len(regular_agents)} Regular Agents).")
 
-        # ── 5. Create 20 Loan Applications across 8 Unique Customers ──────
-        print("\n--- Seeding 20 Loan Applications across 8 Unique Customers ---")
+        # ── 5. Create Loan Applications (All Pending Review, Without Approval/Rejection) ──
+        print("\n--- Seeding Loan Applications (Pending Review) ---")
         customers = [
             {"name": "Lokesh Yadav", "mobile": "123123", "email": "lokesh@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
             {"name": "Rahul Sharma", "mobile": "9876543210", "email": "rahul.sharma@gmail.com", "city": "Mumbai", "income": 120000, "age": 36, "gender": "Male"},
@@ -234,36 +197,33 @@ def seed_database():
             {"name": "Karan Kapoor", "mobile": "9877889900", "email": "karan.k@yahoo.com", "city": "Chandigarh", "income": 105000, "age": 35, "gender": "Male"},
         ]
 
-        # Specifications for 20 applications
+        # 16 Loan Applications across 8 unique customers (all status=None for testing)
         apps_plan = [
-            # Customer 1 (Lokesh - 3 apps)
-            {"cust_idx": 0, "prod_idx": 0, "status": "approved", "req_amt": 5000000, "tenure": 240, "desc": "Home loan sanctioned at 8.40% special concession."},
-            {"cust_idx": 0, "prod_idx": 1, "status": None, "req_amt": 1200000, "tenure": 60, "desc": None},
-            {"cust_idx": 0, "prod_idx": 2, "status": "rejected", "req_amt": 300000, "tenure": 24, "desc": "Multiple active unsecured credit cards with high utilization."},
-            # Customer 2 (Rahul - 2 apps)
-            {"cust_idx": 1, "prod_idx": 0, "status": "approved", "req_amt": 7500000, "tenure": 300, "desc": "Ready to move 3BHK flat in Andheri."},
-            {"cust_idx": 1, "prod_idx": 2, "status": None, "req_amt": 500000, "tenure": 36, "desc": None},
-            # Customer 3 (Pooja - 2 apps)
-            {"cust_idx": 2, "prod_idx": 1, "status": "approved", "req_amt": 950000, "tenure": 48, "desc": "Electric vehicle loan approved at 8.90%."},
-            {"cust_idx": 2, "prod_idx": 0, "status": None, "req_amt": 4200000, "tenure": 180, "desc": None},
-            # Customer 4 (Rohan - 3 apps)
-            {"cust_idx": 3, "prod_idx": 0, "status": "approved", "req_amt": 6000000, "tenure": 240, "desc": "Independent villa in Baner."},
-            {"cust_idx": 3, "prod_idx": 1, "status": None, "req_amt": 1500000, "tenure": 60, "desc": None},
-            {"cust_idx": 3, "prod_idx": 2, "status": "rejected", "req_amt": 400000, "tenure": 36, "desc": "CIBIL score below institutional policy threshold (620)."},
-            # Customer 5 (Neha - 2 apps)
-            {"cust_idx": 4, "prod_idx": 2, "status": "rejected", "req_amt": 800000, "tenure": 36, "desc": "High existing debt-to-income ratio."},
-            {"cust_idx": 4, "prod_idx": 0, "status": None, "req_amt": 3500000, "tenure": 180, "desc": None},
-            # Customer 6 (Siddharth - 3 apps)
-            {"cust_idx": 5, "prod_idx": 0, "status": "approved", "req_amt": 8500000, "tenure": 240, "desc": "Commercial and residential duplex sanction."},
-            {"cust_idx": 5, "prod_idx": 1, "status": "approved", "req_amt": 2200000, "tenure": 60, "desc": "Luxury car loan sanctioned at 8.75%."},
-            {"cust_idx": 5, "prod_idx": 2, "status": None, "req_amt": 600000, "tenure": 48, "desc": None},
-            # Customer 7 (Divya - 2 apps)
-            {"cust_idx": 6, "prod_idx": 0, "status": "approved", "req_amt": 4800000, "tenure": 240, "desc": "Female co-applicant concession applied."},
-            {"cust_idx": 6, "prod_idx": 2, "status": None, "req_amt": 250000, "tenure": 24, "desc": None},
-            # Customer 8 (Karan - 3 apps)
-            {"cust_idx": 7, "prod_idx": 0, "status": "approved", "req_amt": 5500000, "tenure": 180, "desc": "Property legal search completed successfully."},
-            {"cust_idx": 7, "prod_idx": 1, "status": "rejected", "req_amt": 1100000, "tenure": 60, "desc": "Vehicle age exceeds bank cutoff limits."},
-            {"cust_idx": 7, "prod_idx": 2, "status": None, "req_amt": 350000, "tenure": 24, "desc": None},
+            # Customer 1 (Lokesh)
+            {"cust_idx": 0, "prod_idx": 0, "req_amt": 5000000, "tenure": 240},
+            {"cust_idx": 0, "prod_idx": 1, "req_amt": 1200000, "tenure": 60},
+            {"cust_idx": 0, "prod_idx": 2, "req_amt": 300000, "tenure": 24},
+            # Customer 2 (Rahul)
+            {"cust_idx": 1, "prod_idx": 0, "req_amt": 7500000, "tenure": 300},
+            {"cust_idx": 1, "prod_idx": 2, "req_amt": 500000, "tenure": 36},
+            # Customer 3 (Pooja)
+            {"cust_idx": 2, "prod_idx": 1, "req_amt": 950000, "tenure": 48},
+            {"cust_idx": 2, "prod_idx": 0, "req_amt": 4200000, "tenure": 180},
+            # Customer 4 (Rohan)
+            {"cust_idx": 3, "prod_idx": 0, "req_amt": 6000000, "tenure": 240},
+            {"cust_idx": 3, "prod_idx": 1, "req_amt": 1500000, "tenure": 60},
+            # Customer 5 (Neha)
+            {"cust_idx": 4, "prod_idx": 2, "req_amt": 800000, "tenure": 36},
+            {"cust_idx": 4, "prod_idx": 0, "req_amt": 3500000, "tenure": 180},
+            # Customer 6 (Siddharth)
+            {"cust_idx": 5, "prod_idx": 0, "req_amt": 8500000, "tenure": 240},
+            {"cust_idx": 5, "prod_idx": 1, "req_amt": 2200000, "tenure": 60},
+            # Customer 7 (Divya)
+            {"cust_idx": 6, "prod_idx": 0, "req_amt": 4800000, "tenure": 240},
+            {"cust_idx": 6, "prod_idx": 2, "req_amt": 250000, "tenure": 24},
+            # Customer 8 (Karan)
+            {"cust_idx": 7, "prod_idx": 0, "req_amt": 5500000, "tenure": 180},
+            {"cust_idx": 7, "prod_idx": 1, "req_amt": 1100000, "tenure": 60},
         ]
 
         created_apps = []
@@ -271,7 +231,6 @@ def seed_database():
             cust = customers[plan["cust_idx"]]
             prod = products[plan["prod_idx"]]
             assigned_agent = regular_agents[(i - 1) % len(regular_agents)]
-            assigned_bank = banks[(i - 1) % len(banks)] if plan["status"] == "approved" else None
 
             # 1. Create client general details
             cgd = ClientGeneralDetail(
@@ -336,7 +295,7 @@ def seed_database():
                 db.flush()
                 personal_id = pld.id
 
-            # 3. Create Loan Application record
+            # 3. Create Loan Application record (status=None -> Pending Review)
             app = LoanApplication(
                 name=cust["name"],
                 email=cust["email"],
@@ -344,20 +303,20 @@ def seed_database():
                 uniqueCustomerId=cust["mobile"],
                 productId=prod.id,
                 agentId=assigned_agent.id,
-                bankId=assigned_bank.id if assigned_bank else None,
+                bankId=None,
                 clientGeneralDetailTableId=cgd.id,
                 homeLoanDetailId=home_id,
                 carLoanDetailId=car_id,
                 personalLoanDetailId=personal_id,
-                status=plan["status"],
-                description=plan["desc"],
+                status=None,
+                description=None,
                 isActive=True,
             )
             created_apps.append(app)
 
         db.add_all(created_apps)
         db.commit()
-        print(f"Created {len(created_apps)} loan applications across {len(customers)} unique customers.")
+        print(f"Created {len(created_apps)} loan applications (all Pending Review) across {len(customers)} unique customers.")
 
         # ── 6. Seed Demo Contact Enquiries ────────────────────────────────
         print("\n--- Seeding Demo Contact Enquiries ---")
@@ -377,7 +336,7 @@ def seed_database():
         print(f" - 7 Institutions (5 Banks + 2 NBFCs)")
         print(f" - {len(links)} Product-Bank Links")
         print(f" - 8 Agents (2 Admins, 6 Regular Agents)")
-        print(f" - 20 Loan Applications across 8 Unique Customers")
+        print(f" - {len(created_apps)} Loan Applications (All Pending Review)")
         print(f" - 3 Contact Enquiries")
         print("=======================================================\n")
 
