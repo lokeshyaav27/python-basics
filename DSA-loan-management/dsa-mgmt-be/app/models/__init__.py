@@ -3,6 +3,7 @@ from app.models.product import Product
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
+from app.models.bank_document_chunk import BankDocumentChunk
 from app.models.agent import Agent
 from app.models.client_general_detail import ClientGeneralDetail
 from app.models.home_loan_detail import HomeLoanDetail
@@ -17,6 +18,7 @@ __all__ = [
     "Bank",
     "ProductBankLink",
     "BankDocument",
+    "BankDocumentChunk",
     "Agent",
     "ClientGeneralDetail",
     "HomeLoanDetail",

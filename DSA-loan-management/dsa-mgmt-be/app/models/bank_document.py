@@ -14,3 +14,4 @@ class BankDocument(Base):
     createdAt = Column("created_at", DateTime, default=datetime.utcnow)
 
     product_link = relationship("ProductBankLink", back_populates="documents")
+    chunks = relationship("BankDocumentChunk", back_populates="document", cascade="all, delete-orphan")

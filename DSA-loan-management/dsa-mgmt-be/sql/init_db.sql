@@ -2,6 +2,8 @@
 -- DSA Loan Management Platform Database Schema (PostgreSQL)
 -- ==============================================================================
 
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE IF NOT EXISTS products (
     id serial PRIMARY KEY,
     name varchar(255) NOT NULL,
@@ -48,6 +50,21 @@ CREATE TABLE IF NOT EXISTS bank_documents (
     document_location varchar(1024) NOT NULL,
     created_at timestamp DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS bank_document_chunks (
+    id serial PRIMARY KEY,
+    bank_document_id integer REFERENCES bank_documents(id) ON DELETE CASCADE NOT NULL,
+    bank_id integer REFERENCES banks(id) ON DELETE CASCADE NOT NULL,
+    product_id integer REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+    chunk_index integer NOT NULL,
+    page_number integer,
+    chunk_text text NOT NULL,
+    embedding vector(384) NOT NULL,
+    created_at timestamp DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_bank_document_chunks_embedding 
+ON bank_document_chunks USING hnsw (embedding vector_cosine_ops);
 
 CREATE TABLE IF NOT EXISTS client_general_details (
     id serial PRIMARY KEY,

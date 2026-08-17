@@ -13,6 +13,7 @@ from io import BytesIO
 from PIL import Image
 import os
 from uuid import uuid4
+from app.services import rag_service
 
 router = APIRouter()
 
@@ -313,6 +314,19 @@ def upload_bank_product_document(
     db.commit()
     db.refresh(new_doc)
 
+    # Automatically chunk, embed, and index into pgvector table (bank_document_chunks)
+    indexed_chunks_count = 0
+    try:
+        indexed_chunks_count = rag_service.index_document(
+            db=db,
+            bank_document_id=new_doc.id,
+            bank_id=bank_id,
+            product_id=product_id,
+            file_path=storage / fname,
+        )
+    except Exception as e:
+        print(f"Warning: RAG indexing failed for {fname}: {e}")
+
     return {
         "status": "ok",
         "document": {
@@ -320,6 +334,7 @@ def upload_bank_product_document(
             "name": new_doc.documentName,
             "fileName": new_doc.documentLocation,
             "createdAt": new_doc.createdAt.isoformat() if new_doc.createdAt else None,
+            "indexedChunks": indexed_chunks_count,
         }
     }
 
