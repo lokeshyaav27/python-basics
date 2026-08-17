@@ -2,183 +2,119 @@
 
 ## 1. Project Overview
 
-A FinTech platform for a DSA (Direct Selling Agent) business where agents can manage customers and customers can independently submit loan requirements and explore loan products from different banks.
+A comprehensive FinTech platform for a Direct Selling Agent (DSA) loan distribution business. The platform connects loan seekers (Customers) with financial institutions (Banks & NBFCs) through specialized loan agents and administrators.
 
-The first phase will focus on the complete non-AI business application. A second phase will add **RAG, MCP and AI** capabilities.
+- **Phase 1 (Current)**: Complete deterministic FinTech loan origination platform, multi-bank management, DSA commission configuration, document management, multi-step application journey, agent review workflows, and customer self-service portal.
+- **Phase 2 (Future)**: Intelligent assistance with **RAG (Retrieval-Augmented Generation)** across bank policy documents, **MCP tools**, and conversational AI for automated loan eligibility and comparison.
 
-## 2. Roles
+---
 
-- **Admin**
-- **Agent**
-- **Customer**
+## 2. User Roles
 
-## 3. Pages / Screens
+1. **Administrator (Admin)**: Full operational control over products, lending partners, partner schemes/documents, agents, customer applications, and payout commission rates.
+2. **DSA Loan Agent**: Operational officer responsible for reviewing assigned customer loan applications, evaluating eligibility, executing one-time decisions (Approve with Sanctioning Bank / Reject with Reason), and editing applications when necessary.
+3. **Customer / Loan Applicant**: Borrows and tracks loan applications, applies via public multi-step form, and manages loan applications via mobile OTP login.
 
-### Auth Pages
-- **Login Page**
-  - Agent and Admin use the same login page.
-  - If the logged-in user is an Admin, show a popup to select **Admin** or **Agent** role.
-  - If the logged-in user is an Agent and is logging in for the first time, show a **Reset Password** popup.
-  - After password reset, the Agent will be logged out.
+---
 
-### Admin Pages
-- Add / Edit / Delete / List Product
-  - Examples: Home Loan, Car Loan, Personal Loan
-- Add / Edit / Delete / List Bank
-  - Add bank documents for loans
-  - Configure DSA commission as per bank
-- Add / Edit / Delete / List Agents
-  - Reset / Set password for Agent
-- Add / Edit / Delete / List Customer
+## 3. Application Pages & Features
 
-### Agent Pages
-- **Apply for a Loan on Behalf of Customer**
-  - Customer will be created.
-  - Fields: Email, Mobile, Name
-- **Customer List**
-- **Customer Detail**
-  - Opened when an Agent clicks a customer.
+### A. Public Pages
+1. **Home Page (`/`)**:
+   - Modern hero section with instant call-to-actions.
+   - **Product Carousel / Slider**: Interactive showcase of loan offerings (Home Loan, Car Loan, Personal Loan) with key features and "+ Apply Now" redirection.
+   - **Our Lending Partners Section**: Highlights top 5 partner banks/NBFCs with classification badges (Nationalized, Private, NBFC) and quick partner count.
+   - **"See All Partners"**: Modal and dedicated Partners Directory (`/partners`) showcasing all participating banks, NBFCs, and interest rate highlights.
+   - **Customer Enquiry Form**: Direct lead generation with instant validation.
+2. **Partners Directory (`/partners`)**:
+   - Full grid of lending partners with category filter tabs (*All*, *Nationalized Banks*, *Private Banks*, *NBFC Institutions*), search by bank name, and direct product offerings.
+3. **Public Apply Loan (`/apply`)**:
+   - Quick Lead Generation (`Name`, `Email`, `Mobile`, `Selected Product`).
+   - OTP verification (Demo mode uses static OTP `123456`).
+   - Redirects to Customer Portal with pre-filled lead context.
 
-### Public Pages
-#### Home Page
-- DSA details
-- Apply Loan button
+---
 
-#### Apply Loan Page
-- Email
-- Mobile
-- Name
-- OTP
+### B. Customer Portal (`/customer`)
+1. **Customer Login (`/customer/login`)**:
+   - Mobile-based login with instant OTP authentication.
+2. **Customer Dashboard & Loan List (`/customer/loans`)**:
+   - Overview stats (Total applications, Approved, In Review, Rejected).
+   - Filter by status and product.
+   - **View Application Details**: Full comprehensive modal displaying:
+     - 3 Customer Contact fields
+     - 11 Personal & Financial profile fields
+     - 11/4/4 Product-specific parameters (Home/Car/Personal)
+     - Decision status, Sanctioned Bank, Remarks, or Rejection Reason.
+     - Direct Advisor contact card with phone link.
+   - **Live Inline Edit**: Allows updating customer profile and loan requirements while status is pending (`null`).
+3. **Multi-Step Loan Application (`/customer/apply` & `/apply`)**:
+   - Step 1: Basic Profile & Employment Info (11 financial parameters).
+   - Step 2: Product Specific Requirements (Property details for Home Loan, Car details for Car Loan, Purpose/Amount for Personal Loan).
+   - Step 3: Bank preference & submission.
 
-Once OTP is successfully entered:
+---
 
-```text
-Public Apply Loan
-       ↓
-Lead Created
-       ↓
-Customer Portal
-       ↓
-Multi-step Loan Requirement Form
+### C. Agent Portal (`/agent`)
+1. **Agent Login (`/login`)**:
+   - Email & password authentication with JWT tokens.
+   - First-time login triggers mandatory password reset modal.
+2. **Loan Applications Management (`/agent/loan-applications`)**:
+   - View assigned loan applications with applicant details, product badge, requested loan amount, and CIBIL score.
+   - **Comprehensive View & Edit Modal**:
+     - View all 11 financial + 11/4/4 product fields.
+     - Edit applicant data if clarification is provided while pending.
+   - **One-Time Irreversible Decision**:
+     - **Approve Modal**: Select Sanctioning Bank from mapped partners offering this product + enter sanction remarks.
+     - **Reject Modal**: Enter structured rejection reason.
+     - *Once decided, status cannot be reverted or altered.*
+
+---
+
+### D. Admin Portal (`/admin`)
+1. **Admin Dashboard (`/admin/dashboard`)**:
+   - High-level loan distribution metrics, volume metrics, and recent activity.
+2. **Product Management (`/admin/products`)**:
+   - Add, edit, delete, and toggle status of loan products (Home, Car, Personal).
+3. **Bank & Document Management (`/admin/banks`)**:
+   - Add/Edit banks with classification flags (Nationalized, Private, NBFC) and logo uploader.
+   - **Link Products Modal**:
+     - Map products offered by the bank.
+     - Configure custom DSA payout commission percentage.
+     - **Multi-Document Manager**: Attach multiple scheme/policy documents per product (e.g. "Policy Circular 2026.pdf", "ROI Rate Sheet.pdf", "KYC Norms.docx") with custom display titles and individual deletion.
+   - **Bank Profile View Modal**:
+     - Displays bank credentials, mapped products, commission rates, and all attached document links.
+4. **Agent Management (`/admin/agents`)**:
+   - Manage staff agents, assign roles (Admin vs Agent), upload agent photos, and reset temporary passwords.
+5. **Loan Applications (`/admin/loan-applications`)**:
+   - Global view of all applications across all agents and branches with complete detail view and live edit controls.
+
+---
+
+## 4. Application Status Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> PendingReview : Customer submits application (status = null)
+    
+    PendingReview --> PendingReview : Applicant / Agent updates details
+    
+    PendingReview --> Approved : Agent approves (Selects Bank & Remarks)
+    PendingReview --> Rejected : Agent rejects (Enters Rejection Reason)
+    
+    Approved --> [*] : Locked & Irreversible
+    Rejected --> [*] : Locked & Irreversible
 ```
 
-The customer will then submit `loan-requirement-details` through a multi-step form.
+---
 
-### Customer Login
-- Login using mobile number and static OTP
+## 5. Phase 2: AI & RAG Capabilities
 
-### Customer Pages
-- Apply Loan
-  - `loan-requirement-details` through a multi-step form
-- List of Loans
-- Loan Details
-  - Opened when the customer clicks a loan
-
-### Second Phase — RAG, MCP and AI
-#### Agent
-- Chat with AI
-- Loan Comparison
-- Check Eligibility
-
-#### Customer
-- Loan Comparison
-- Check Eligibility
-
-## 4. High-Level Flow
-
-### Customer Flow
-
-```text
-Public Home
-    ↓
-Apply Loan
-    ↓
-Email + Mobile + Name + OTP
-    ↓
-Lead Created
-    ↓
-Customer Portal
-    ↓
-Loan Requirement Multi-step Form
-    ↓
-Loan Created
-    ↓
-Customer Loan List
-    ↓
-Loan Details
-```
-
-### Agent Flow
-
-```text
-Agent Login
-    ↓
-Customer List
-    ↓
-Customer Details
-    ↓
-Apply Loan on Behalf of Customer
-    ↓
-Customer Created
-    ↓
-Loan Requirement
-    ↓
-Loan Created
-```
-
-### Admin Flow
-
-```text
-Admin Login
-    ↓
-Select Admin / Agent Role
-    ↓
-Admin Dashboard
-    ↓
-Manage Products
-Manage Banks
-Manage Bank Documents
-Manage Agents
-Manage Customers
-```
-
-## 5. AI Phase Flow
-
-```text
-Customer / Agent
-       ↓
-Loan / Customer Information
-       ↓
-Eligibility + Loan Comparison
-       ↓
-RAG → Bank Policy / Loan Documents
-       ↓
-MCP → Application / Customer / Bank Data
-       ↓
-AI / LLM
-       ↓
-Recommendation / Explanation
-```
-
-The deterministic application and database remain the foundation. AI is added as a second phase on top of the existing application.
-
-
-
-## 7. Finalized Field Notes
-
-- Product image is optional / nullable.
-- Bank logo is optional / nullable.
-- Agent `tempPassword` can be null.
-- Agent `tempPasswordReset` is boolean.
-- Customer `agentId` can be null.
-- Customer `LoanId` can be null.
-- Customer status values:
-  - `not-started`
-  - `inprogress`
-  - `rejected`
-  - `forwardedToBank`
-- Car loan `Vehicle Age` is nullable.
-- Home loan uses `PropertyUsageType` for:
-  - commercial
-  - semi-commercial
-  - residential
+1. **RAG Knowledge Base**:
+   - Indexes all `bank_documents` (PDF/DOCX) using embeddings in PostgreSQL (`pgvector`).
+   - Retrieves real-time interest rates, LTV norms, FOIR limits, and property eligibility rules.
+2. **Agent AI Copilot**:
+   - Instant query assistance: *"Which bank offers the best ROI for a self-employed applicant with a 720 CIBIL score for a 75L Home Loan?"*
+   - Auto-matches best lender based on customer financial profile.
+3. **Customer AI Assistant**:
+   - Conversational pre-qualification and step-by-step guidance on loan documentation.
