@@ -47,6 +47,7 @@ app.include_router(api_routers.contact.router, prefix="/api/contact", tags=["con
 app.include_router(api_routers.rag.router, prefix="/api/rag", tags=["rag"])
 app.include_router(api_routers.eligibility.router, prefix="/api/eligibility", tags=["eligibility"])
 app.include_router(api_routers.comparison.router, prefix="/api/comparison", tags=["comparison"])
+app.include_router(api_routers.mcp_tools.router, prefix="/api/mcp", tags=["mcp"])
 
 
 @app.on_event("startup")
