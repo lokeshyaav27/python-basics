@@ -12,7 +12,18 @@ import {
   BankProductLink,
   BankDocumentItem,
 } from '../../services/banks'
-import { message } from 'antd'
+import { message, Tooltip } from 'antd'
+import {
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  LinkOutlined,
+  SaveOutlined,
+  UploadOutlined,
+  FileTextOutlined,
+  CloseOutlined,
+} from '@ant-design/icons'
 
 type Bank = {
   id: number
@@ -209,9 +220,9 @@ export default function BanksPage() {
         </div>
         <button
           onClick={openAdd}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition"
         >
-          + Add Bank
+          <PlusOutlined /> Add Bank
         </button>
       </div>
 
@@ -267,32 +278,43 @@ export default function BanksPage() {
 
                   {/* Actions Column */}
                   <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openLinkProducts(b)}
-                        className="rounded px-2.5 py-1 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1"
-                        title="Link loan products & policy documents"
-                      >
-                        <span>🔗</span> Link Products
-                      </button>
-                      <button
-                        onClick={() => openView(b)}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => openEdit(b)}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete({ open: true, id: b.id })}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
-                      >
-                        Delete
-                      </button>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip title="Link Products & Documents">
+                        <button
+                          onClick={() => openLinkProducts(b)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Link Products"
+                        >
+                          <LinkOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="View Bank Details">
+                        <button
+                          onClick={() => openView(b)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="View Details"
+                        >
+                          <EyeOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Edit Bank">
+                        <button
+                          onClick={() => openEdit(b)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Edit Bank"
+                        >
+                          <EditOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Delete Bank">
+                        <button
+                          onClick={() => setConfirmDelete({ open: true, id: b.id })}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Delete Bank"
+                        >
+                          <DeleteOutlined />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>
@@ -995,10 +1017,10 @@ function ProductLinkRow({
                     type="button"
                     onClick={() => handleDeleteDocument(doc.id, doc.name)}
                     disabled={deletingDocId === doc.id}
-                    className="text-slate-400 hover:text-red-600 text-xs px-1 font-bold leading-none transition"
+                    className="text-slate-400 hover:text-red-600 text-xs p-1 rounded hover:bg-red-50 transition"
                     title="Delete document"
                   >
-                    {deletingDocId === doc.id ? '…' : '✕'}
+                    {deletingDocId === doc.id ? '…' : <CloseOutlined className="text-[11px]" />}
                   </button>
                 </div>
               ))}
@@ -1014,9 +1036,9 @@ function ProductLinkRow({
                 <button
                   type="button"
                   onClick={() => setShowDocUpload(true)}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline mt-1"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline mt-1"
                 >
-                  <span>+</span> Upload New Document
+                  <PlusOutlined className="text-[10px]" /> Upload New Document
                 </button>
               ) : (
                 <form
@@ -1064,9 +1086,9 @@ function ProductLinkRow({
                     <button
                       type="submit"
                       disabled={isUploadingDoc || !uploadFile}
-                      className="rounded-md bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
-                      {isUploadingDoc ? 'Uploading…' : 'Upload'}
+                      <UploadOutlined /> {isUploadingDoc ? 'Uploading…' : 'Upload'}
                     </button>
                   </div>
                 </form>
@@ -1081,9 +1103,9 @@ function ProductLinkRow({
         <button
           onClick={handleSaveLink}
           disabled={isSaving}
-          className="rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition"
         >
-          {isSaving ? 'Saving…' : 'Save'}
+          <SaveOutlined /> {isSaving ? 'Saving…' : 'Save'}
         </button>
       </td>
     </tr>

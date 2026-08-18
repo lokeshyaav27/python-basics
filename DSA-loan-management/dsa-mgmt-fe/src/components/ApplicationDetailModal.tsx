@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { message } from 'antd'
+import { EditOutlined, CloseOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   LoanApplication,
   updateLoanApplication,
@@ -188,15 +189,15 @@ export default function ApplicationDetailModal({
                 onClick={() => setIsEditing(true)}
                 className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition flex items-center gap-1.5"
               >
-                <span>✏️</span> Edit Details
+                <EditOutlined /> Edit Details
               </button>
             )}
 
             <button
               onClick={onClose}
-              className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 text-xl leading-none transition"
+              className="rounded-xl p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 text-sm flex items-center justify-center transition"
             >
-              ×
+              <CloseOutlined />
             </button>
           </div>
         </div>
@@ -1016,9 +1017,9 @@ export default function ApplicationDetailModal({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition"
                 >
-                  {isSaving ? 'Saving Changes…' : '💾 Save Changes'}
+                  <SaveOutlined /> {isSaving ? 'Saving Changes…' : 'Save Changes'}
                 </button>
               </div>
             )}

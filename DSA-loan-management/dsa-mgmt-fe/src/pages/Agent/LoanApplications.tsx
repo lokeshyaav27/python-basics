@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchLoanApplications,
@@ -7,7 +8,16 @@ import {
 } from '../../services/loanApplications'
 import { fetchBanks } from '../../services/banks'
 import { useAuth } from '../../auth/AuthProvider'
-import { message } from 'antd'
+import { message, Tooltip } from 'antd'
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  EyeOutlined,
+  ExclamationCircleOutlined,
+  AuditOutlined,
+  BarChartOutlined,
+  RobotOutlined,
+} from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
@@ -120,6 +130,7 @@ export function checkApplicationCompleteness(app: any): { isComplete: boolean; m
 export default function AgentLoanApplicationsPage() {
   const qc = useQueryClient()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [activeApplication, setActiveApplication] = useState<LoanApplication | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -305,65 +316,94 @@ export default function AgentLoanApplicationsPage() {
                     <StatusBadge status={c.status} bankName={c.bankName} />
                   </td>
                   <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {c.status === 'approved' || c.status === 'rejected' ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Check Eligibility Button */}
+                      <Tooltip title="Check Loan Eligibility">
                         <button
-                          onClick={() => openView(c)}
-                          className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-sm"
+                          onClick={() => navigate(`/agent/check-eligibility?appId=${c.id}`)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Check Eligibility"
                         >
-                          View Details
+                          <AuditOutlined />
                         </button>
-                      ) : (
+                      </Tooltip>
+
+                      {/* Loan Comparison Button */}
+                      <Tooltip title="Loan Comparison Matrix">
+                        <button
+                          onClick={() => navigate(`/agent/loan-comparison?appId=${c.id}`)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Loan Comparison"
+                        >
+                          <BarChartOutlined />
+                        </button>
+                      </Tooltip>
+
+                      {/* Chat with AI Button */}
+                      <Tooltip title="Chat with AI Assistant">
+                        <button
+                          onClick={() => navigate(`/agent/chat-with-ai?appId=${c.id}`)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Chat with AI"
+                        >
+                          <RobotOutlined />
+                        </button>
+                      </Tooltip>
+
+                      {c.status !== 'approved' && c.status !== 'rejected' && (
                         <>
                           {/* Approve & Forward Button */}
                           {(() => {
                             const comp = checkApplicationCompleteness(c)
                             if (comp.isComplete) {
                               return (
-                                <button
-                                  onClick={() => openApprove(c)}
-                                  className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-sm flex items-center gap-1"
-                                  title="Approve & Forward application to partner bank"
-                                >
-                                  <span>✅</span> Approve & Forward
-                                </button>
+                                <Tooltip title="Approve & Forward to Bank">
+                                  <button
+                                    onClick={() => openApprove(c)}
+                                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                                    aria-label="Approve & Forward"
+                                  >
+                                    <CheckCircleOutlined />
+                                  </button>
+                                </Tooltip>
                               )
                             }
                             return (
-                              <div className="relative group inline-block">
+                              <Tooltip title={comp.message}>
                                 <button
                                   disabled
-                                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-400 border border-slate-200 cursor-not-allowed flex items-center gap-1 opacity-60"
-                                  title={comp.message}
+                                  className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 text-slate-400 border border-slate-200/70 text-sm cursor-not-allowed opacity-60 shadow-2xs"
+                                  aria-label="Cannot Approve"
                                 >
-                                  <span>⚠️</span> Approve
+                                  <ExclamationCircleOutlined />
                                 </button>
-                                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-64 rounded-xl bg-slate-900 px-3 py-2 text-center text-xs font-medium text-white shadow-2xl group-hover:block z-30 leading-tight">
-                                  {comp.message}
-                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
-                                </div>
-                              </div>
+                              </Tooltip>
                             )
                           })()}
 
                           {/* Reject Button */}
-                          <button
-                            onClick={() => openReject(c)}
-                            className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-sm flex items-center gap-1"
-                            title="Reject loan application"
-                          >
-                            <span>❌</span> Reject
-                          </button>
-
-                          {/* View Details Button */}
-                          <button
-                            onClick={() => openView(c)}
-                            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition shadow-sm"
-                          >
-                            View
-                          </button>
+                          <Tooltip title="Reject Application">
+                            <button
+                              onClick={() => openReject(c)}
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                              aria-label="Reject Application"
+                            >
+                              <CloseCircleOutlined />
+                            </button>
+                          </Tooltip>
                         </>
                       )}
+
+                      {/* View Details Button */}
+                      <Tooltip title="View Application Details">
+                        <button
+                          onClick={() => openView(c)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="View Details"
+                        >
+                          <EyeOutlined />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

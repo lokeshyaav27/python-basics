@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchAgents, createAgent, updateAgent, deleteAgent } from '../../services/agents'
-import { message } from 'antd'
+import { message, Tooltip } from 'antd'
+import { EyeOutlined, EditOutlined, DeleteOutlined, UserAddOutlined } from '@ant-design/icons'
 
 type Agent = {
   id: number
@@ -139,9 +140,9 @@ export default function AgentsPage() {
         </div>
         <button
           onClick={openAdd}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition"
         >
-          + Add Agent
+          <UserAddOutlined /> Add Agent
         </button>
       </div>
 
@@ -180,10 +181,34 @@ export default function AgentsPage() {
                     <span className={badgeClass(a.tempPasswordReset)}>{a.tempPasswordReset ? 'Done' : 'Pending'}</span>
                   </td>
                   <td className="p-3">
-                    <div className="flex gap-2">
-                      <button onClick={() => openView(a)} className="rounded px-3 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition">View</button>
-                      <button onClick={() => openEdit(a)} className="rounded px-3 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition">Edit</button>
-                      <button onClick={() => setConfirmDelete({ open: true, id: a.id })} className="rounded px-3 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition">Delete</button>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip title="View Agent Details">
+                        <button
+                          onClick={() => openView(a)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="View Details"
+                        >
+                          <EyeOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Edit Agent">
+                        <button
+                          onClick={() => openEdit(a)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Edit Agent"
+                        >
+                          <EditOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Delete Agent">
+                        <button
+                          onClick={() => setConfirmDelete({ open: true, id: a.id })}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Delete Agent"
+                        >
+                          <DeleteOutlined />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

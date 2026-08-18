@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/products'
-import { message } from 'antd'
+import { message, Tooltip } from 'antd'
+import { EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 
 type Product = {
   id: number
@@ -149,7 +150,9 @@ export default function ProductsPage() {
           <p className="text-sm text-slate-600">Manage loan products</p>
         </div>
         <div>
-          <button onClick={openAdd} className="rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700">Add Product</button>
+          <button onClick={openAdd} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm text-white font-bold hover:bg-blue-700 shadow-sm transition">
+            <PlusOutlined /> Add Product
+          </button>
         </div>
       </div>
 
@@ -173,14 +176,38 @@ export default function ProductsPage() {
               </tr>
             ) : (
               products.map((p) => (
-                <tr key={p.id} className="border-t">
-                  <td className="p-3 text-sm text-slate-700">{p.name}</td>
-                  <td className="p-3 text-sm text-slate-700">{p.description}</td>
+                <tr key={p.id} className="border-t hover:bg-slate-50/70 transition">
+                  <td className="p-3 text-sm font-semibold text-slate-800">{p.name}</td>
+                  <td className="p-3 text-sm text-slate-600">{p.description}</td>
                   <td className="p-3 text-sm text-slate-700">
-                    <div className="flex gap-2">
-                      <button onClick={() => openView(p)} className="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200">View</button>
-                      <button onClick={() => openEdit(p)} className="px-3 py-1 rounded bg-yellow-100 hover:bg-yellow-200">Edit</button>
-                      <button onClick={() => setConfirmDelete({ open: true, id: p.id })} className="px-3 py-1 rounded bg-red-100 hover:bg-red-200">Delete</button>
+                    <div className="flex items-center gap-1.5">
+                      <Tooltip title="View Details">
+                        <button
+                          onClick={() => openView(p)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="View Details"
+                        >
+                          <EyeOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Edit Product">
+                        <button
+                          onClick={() => openEdit(p)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Edit Product"
+                        >
+                          <EditOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Delete Product">
+                        <button
+                          onClick={() => setConfirmDelete({ open: true, id: p.id })}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Delete Product"
+                        >
+                          <DeleteOutlined />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>

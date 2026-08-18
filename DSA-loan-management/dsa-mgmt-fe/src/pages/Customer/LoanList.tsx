@@ -3,6 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchCustomerLoanApplications, LoanApplication } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
+import { message, Tooltip } from 'antd'
+import {
+  EyeOutlined,
+  PlusOutlined,
+  AuditOutlined,
+  BarChartOutlined,
+  RobotOutlined,
+} from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
@@ -84,8 +92,9 @@ export default function CustomerLoanList() {
             to="/apply-for-loan"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition active:scale-95"
           >
-            <span>+</span> Apply for New Loan
+            <PlusOutlined /> Apply for New Loan
           </Link>
+
         </div>
 
         {/* Quick Stat Counters */}
@@ -256,12 +265,51 @@ export default function CustomerLoanList() {
                   <span className="text-[11px] text-slate-400">
                     Status: <span className="capitalize font-medium text-slate-600">{loan.status || 'Pending Review'}</span>
                   </span>
-                  <button
-                    onClick={() => openDetails(loan)}
-                    className="rounded-lg bg-blue-50 px-3.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition border border-blue-200 shadow-2xs"
-                  >
-                    View Details →
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {/* Check Eligibility Button */}
+                    <Tooltip title="Check Loan Eligibility">
+                      <Link
+                        to={`/customer/check-eligibility?appId=${loan.id}`}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                        aria-label="Check Eligibility"
+                      >
+                        <AuditOutlined />
+                      </Link>
+                    </Tooltip>
+
+                    {/* Loan Comparison Button */}
+                    <Tooltip title="Loan Comparison Matrix">
+                      <Link
+                        to={`/customer/loan-comparison?appId=${loan.id}`}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                        aria-label="Loan Comparison"
+                      >
+                        <BarChartOutlined />
+                      </Link>
+                    </Tooltip>
+
+                    {/* Chat with AI Button */}
+                    <Tooltip title="Chat with AI Assistant">
+                      <Link
+                        to={`/customer/chat-with-ai?appId=${loan.id}`}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                        aria-label="Chat with AI"
+                      >
+                        <RobotOutlined />
+                      </Link>
+                    </Tooltip>
+
+                    {/* View Details Button */}
+                    <Tooltip title="View Full Application Details">
+                      <button
+                        onClick={() => openDetails(loan)}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                        aria-label="View Details"
+                      >
+                        <EyeOutlined />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             ))}

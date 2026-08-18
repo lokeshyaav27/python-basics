@@ -22,6 +22,9 @@ import AgentLoanApplicationsPage from './pages/Agent/LoanApplications'
 import CustomerPortal from './pages/Customer/Portal'
 import CustomerLoanList from './pages/Customer/LoanList'
 import LoanDetail from './pages/Customer/LoanDetail'
+import CheckEligibility from './pages/Shared/CheckEligibility'
+import LoanComparison from './pages/Shared/LoanComparison'
+import ChatWithAI from './pages/Shared/ChatWithAI'
 import NotFound from './pages/NotFound'
 import { ProtectedRoute, useAuth } from './auth/AuthProvider'
 import ProtectedLayout from './components/ProtectedLayout'
@@ -164,6 +167,36 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/agent/check-eligibility"
+              element={
+                <ProtectedRoute role={'agent'}>
+                  <ProtectedLayout role={'agent'}>
+                    <CheckEligibility />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/agent/loan-comparison"
+              element={
+                <ProtectedRoute role={'agent'}>
+                  <ProtectedLayout role={'agent'}>
+                    <LoanComparison />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/agent/chat-with-ai"
+              element={
+                <ProtectedRoute role={'agent'}>
+                  <ProtectedLayout role={'agent'}>
+                    <ChatWithAI />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Customer routes */}
             <Route
@@ -196,6 +229,42 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/customer/check-eligibility"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <CheckEligibility />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/loan-comparison"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <LoanComparison />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/chat-with-ai"
+              element={
+                <ProtectedRoute role={'customer'}>
+                  <ProtectedLayout role={'customer'}>
+                    <ChatWithAI />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Direct fallback routes */}
+            <Route path="/check-eligibility" element={<CheckEligibility />} />
+            <Route path="/loan-comparison" element={<LoanComparison />} />
+            <Route path="/chat-with-ai" element={<ChatWithAI />} />
+
 
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<Navigate to="/404" replace />} />

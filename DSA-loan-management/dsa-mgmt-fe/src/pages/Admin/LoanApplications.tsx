@@ -10,7 +10,15 @@ import {
 } from '../../services/loanApplications'
 import { fetchAgents } from '../../services/agents'
 import { fetchProducts } from '../../services/products'
-import { message } from 'antd'
+import { message, Tooltip } from 'antd'
+import {
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  UserSwitchOutlined,
+  UserAddOutlined,
+} from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
 const BLANK_FORM = { name: '', email: '', mobile: '', productId: null as number | null }
@@ -206,9 +214,9 @@ export default function LoanApplicationsPage() {
         </div>
         <button
           onClick={openAdd}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition"
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition"
         >
-          + Add Application
+          <PlusOutlined /> Add Application
         </button>
       </div>
 
@@ -290,31 +298,42 @@ export default function LoanApplicationsPage() {
                   {/* Actions */}
                   <td className="p-3">
                     <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => openAssign(c)}
-                        className="rounded px-2.5 py-1 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
-                        title="Assign or change DSA agent"
-                      >
-                        {c.agentId ? 'Change Agent' : 'Assign Agent'}
-                      </button>
-                      <button
-                        onClick={() => openView(c)}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => openEdit(c)}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-yellow-100 hover:bg-yellow-200 text-yellow-800 transition"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete({ open: true, id: c.id })}
-                        className="rounded px-2.5 py-1 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-700 transition"
-                      >
-                        Delete
-                      </button>
+                      <Tooltip title={c.agentId ? 'Change Assigned Agent' : 'Assign DSA Agent'}>
+                        <button
+                          onClick={() => openAssign(c)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label={c.agentId ? 'Change Agent' : 'Assign Agent'}
+                        >
+                          {c.agentId ? <UserSwitchOutlined /> : <UserAddOutlined />}
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="View Application Details">
+                        <button
+                          onClick={() => openView(c)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="View Details"
+                        >
+                          <EyeOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Edit Application">
+                        <button
+                          onClick={() => openEdit(c)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Edit Application"
+                        >
+                          <EditOutlined />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Delete Application">
+                        <button
+                          onClick={() => setConfirmDelete({ open: true, id: c.id })}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
+                          aria-label="Delete Application"
+                        >
+                          <DeleteOutlined />
+                        </button>
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>
