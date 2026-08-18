@@ -157,15 +157,15 @@ def seed_database():
         print("\n--- Seeding 8 Agents (2 Admins + 6 Regular Agents) ---")
         agents_data = [
             # Admins
-            {"name": "Lokesh Admin", "email": "lokesh_dsa_admin@yopmail.com", "mobile": "1111111111", "password": "Lokesh@123", "is_admin": True, "photo": "user-01.png"},
-            {"name": "Rajesh Sharma (Admin)", "email": "rajesh.admin@dsafinance.com", "mobile": "9810011223", "password": "Admin@123", "is_admin": True, "photo": "user-02.png"},
+            {"name": "Lokesh Admin", "email": "lokesh_dsa_admin@yopmail.com", "mobile": "1111111111", "password": "azilen@123", "is_admin": True, "photo": "user-01.png"},
+            {"name": "Rajesh Sharma (Admin)", "email": "rajesh.admin@dsafinance.com", "mobile": "9810011223", "password": "azilen@123", "is_admin": True, "photo": "user-02.png"},
             # Regular Agents
-            {"name": "Lokesh Agent", "email": "lokesh_agent@yopmail.com", "mobile": "2222222222", "password": "Lokesh@123", "is_admin": False, "photo": "user-03.png"},
-            {"name": "Priya Verma", "email": "priya.verma@dsafinance.com", "mobile": "9876500001", "password": "Agent@123", "is_admin": False, "photo": "user-04.png"},
-            {"name": "Amitabh Sen", "email": "amitabh.sen@dsafinance.com", "mobile": "9876500002", "password": "Agent@123", "is_admin": False, "photo": "user-05.png"},
-            {"name": "Sneha Kulkarni", "email": "sneha.k@dsafinance.com", "mobile": "9876500003", "password": "Agent@123", "is_admin": False, "photo": "user-06.png"},
-            {"name": "Vikram Malhotra", "email": "vikram.m@dsafinance.com", "mobile": "9876500004", "password": "Agent@123", "is_admin": False, "photo": "user-07.png"},
-            {"name": "Ananya Roy", "email": "ananya.roy@dsafinance.com", "mobile": "9876500005", "password": "Agent@123", "is_admin": False, "photo": "user-08.png"},
+            {"name": "Lokesh Agent", "email": "lokesh_agent@yopmail.com", "mobile": "2222222222", "password": "azilen@123", "is_admin": False, "photo": "user-03.png"},
+            {"name": "Priya Verma", "email": "priya.verma@dsafinance.com", "mobile": "9876500001", "password": "azilen@123", "is_admin": False, "photo": "user-04.png"},
+            {"name": "Amitabh Sen", "email": "amitabh.sen@dsafinance.com", "mobile": "9876500002", "password": "azilen@123", "is_admin": False, "photo": "user-05.png"},
+            {"name": "Sneha Kulkarni", "email": "sneha.k@dsafinance.com", "mobile": "9876500003", "password": "azilen@123", "is_admin": False, "photo": "user-06.png"},
+            {"name": "Vikram Malhotra", "email": "vikram.m@dsafinance.com", "mobile": "9876500004", "password": "azilen@123", "is_admin": False, "photo": "user-07.png"},
+            {"name": "Ananya Roy", "email": "ananya.roy@dsafinance.com", "mobile": "9876500005", "password": "azilen@123", "is_admin": False, "photo": "user-08.png"},
         ]
 
         created_agents = []
