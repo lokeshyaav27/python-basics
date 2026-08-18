@@ -565,8 +565,11 @@ def search_bank_documents(
     # Format into ready-to-use LLM prompt context
     context_blocks = []
     for idx, m in enumerate(matches, 1):
-        doc_header = f"[{idx}] Source: {m['bankName']} — {m['documentName']} (Page {m['pageNumber'] or 'N/A'}) [Similarity: {m['similarityScore']}]"
-        context_blocks.append(f"{doc_header}\n{m['chunkText']}")
+        text_snippet = m['chunkText']
+        if len(text_snippet) > 400:
+            text_snippet = text_snippet[:400] + "..."
+        doc_header = f"[{idx}] {m['bankName']} - {m['documentName']} (Page {m['pageNumber'] or '1'})"
+        context_blocks.append(f"{doc_header}\n{text_snippet}")
 
     llm_context = "\n\n---\n\n".join(context_blocks) if context_blocks else "No relevant bank policy document excerpts found."
 
@@ -622,7 +625,7 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
             "type": "object",
             "properties": {
                 "agent_id": {"type": "integer", "description": "Agent ID to query loans for."},
-                "status_filter": {"type": "string", "description": "Optional status filter (e.g. 'Pending Review', 'approved')."}
+                "status_filter": {"type": ["string", "null"], "description": "Optional status filter (e.g. 'Pending Review', 'approved')."}
             },
             "required": ["agent_id"]
         }
@@ -644,7 +647,7 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
         "parameters": {
             "type": "object",
             "properties": {
-                "is_active": {"type": "boolean", "description": "Filter by active status (default: true)."}
+                "is_active": {"type": ["boolean", "null"], "description": "Filter by active status (default: true)."}
             }
         }
     },
@@ -665,8 +668,8 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
         "parameters": {
             "type": "object",
             "properties": {
-                "product_id": {"type": "integer", "description": "Optional product ID filter."},
-                "is_active": {"type": "boolean", "description": "Filter by active status (default: true)."}
+                "product_id": {"type": ["integer", "null"], "description": "Optional product ID filter."},
+                "is_active": {"type": ["boolean", "null"], "description": "Filter by active status (default: true)."}
             }
         }
     },
@@ -687,7 +690,7 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
         "parameters": {
             "type": "object",
             "properties": {
-                "customer_identifier": {"type": "string", "description": "Optional customer ID, mobile, or name filter."}
+                "customer_identifier": {"type": ["string", "null"], "description": "Optional customer ID, mobile, or name filter."}
             }
         }
     },
@@ -698,9 +701,9 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search query or natural language policy question."},
-                "bank_id": {"type": "integer", "description": "Optional bank ID to filter search."},
-                "product_id": {"type": "integer", "description": "Optional product ID to filter search."},
-                "top_k": {"type": "integer", "description": "Number of relevant policy chunks to return (default: 5)."}
+                "bank_id": {"type": ["integer", "null"], "description": "Optional bank ID to filter search."},
+                "product_id": {"type": ["integer", "null"], "description": "Optional product ID to filter search."},
+                "top_k": {"type": ["integer", "null"], "description": "Number of relevant policy chunks to return (default: 5)."}
             },
             "required": ["query"]
         }

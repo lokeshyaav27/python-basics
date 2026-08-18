@@ -6,6 +6,7 @@ import {
   fetchCustomerLoanApplications,
   LoanApplication,
 } from '../../services/loanApplications'
+import { sendChatMessage, ToolExecutionAudit } from '../../services/chat'
 import { useAuth } from '../../auth/AuthProvider'
 import {
   RobotOutlined,
@@ -13,10 +14,15 @@ import {
   SendOutlined,
   UserOutlined,
   FileTextOutlined,
-  TagOutlined,
-  SparklesOutlined,
+  LoadingOutlined,
+  ToolOutlined,
+  FileSearchOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DownOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
-import { Tooltip } from 'antd'
+import { Tooltip, message as antdMessage } from 'antd'
 
 interface MentionItem {
   id: string
@@ -27,11 +33,13 @@ interface MentionItem {
   badge: string
 }
 
-interface ChatMessage {
+interface DisplayChatMessage {
   id: string
   sender: 'user' | 'assistant'
   content: string
   timestamp: string
+  toolExecutions?: ToolExecutionAudit[]
+  referencedDocs?: string[]
 }
 
 export default function ChatWithAI() {
@@ -39,9 +47,11 @@ export default function ChatWithAI() {
   const { user } = useAuth()
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
-
   const [inputVal, setInputVal] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [isLoading, setIsLoading] = useState(false)
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({})
+
+  const [messages, setMessages] = useState<DisplayChatMessage[]>([
     {
       id: 'welcome-1',
       sender: 'assistant',
@@ -114,7 +124,7 @@ export default function ChatWithAI() {
   // Scroll to bottom on new message
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isLoading])
 
   // Filtered mentions based on search query
   const filteredMentions = mentionItems.filter((item) => {
@@ -198,31 +208,79 @@ export default function ChatWithAI() {
     }
   }
 
-  const handleSendMessage = () => {
-    const trimmed = inputVal.trim()
-    if (!trimmed) return
+  const toggleToolExpand = (msgId: string) => {
+    setExpandedTools((prev) => ({
+      ...prev,
+      [msgId]: !prev[msgId],
+    }))
+  }
 
-    const newMsg: ChatMessage = {
+  const handleSendMessage = async () => {
+    const trimmed = inputVal.trim()
+    if (!trimmed || isLoading) return
+
+    // Extract @app:ID or @user:ID from query if present
+    const appMatch = trimmed.match(/@app:(\d+)/)
+    const userMatch = trimmed.match(/@user:([\w:-]+)/)
+    const linkedAppId = appMatch ? parseInt(appMatch[1], 10) : undefined
+    const linkedCustId = userMatch ? userMatch[1] : undefined
+
+    const userMsg: DisplayChatMessage = {
       id: String(Date.now()),
       sender: 'user',
       content: trimmed,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
 
-    setMessages((prev) => [...prev, newMsg])
+    setMessages((prev) => [...prev, userMsg])
     setInputVal('')
     setMentionOpen(false)
+    setIsLoading(true)
 
-    // Temporary placeholder AI acknowledgement
-    setTimeout(() => {
-      const responseMsg: ChatMessage = {
+    // Convert display messages to API history
+    const historyPayload = messages.map((m) => ({
+      role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+      content: m.content,
+    }))
+
+    try {
+      const res = await sendChatMessage({
+        message: trimmed,
+        history: historyPayload,
+        authContext: {
+          role: user?.role || 'customer',
+          userId: user?.id,
+          identifier: user?.mobile || user?.email || user?.uniqueCustomerId,
+          name: user?.name,
+          email: user?.email,
+          mobile: user?.mobile,
+        },
+        applicationId: linkedAppId,
+        customerId: linkedCustId,
+      })
+
+      const assistantMsg: DisplayChatMessage = {
         id: String(Date.now() + 1),
         sender: 'assistant',
-        content: `Received: "${trimmed}".\n\n*(Full RAG, MCP tool execution, and Groq reasoning will be connected next!)*`,
+        content: res.response,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        toolExecutions: res.toolExecutions,
+        referencedDocs: res.referencedDocs,
+      }
+
+      setMessages((prev) => [...prev, assistantMsg])
+    } catch (err: any) {
+      antdMessage.error(err.message || 'Failed to get response from AI Assistant')
+      const errorMsg: DisplayChatMessage = {
+        id: String(Date.now() + 1),
+        sender: 'assistant',
+        content: `⚠️ **Error communicating with AI Assistant**:\n${err.message || 'An unexpected error occurred.'}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }
-      setMessages((prev) => [...prev, responseMsg])
-    }, 400)
+      setMessages((prev) => [...prev, errorMsg])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Render message content with styled mention chips
@@ -271,7 +329,7 @@ export default function ChatWithAI() {
             </span>
             <span className="text-sm font-bold text-slate-800">DSA Loan Underwriter</span>
             <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-mono font-semibold border border-blue-200/60">
-              GPT-OSS 120B
+              GPT-OSS 120B • MCP & RAG
             </span>
           </div>
         </div>
@@ -297,6 +355,56 @@ export default function ChatWithAI() {
                   : 'bg-white text-slate-800 border border-slate-200/80 rounded-3xl rounded-tl-sm px-5 py-4 shadow-2xs whitespace-pre-line'
               }`}
             >
+              {/* Tool Execution Badges Accordion */}
+              {msg.toolExecutions && msg.toolExecutions.length > 0 && (
+                <div className="mb-3 rounded-2xl bg-slate-50 border border-slate-200 p-2.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => toggleToolExpand(msg.id)}
+                    className="flex w-full items-center justify-between font-semibold text-slate-700 hover:text-blue-600 transition"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <ToolOutlined className="text-blue-600" />
+                      Executed {msg.toolExecutions.length} MCP / RAG Tool{msg.toolExecutions.length > 1 ? 's' : ''}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {expandedTools[msg.id] ? <UpOutlined /> : <DownOutlined />}
+                    </span>
+                  </button>
+
+                  {expandedTools[msg.id] && (
+                    <div className="mt-2 space-y-1.5 border-t border-slate-200 pt-2 text-[11px]">
+                      {msg.toolExecutions.map((t, idx) => (
+                        <div key={idx} className="flex items-start gap-1.5 text-slate-600">
+                          {t.status === 'SUCCESS' ? (
+                            <CheckCircleOutlined className="text-emerald-500 mt-0.5" />
+                          ) : (
+                            <CloseCircleOutlined className="text-rose-500 mt-0.5" />
+                          )}
+                          <div>
+                            <span className="font-mono font-bold text-slate-800">{t.toolName}</span>: {t.summary}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Referenced Policy Documents */}
+              {msg.referencedDocs && msg.referencedDocs.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5 items-center text-[11px] text-slate-500">
+                  <span className="font-semibold flex items-center gap-1 text-slate-600">
+                    <FileSearchOutlined className="text-purple-600" /> Sources:
+                  </span>
+                  {msg.referencedDocs.map((doc, idx) => (
+                    <span key={idx} className="rounded-md bg-purple-50 px-2 py-0.5 font-medium text-purple-700 border border-purple-200/60">
+                      {doc}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div>{renderMessageContent(msg.content)}</div>
               <div
                 className={`mt-2 text-[10px] ${
@@ -314,6 +422,20 @@ export default function ChatWithAI() {
             )}
           </div>
         ))}
+
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div className="flex gap-3.5 justify-start items-center">
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-900 text-white text-sm shrink-0 shadow-xs">
+              <RobotOutlined />
+            </div>
+            <div className="rounded-3xl rounded-tl-sm bg-white border border-slate-200/80 px-5 py-3 shadow-2xs flex items-center gap-2 text-xs text-slate-500">
+              <LoadingOutlined className="text-blue-600 text-sm" />
+              <span>Analyzing loan context, calculating underwriting metrics & searching policies...</span>
+            </div>
+          </div>
+        )}
+
         <div ref={chatBottomRef} />
       </div>
 
@@ -399,22 +521,22 @@ export default function ChatWithAI() {
             <button
               type="button"
               onClick={handleSendMessage}
-              disabled={!inputVal.trim()}
+              disabled={!inputVal.trim() || isLoading}
               className={`h-9 w-9 inline-flex items-center justify-center rounded-full transition active:scale-95 shrink-0 ${
-                inputVal.trim()
+                inputVal.trim() && !isLoading
                   ? 'bg-slate-900 text-white shadow-xs hover:bg-black'
                   : 'bg-slate-100 text-slate-300 cursor-not-allowed'
               }`}
               title="Send message"
             >
-              <SendOutlined className="text-xs" />
+              {isLoading ? <LoadingOutlined className="text-xs" /> : <SendOutlined className="text-xs" />}
             </button>
           </div>
         </div>
 
         {/* Subtitle / Disclaimer */}
         <p className="mt-2 text-[10px] text-slate-400 text-center">
-          AI Underwriter can analyze policies, FOIR, and EMIs. Verify figures with official bank sanction letters.
+          AI Underwriter evaluates policies, FOIR, and EMIs via deterministic MCP tools & RAG. Verify figures with bank sanction letters.
         </p>
       </div>
     </div>
