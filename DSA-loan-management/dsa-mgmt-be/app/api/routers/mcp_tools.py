@@ -17,6 +17,7 @@ from app.services.mcp_dsa_tools import (
     get_banks,
     get_bank_by_id,
     get_all_loans_of_customers,
+    search_bank_documents,
 )
 from app.services.mcp_eligibility_tool import MCP_ELIGIBILITY_TOOL_SPEC, execute_mcp_eligibility_tool
 from app.services.mcp_comparison_tool import MCP_COMPARISON_TOOL_SPEC, execute_mcp_comparison_tool
@@ -197,3 +198,44 @@ def mcp_get_all_loans(
 ):
     auth = {"role": userRole, "userId": userId, "identifier": customerIdentifier}
     return get_all_loans_of_customers(db, customer_identifier=customerIdentifier, auth_user=auth)
+
+
+class SemanticSearchPayload(BaseModel):
+    query: str = Field(..., min_length=2, description="Natural language search query or question")
+    bankId: Optional[int] = Field(None, description="Optional bank filter")
+    productId: Optional[int] = Field(None, description="Optional product filter")
+    topK: int = Field(5, ge=1, le=20, description="Number of relevant chunks")
+
+
+@router.post("/semantic-search")
+def mcp_post_semantic_search(
+    payload: SemanticSearchPayload,
+    db: Session = Depends(get_db),
+):
+    """
+    Semantic vector search over bank policy documents via pgvector, returning both structured matches and formatted LLM knowledge context.
+    """
+    return search_bank_documents(
+        db=db,
+        query=payload.query,
+        bank_id=payload.bankId,
+        product_id=payload.productId,
+        top_k=payload.topK,
+    )
+
+
+@router.get("/semantic-search")
+def mcp_get_semantic_search(
+    query: str = Query(..., min_length=2),
+    bankId: Optional[int] = Query(None),
+    productId: Optional[int] = Query(None),
+    topK: int = Query(5, ge=1, le=20),
+    db: Session = Depends(get_db),
+):
+    return search_bank_documents(
+        db=db,
+        query=query,
+        bank_id=bankId,
+        product_id=productId,
+        top_k=topK,
+    )

@@ -17,6 +17,7 @@ from app.models.bank import Bank
 from app.models.agent import Agent
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
+from app.services import rag_service
 
 
 # ── Helper: Serialize Loan Application with related tables ───────────────────
@@ -540,6 +541,44 @@ def get_all_loans_of_customers(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 11. search_bank_documents (RAG Semantic Vector Search)
+# ─────────────────────────────────────────────────────────────────────────────
+def search_bank_documents(
+    db: Session,
+    query: str,
+    bank_id: Optional[int] = None,
+    product_id: Optional[int] = None,
+    top_k: int = 5,
+) -> Dict[str, Any]:
+    """
+    Performs semantic vector search over bank policy & guideline PDF chunks using pgvector.
+    Provides structured excerpts and formatted LLM knowledge context.
+    """
+    matches = rag_service.search_relevant_chunks(
+        db=db,
+        query_text=query,
+        bank_id=bank_id,
+        product_id=product_id,
+        top_k=top_k,
+    )
+
+    # Format into ready-to-use LLM prompt context
+    context_blocks = []
+    for idx, m in enumerate(matches, 1):
+        doc_header = f"[{idx}] Source: {m['bankName']} — {m['documentName']} (Page {m['pageNumber'] or 'N/A'}) [Similarity: {m['similarityScore']}]"
+        context_blocks.append(f"{doc_header}\n{m['chunkText']}")
+
+    llm_context = "\n\n---\n\n".join(context_blocks) if context_blocks else "No relevant bank policy document excerpts found."
+
+    return {
+        "query": query,
+        "totalMatches": len(matches),
+        "llmContext": llm_context,
+        "results": matches,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Master MCP Tools Specifications Registry
 # ─────────────────────────────────────────────────────────────────────────────
 MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
@@ -651,6 +690,20 @@ MCP_DSA_TOOLS_SPECS: List[Dict[str, Any]] = [
                 "customer_identifier": {"type": "string", "description": "Optional customer ID, mobile, or name filter."}
             }
         }
+    },
+    {
+        "name": "search_bank_documents",
+        "description": "Performs semantic RAG search across indexed partner bank policy PDFs (interest rates, guidelines, age rules, insurance, prepayment penalties) using vector embeddings.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query or natural language policy question."},
+                "bank_id": {"type": "integer", "description": "Optional bank ID to filter search."},
+                "product_id": {"type": "integer", "description": "Optional product ID to filter search."},
+                "top_k": {"type": "integer", "description": "Number of relevant policy chunks to return (default: 5)."}
+            },
+            "required": ["query"]
+        }
     }
 ]
 
@@ -703,6 +756,17 @@ def execute_dsa_mcp_tool(
             db,
             customer_identifier=arguments.get("customer_identifier") or arguments.get("customerIdentifier"),
             auth_user=auth_user
+        )
+
+    elif tool_name in ["search_bank_documents", "search_bank_policies", "semantic_search"]:
+        b_id = arguments.get("bank_id") or arguments.get("bankId")
+        p_id = arguments.get("product_id") or arguments.get("productId")
+        return search_bank_documents(
+            db,
+            query=str(arguments.get("query") or arguments.get("query_text") or "").strip(),
+            bank_id=int(b_id) if b_id else None,
+            product_id=int(p_id) if p_id else None,
+            top_k=int(arguments.get("top_k") or arguments.get("topK") or 5),
         )
 
     else:
