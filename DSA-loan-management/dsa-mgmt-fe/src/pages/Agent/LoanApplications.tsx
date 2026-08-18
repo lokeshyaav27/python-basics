@@ -339,17 +339,6 @@ export default function AgentLoanApplicationsPage() {
                         </button>
                       </Tooltip>
 
-                      {/* Chat with AI Button */}
-                      <Tooltip title="Chat with AI Assistant">
-                        <button
-                          onClick={() => navigate(`/agent/chat-with-ai?appId=${c.id}`)}
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
-                          aria-label="Chat with AI"
-                        >
-                          <RobotOutlined />
-                        </button>
-                      </Tooltip>
-
                       {c.status !== 'approved' && c.status !== 'rejected' && (
                         <>
                           {/* Approve & Forward Button */}

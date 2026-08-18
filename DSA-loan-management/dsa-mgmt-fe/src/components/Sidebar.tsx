@@ -14,13 +14,12 @@ export default function Sidebar({ role }: { role: Role }) {
 
   const agentMenu = [
     { to: '/agent/loan-applications', label: 'Loan Applications' },
+    { to: '/agent/chat-with-ai', label: 'Chat with AI' },
   ]
 
   const customerMenu = [
     { to: '/customer', label: 'Portal' },
     { to: '/customer/loans', label: 'My Loans' },
-    { to: '/customer/check-eligibility', label: 'Check Eligibility' },
-    { to: '/customer/loan-comparison', label: 'Loan Comparison' },
     { to: '/customer/chat-with-ai', label: 'Chat with AI' },
   ]
 
