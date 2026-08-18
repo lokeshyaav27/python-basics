@@ -126,7 +126,28 @@ alembic upgrade head
 The project includes an automated database seeder (`seed_full_database.py`) that sets up the database with realistic demo data and syncs image assets.
 
 ### Run the Seeder Command
+
+Make sure to activate your virtual environment before running the seeder (or use the `.venv` Python executable directly):
+
+#### Windows (PowerShell):
+```powershell
+.\.venv\Scripts\Activate.ps1
+python seed_full_database.py
+```
+*Or execute directly without activating:*
+```powershell
+.\.venv\Scripts\python.exe seed_full_database.py
+```
+
+#### Windows (Command Prompt):
+```cmd
+.venv\Scripts\activate.bat
+python seed_full_database.py
+```
+
+#### macOS / Linux:
 ```bash
+source .venv/bin/activate
 python seed_full_database.py
 ```
 
