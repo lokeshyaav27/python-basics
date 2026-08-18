@@ -38,8 +38,10 @@ export default function LoanComparison() {
   const initialAppId = appIdParam ? parseInt(appIdParam, 10) : null
   const [selectedAppId, setSelectedAppId] = useState<number | null>(initialAppId)
 
-  // Default to selecting first 2 banks (SBI & ICICI or first 2 available)
-  const [selectedBankIds, setSelectedBankIds] = useState<number[]>([1, 2])
+  // Dropdown states for Bank 1 and Bank 2
+  const [bank1Id, setBank1Id] = useState<number | null>(null)
+  const [bank2Id, setBank2Id] = useState<number | null>(null)
+  const [comparedBankIds, setComparedBankIds] = useState<number[]>([])
 
   // Fetch applications list to allow application switching
   const { data: applications = [] } = useQuery<LoanApplication[]>({
@@ -68,25 +70,34 @@ export default function LoanComparison() {
     }
   }, [applications, selectedAppId, setSearchParams])
 
-  // Auto-set initial selected banks if list loads
+  // Set default initial banks when bank list loads
   useEffect(() => {
-    if (allBanks.length >= 2 && selectedBankIds.length === 0) {
-      setSelectedBankIds([allBanks[0].id, allBanks[1].id])
+    if (allBanks.length >= 2 && !bank1Id && !bank2Id) {
+      const b1 = allBanks[0].id
+      const b2 = allBanks[1].id
+      setBank1Id(b1)
+      setBank2Id(b2)
+      setComparedBankIds([b1, b2])
+    } else if (allBanks.length === 1 && !bank1Id) {
+      const b1 = allBanks[0].id
+      setBank1Id(b1)
+      setComparedBankIds([b1])
     }
-  }, [allBanks, selectedBankIds])
+  }, [allBanks, bank1Id, bank2Id])
 
   // Fetch comparison data
   const {
     data: comparison,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
   } = useQuery<BankComparisonResponse>({
-    queryKey: ['bank-comparison', selectedAppId, selectedBankIds, user?.role],
+    queryKey: ['bank-comparison', selectedAppId, comparedBankIds, user?.role],
     queryFn: () =>
-      fetchBankComparison(selectedAppId!, selectedBankIds, user?.role || 'customer'),
-    enabled: !!selectedAppId && selectedBankIds.length > 0,
+      fetchBankComparison(selectedAppId!, comparedBankIds, user?.role || 'customer'),
+    enabled: !!selectedAppId && comparedBankIds.length > 0,
   })
 
   const handleSelectApp = (id: number) => {
@@ -94,22 +105,24 @@ export default function LoanComparison() {
     setSearchParams({ appId: String(id) })
   }
 
-  const handleToggleBank = (bankId: number) => {
-    if (selectedBankIds.includes(bankId)) {
-      // Must have at least 1 bank selected
-      if (selectedBankIds.length === 1) {
-        message.warning('Please select at least one bank to compare.')
-        return
-      }
-      setSelectedBankIds(selectedBankIds.filter((id) => id !== bankId))
-    } else {
-      // Enforce MAX 2 BANKS constraint
-      if (selectedBankIds.length >= 2) {
-        message.info('You cannot compare more than 2 banks at once. Deselect a bank first.')
-        return
-      }
-      setSelectedBankIds([...selectedBankIds, bankId])
+  const handleStartComparison = () => {
+    if (!bank1Id && !bank2Id) {
+      message.warning('Please select at least one bank to compare.')
+      return
     }
+
+    if (bank1Id && bank2Id && bank1Id === bank2Id) {
+      message.warning('Please select two distinct banks for comparison.')
+      return
+    }
+
+    const selectedList: number[] = []
+    if (bank1Id) selectedList.push(bank1Id)
+    if (bank2Id && bank2Id !== bank1Id) selectedList.push(bank2Id)
+
+    setComparedBankIds(selectedList)
+    refetch()
+    message.success('Comparison updated!')
   }
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
@@ -165,61 +178,83 @@ export default function LoanComparison() {
         </div>
       </div>
 
-      {/* ── Bank Selector Bar (Max 2 Limit Indicator) ──────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+      {/* ── Bank Selector Bar (Two Dropdowns + Compare Button) ──────────── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Select Banks to Compare
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+              <BankOutlined className="text-purple-600" /> Select Banks to Compare
             </span>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
-                selectedBankIds.length === 2
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              {selectedBankIds.length} / 2 Selected
+            <span className="rounded-full bg-purple-100 text-purple-800 px-2.5 py-0.5 text-[11px] font-extrabold">
+              Max 2 Banks
             </span>
           </div>
           <span className="text-[11px] text-slate-500 italic">
-            * Select up to 2 partner banks at once for side-by-side analysis
+            Choose two partner banks from the dropdowns below and click Compare
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {allBanks.map((bank) => {
-            const isSelected = selectedBankIds.includes(bank.id)
-            const isMaxReached = selectedBankIds.length >= 2 && !isSelected
-
-            return (
-              <Tooltip
-                key={bank.id}
-                title={
-                  isMaxReached
-                    ? 'Maximum 2 banks can be compared at once. Deselect a bank to pick this one.'
-                    : undefined
-                }
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+          {/* Dropdown 1: First Bank */}
+          <div className="sm:col-span-5 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700">
+              Bank 1 <span className="text-purple-600">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={bank1Id || ''}
+                onChange={(e) => setBank1Id(e.target.value ? Number(e.target.value) : null)}
+                className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 shadow-2xs pr-8"
               >
-                <button
-                  type="button"
-                  disabled={isMaxReached}
-                  onClick={() => handleToggleBank(bank.id)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition border ${
-                    isSelected
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
-                      : isMaxReached
-                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
-                      : 'bg-white text-slate-700 border-slate-300 hover:border-purple-300 hover:bg-purple-50/50'
-                  }`}
-                >
-                  <BankOutlined />
-                  <span>{bank.name}</span>
-                  {isSelected && <span className="ml-1 text-[10px] font-black">✓</span>}
-                </button>
-              </Tooltip>
-            )
-          })}
+                <option value="">-- Select First Bank --</option>
+                {allBanks.map((b) => (
+                  <option key={b.id} value={b.id} disabled={b.id === bank2Id}>
+                    {b.name} {b.id === bank2Id ? '(Selected as Bank 2)' : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 text-xs">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {/* Dropdown 2: Second Bank */}
+          <div className="sm:col-span-5 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700">
+              Bank 2 <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <div className="relative">
+              <select
+                value={bank2Id || ''}
+                onChange={(e) => setBank2Id(e.target.value ? Number(e.target.value) : null)}
+                className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 shadow-2xs pr-8"
+              >
+                <option value="">-- Select Second Bank (Optional) --</option>
+                {allBanks.map((b) => (
+                  <option key={b.id} value={b.id} disabled={b.id === bank1Id}>
+                    {b.name} {b.id === bank1Id ? '(Selected as Bank 1)' : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 text-xs">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {/* Compare Action Button */}
+          <div className="sm:col-span-2">
+            <button
+              type="button"
+              onClick={handleStartComparison}
+              disabled={isFetching || (!bank1Id && !bank2Id)}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 px-4 shadow-md shadow-purple-600/25 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <BarChartOutlined />
+              <span>{isFetching ? 'Comparing...' : 'Compare'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
