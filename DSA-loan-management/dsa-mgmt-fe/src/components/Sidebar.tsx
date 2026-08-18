@@ -14,9 +14,6 @@ export default function Sidebar({ role }: { role: Role }) {
 
   const agentMenu = [
     { to: '/agent/loan-applications', label: 'Loan Applications' },
-    { to: '/agent/check-eligibility', label: 'Check Eligibility' },
-    { to: '/agent/loan-comparison', label: 'Loan Comparison' },
-    { to: '/agent/chat-with-ai', label: 'Chat with AI' },
   ]
 
   const customerMenu = [
