@@ -153,6 +153,65 @@ def seed_database():
         db.commit()
         print(f"Created {len(links)} product-bank links with custom commissions.")
 
+        # ── 3.1 Index Bank Policy Documents for Vector Search (pgvector) ──
+        print("\n--- Indexing Bank Policy Documents into pgvector ---")
+        from app.services import rag_service
+        base_dir = Path(__file__).resolve().parent
+        docs_src = base_dir.parent / "home-loan-bank-documents"
+        storage_dir = base_dir / "dsa-file-storage" / "bank-documents"
+        storage_dir.mkdir(parents=True, exist_ok=True)
+
+        folder_map = {
+            "Axis": "Axis Bank",
+            "Bajaj_Housing": "Bajaj Housing Finance",
+            "HDFC": "HDFC Bank",
+            "ICICI": "ICICI Bank",
+            "PNB": "Punjab National Bank (PNB)",
+            "SBI": "State Bank of India (SBI)",
+            "Tata_Capital": "Tata Capital Financial Services",
+        }
+
+        indexed_chunks_total = 0
+        if docs_src.exists():
+            for folder_name, b_name in folder_map.items():
+                target_bank = next((b for b in banks if b_name.lower() in b.name.lower()), None)
+                if not target_bank:
+                    continue
+
+                target_link = next((l for l in links if l.bankId == target_bank.id and l.productId == p_home.id), None)
+                if not target_link:
+                    continue
+
+                folder_path = docs_src / folder_name
+                if not folder_path.exists():
+                    continue
+
+                for pdf_file in folder_path.glob("*.pdf"):
+                    dest_filename = f"{target_bank.id}_{p_home.id}_{pdf_file.name}"
+                    dest_path = storage_dir / dest_filename
+                    shutil.copy2(pdf_file, dest_path)
+
+                    doc_name = pdf_file.stem.replace("_", " ")
+                    bdoc = BankDocument(
+                        productBankLinkId=target_link.id,
+                        documentName=doc_name,
+                        documentLocation=dest_filename,
+                    )
+                    db.add(bdoc)
+                    db.commit()
+                    db.refresh(bdoc)
+
+                    chunks_count = rag_service.index_document(
+                        db=db,
+                        bank_document_id=bdoc.id,
+                        bank_id=target_bank.id,
+                        product_id=p_home.id,
+                        file_path=dest_path,
+                    )
+                    indexed_chunks_total += chunks_count
+
+            print(f"Indexed {indexed_chunks_total} vector document chunks across all partner banks.")
+
         # ── 4. Create 8 Agents (2 Admins + 6 Regular Agents) ─────────────
         print("\n--- Seeding 8 Agents (2 Admins + 6 Regular Agents) ---")
         agents_data = [

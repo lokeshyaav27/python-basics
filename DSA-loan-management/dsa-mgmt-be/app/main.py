@@ -46,6 +46,7 @@ app.include_router(api_routers.loan_applications.router, prefix="/api/loan-appli
 app.include_router(api_routers.contact.router, prefix="/api/contact", tags=["contact"])
 app.include_router(api_routers.rag.router, prefix="/api/rag", tags=["rag"])
 app.include_router(api_routers.eligibility.router, prefix="/api/eligibility", tags=["eligibility"])
+app.include_router(api_routers.comparison.router, prefix="/api/comparison", tags=["comparison"])
 
 
 @app.on_event("startup")
