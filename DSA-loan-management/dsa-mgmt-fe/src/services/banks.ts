@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export type BankDocumentItem = {
   id: number
@@ -19,7 +17,7 @@ export type Bank = {
 }
 
 export async function fetchBanks(): Promise<Bank[]> {
-  const res = await axios.get(`${API_BASE_URL}/api/banks`)
+  const res = await apiClient.get('/api/banks')
   return res.data || []
 }
 
@@ -36,7 +34,7 @@ export async function createBank(payload: {
   fd.append('isPrivate', String(!!payload.isPrivate))
   fd.append('isnbfc', String(!!payload.isnbfc))
   if (payload.file) fd.append('file', payload.file)
-  const res = await axios.post(`${API_BASE_URL}/api/banks`, fd, {
+  const res = await apiClient.post('/api/banks', fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
@@ -60,14 +58,14 @@ export async function updateBank(
   fd.append('isnbfc', String(!!payload.isnbfc))
   if (payload.file) fd.append('file', payload.file)
   if ((payload as any).remove_logo) fd.append('remove_logo', 'true')
-  const res = await axios.put(`${API_BASE_URL}/api/banks/${id}`, fd, {
+  const res = await apiClient.put(`/api/banks/${id}`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
 }
 
 export async function deleteBank(id: number) {
-  const res = await axios.delete(`${API_BASE_URL}/api/banks/${id}`)
+  const res = await apiClient.delete(`/api/banks/${id}`)
   return res.data
 }
 
@@ -83,7 +81,7 @@ export type BankProductLink = {
 }
 
 export async function fetchBankProducts(bankId: number): Promise<BankProductLink[]> {
-  const res = await axios.get(`${API_BASE_URL}/api/banks/${bankId}/products`)
+  const res = await apiClient.get(`/api/banks/${bankId}/products`)
   return res.data || []
 }
 
@@ -100,7 +98,7 @@ export async function linkBankProduct(
   if (payload.commission !== undefined && payload.commission !== null) {
     fd.append('commission', String(payload.commission))
   }
-  const res = await axios.post(`${API_BASE_URL}/api/banks/${bankId}/products/${productId}/link`, fd, {
+  const res = await apiClient.post(`/api/banks/${bankId}/products/${productId}/link`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
@@ -117,8 +115,8 @@ export async function uploadBankProductDocument(
   if (documentName && documentName.trim()) {
     fd.append('document_name', documentName.trim())
   }
-  const res = await axios.post(
-    `${API_BASE_URL}/api/banks/${bankId}/products/${productId}/documents`,
+  const res = await apiClient.post(
+    `/api/banks/${bankId}/products/${productId}/documents`,
     fd,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -132,8 +130,8 @@ export async function deleteBankProductDocument(
   productId: number,
   documentId: number
 ) {
-  const res = await axios.delete(
-    `${API_BASE_URL}/api/banks/${bankId}/products/${productId}/documents/${documentId}`
+  const res = await apiClient.delete(
+    `/api/banks/${bankId}/products/${productId}/documents/${documentId}`
   )
   return res.data
 }

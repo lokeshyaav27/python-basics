@@ -11,12 +11,12 @@ import { AuthProvider } from './auth/AuthProvider'
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <Provider store={store}>
+    <Provider store={store}>
+      <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <App />
         </QueryClientProvider>
-      </Provider>
-    </AuthProvider>
+      </AuthProvider>
+    </Provider>
   </React.StrictMode>
 )

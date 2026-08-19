@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export interface EligibilityResult {
   applicationId: number
@@ -40,7 +38,7 @@ export interface EligibilityResult {
 }
 
 export async function fetchEligibility(applicationId: number): Promise<EligibilityResult> {
-  const res = await axios.get<EligibilityResult>(`${API_BASE_URL}/api/eligibility/evaluate`, {
+  const res = await apiClient.get<EligibilityResult>('/api/eligibility/evaluate', {
     params: { applicationId },
   })
   return res.data

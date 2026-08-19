@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export interface InsuranceItem {
   isProvided: string
@@ -67,7 +65,7 @@ export async function fetchBankComparison(
   bankIds: number[],
   userRole: string = 'customer',
 ): Promise<BankComparisonResponse> {
-  const res = await axios.get<BankComparisonResponse>(`${API_BASE_URL}/api/comparison/banks`, {
+  const res = await apiClient.get<BankComparisonResponse>('/api/comparison/banks', {
     params: {
       applicationId,
       bankIds: bankIds.join(','),

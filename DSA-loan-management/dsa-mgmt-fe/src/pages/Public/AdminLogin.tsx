@@ -15,8 +15,21 @@ export default function AdminLogin() {
     setError(null)
     try {
       const res = await adminLogin(email, password)
-      const name = res?.admin?.name || email
-      auth.login(name, 'admin')
+      const admin = res?.admin || {}
+      const name = admin?.name || email
+      const token = res?.accessToken || 'token'
+      auth.login(
+        name,
+        'admin',
+        {
+          id: admin.id,
+          email: admin.email,
+          mobile: admin.mobile,
+          photo: admin.photo,
+          isAdmin: true,
+        },
+        token
+      )
       nav('/admin')
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Login failed')

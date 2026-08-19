@@ -13,3 +13,4 @@ sentence-transformers
 PyMuPDF
 pgvector
 groq
+pyjwt

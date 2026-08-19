@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -37,21 +37,6 @@ export async function sendChatMessage(payload: {
   applicationId?: number
   customerId?: string
 }): Promise<ChatResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/chat/assistant`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Role': payload.authContext?.role || 'customer',
-      'X-User-Id': String(payload.authContext?.userId || ''),
-      'X-Customer-Id': payload.authContext?.identifier || '',
-    },
-    body: JSON.stringify(payload),
-  })
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: 'Failed to communicate with AI Assistant' }))
-    throw new Error(err.detail || `Server returned ${res.status}`)
-  }
-
-  return res.json()
+  const res = await apiClient.post<ChatResponse>('/api/chat/assistant', payload)
+  return res.data
 }

@@ -1,9 +1,7 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export async function fetchAgents() {
-  const res = await axios.get(`${API_BASE_URL}/api/agents`)
+  const res = await apiClient.get('/api/agents')
   return res.data || []
 }
 
@@ -22,7 +20,7 @@ export async function createAgent(payload: {
   fd.append('password', payload.password)
   fd.append('isAdmin', String(!!payload.isAdmin))
   if (payload.file) fd.append('file', payload.file)
-  const res = await axios.post(`${API_BASE_URL}/api/agents`, fd, {
+  const res = await apiClient.post('/api/agents', fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
@@ -46,13 +44,13 @@ export async function updateAgent(
   fd.append('isAdmin', String(!!payload.isAdmin))
   if (payload.file) fd.append('file', payload.file)
   if (payload.remove_photo) fd.append('remove_photo', 'true')
-  const res = await axios.put(`${API_BASE_URL}/api/agents/${id}`, fd, {
+  const res = await apiClient.put(`/api/agents/${id}`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
 }
 
 export async function deleteAgent(id: number) {
-  const res = await axios.delete(`${API_BASE_URL}/api/agents/${id}`)
+  const res = await apiClient.delete(`/api/agents/${id}`)
   return res.data
 }

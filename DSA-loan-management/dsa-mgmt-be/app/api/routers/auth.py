@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict
+from typing import Dict, Any
 
 from app.db.session import SessionLocal
 from app.models.agent import Agent
 from app.models.loan_application import LoanApplication
+from app.core.security import create_access_token, get_current_user, CurrentUser
 
 router = APIRouter()
 
@@ -58,16 +59,34 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     if app.isActive is False:
         raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
+    # Generate JWT access token for customer
+    token_payload = {
+        "sub": str(app.id),
+        "userId": app.id,
+        "role": "customer",
+        "name": app.name,
+        "email": app.email,
+        "mobile": app.mobile,
+        "uniqueCustomerId": app.uniqueCustomerId,
+    }
+    access_token = create_access_token(token_payload)
+
+    customer_dict = {
+        'id': app.id,
+        'email': app.email,
+        'name': app.name,
+        'mobile': app.mobile,
+        'uniqueCustomerId': app.uniqueCustomerId,
+        'role': 'customer',
+        'isActive': app.isActive,
+    }
+
     return {
         'status': 'ok',
-        'customer': {
-            'id': app.id,
-            'email': app.email,
-            'name': app.name,
-            'mobile': app.mobile,
-            'uniqueCustomerId': app.uniqueCustomerId,
-            'isActive': app.isActive,
-        }
+        'accessToken': access_token,
+        'tokenType': 'bearer',
+        'customer': customer_dict,
+        'user': customer_dict,
     }
 
 
@@ -99,18 +118,34 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
             existing.productId = product_id
             db.commit()
             db.refresh(existing)
+
+        token_payload = {
+            "sub": str(existing.id),
+            "userId": existing.id,
+            "role": "customer",
+            "name": existing.name,
+            "email": existing.email,
+            "mobile": existing.mobile,
+            "uniqueCustomerId": existing.uniqueCustomerId,
+        }
+        access_token = create_access_token(token_payload)
+        cust_data = {
+            'id': existing.id,
+            'email': existing.email,
+            'name': existing.name,
+            'mobile': existing.mobile,
+            'uniqueCustomerId': existing.uniqueCustomerId,
+            'productId': existing.productId,
+            'status': existing.status,
+            'role': 'customer',
+            'isActive': existing.isActive,
+        }
         return {
             'status': 'ok',
-            'customer': {
-                'id': existing.id,
-                'email': existing.email,
-                'name': existing.name,
-                'mobile': existing.mobile,
-                'uniqueCustomerId': existing.uniqueCustomerId,
-                'productId': existing.productId,
-                'status': existing.status,
-                'isActive': existing.isActive,
-            },
+            'accessToken': access_token,
+            'tokenType': 'bearer',
+            'customer': cust_data,
+            'user': cust_data,
             'created': False
         }
 
@@ -127,18 +162,34 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_app)
 
+    token_payload = {
+        "sub": str(new_app.id),
+        "userId": new_app.id,
+        "role": "customer",
+        "name": new_app.name,
+        "email": new_app.email,
+        "mobile": new_app.mobile,
+        "uniqueCustomerId": new_app.uniqueCustomerId,
+    }
+    access_token = create_access_token(token_payload)
+    cust_data = {
+        'id': new_app.id,
+        'email': new_app.email,
+        'name': new_app.name,
+        'mobile': new_app.mobile,
+        'uniqueCustomerId': new_app.uniqueCustomerId,
+        'productId': new_app.productId,
+        'status': new_app.status,
+        'role': 'customer',
+        'isActive': new_app.isActive,
+    }
+
     return {
         'status': 'ok',
-        'customer': {
-            'id': new_app.id,
-            'email': new_app.email,
-            'name': new_app.name,
-            'mobile': new_app.mobile,
-            'uniqueCustomerId': new_app.uniqueCustomerId,
-            'productId': new_app.productId,
-            'status': new_app.status,
-            'isActive': new_app.isActive,
-        },
+        'accessToken': access_token,
+        'tokenType': 'bearer',
+        'customer': cust_data,
+        'user': cust_data,
         'created': True
     }
 
@@ -165,18 +216,35 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
+    token_payload = {
+        "sub": str(agent.id),
+        "userId": agent.id,
+        "role": "agent",
+        "name": agent.name,
+        "email": agent.email,
+        "mobile": agent.mobile,
+        "isAdmin": False,
+    }
+    access_token = create_access_token(token_payload)
+
+    agent_dict = {
+        'id': agent.id,
+        'name': agent.name,
+        'email': agent.email,
+        'mobile': agent.mobile,
+        'role': 'agent',
+        'isAdmin': agent.isAdmin,
+        'tempPasswordReset': agent.tempPasswordReset,
+        'photo': agent.photo,
+        'isActive': agent.isActive,
+    }
+
     return {
         'status': 'ok',
-        'agent': {
-            'id': agent.id,
-            'name': agent.name,
-            'email': agent.email,
-            'mobile': agent.mobile,
-            'isAdmin': agent.isAdmin,
-            'tempPasswordReset': agent.tempPasswordReset,
-            'photo': agent.photo,
-            'isActive': agent.isActive,
-        }
+        'accessToken': access_token,
+        'tokenType': 'bearer',
+        'agent': agent_dict,
+        'user': agent_dict,
     }
 
 
@@ -202,18 +270,46 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
 
+    token_payload = {
+        "sub": str(agent.id),
+        "userId": agent.id,
+        "role": "admin",
+        "name": agent.name,
+        "email": agent.email,
+        "mobile": agent.mobile,
+        "isAdmin": True,
+    }
+    access_token = create_access_token(token_payload)
+
+    admin_dict = {
+        'id': agent.id,
+        'name': agent.name,
+        'email': agent.email,
+        'mobile': agent.mobile,
+        'role': 'admin',
+        'isAdmin': agent.isAdmin,
+        'tempPasswordReset': agent.tempPasswordReset,
+        'photo': agent.photo,
+        'isActive': agent.isActive,
+    }
+
     return {
         'status': 'ok',
-        'admin': {
-            'id': agent.id,
-            'name': agent.name,
-            'email': agent.email,
-            'mobile': agent.mobile,
-            'isAdmin': agent.isAdmin,
-            'tempPasswordReset': agent.tempPasswordReset,
-            'photo': agent.photo,
-            'isActive': agent.isActive,
-        }
+        'accessToken': access_token,
+        'tokenType': 'bearer',
+        'admin': admin_dict,
+        'user': admin_dict,
+    }
+
+
+@router.get('/me')
+def get_authenticated_user_profile(current_user: CurrentUser = Depends(get_current_user)):
+    """
+    Returns current user profile authenticated via Bearer JWT token.
+    """
+    return {
+        "status": "ok",
+        "user": current_user.dict()
     }
 
 

@@ -47,7 +47,19 @@ export default function AgentLogin() {
 
       // Normal login flow
       const name = agent?.name || email
-      auth.login(name, 'agent', { id: agent.id, email: agent.email, photo: agent.photo })
+      const token = res?.accessToken || 'token'
+      auth.login(
+        name,
+        'agent',
+        {
+          id: agent.id,
+          email: agent.email,
+          mobile: agent.mobile,
+          photo: agent.photo,
+          isAdmin: false,
+        },
+        token
+      )
       message.success(`Welcome back, ${name}!`)
       nav('/agent/loan-applications')
     } catch (err: any) {

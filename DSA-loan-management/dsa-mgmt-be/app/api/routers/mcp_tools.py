@@ -22,6 +22,8 @@ from app.services.mcp_dsa_tools import (
 from app.services.mcp_eligibility_tool import MCP_ELIGIBILITY_TOOL_SPEC, execute_mcp_eligibility_tool
 from app.services.mcp_comparison_tool import MCP_COMPARISON_TOOL_SPEC, execute_mcp_comparison_tool
 
+from app.core.security import get_current_user_optional, CurrentUser
+
 router = APIRouter()
 
 
@@ -61,6 +63,7 @@ def list_all_mcp_tools():
 @router.post("/execute")
 def execute_mcp_tool(
     req: MCPExecuteRequest,
+    current_user: Optional[CurrentUser] = Depends(get_current_user_optional),
     x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     x_customer_id: Optional[str] = Header(None, alias="X-Customer-Id"),
@@ -70,12 +73,20 @@ def execute_mcp_tool(
     Unified entry point for calling any MCP tool with automated authorization checks.
     """
     auth = req.auth_context or {}
-    if x_user_role:
-        auth["role"] = x_user_role
-    if x_user_id:
-        auth["userId"] = x_user_id
-    if x_customer_id:
-        auth["identifier"] = x_customer_id
+    if current_user:
+        auth["role"] = current_user.role
+        auth["userId"] = current_user.id
+        auth["name"] = current_user.name
+        auth["email"] = current_user.email
+        auth["mobile"] = current_user.mobile
+        auth["identifier"] = current_user.uniqueCustomerId or str(current_user.id or "")
+    else:
+        if x_user_role:
+            auth["role"] = x_user_role
+        if x_user_id:
+            auth["userId"] = x_user_id
+        if x_customer_id:
+            auth["identifier"] = x_customer_id
 
     tool = req.tool_name.strip()
 

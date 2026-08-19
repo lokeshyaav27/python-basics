@@ -44,11 +44,18 @@ export default function CustomerLogin() {
       const res = await verifyCustomerOtp(mobile.trim(), otp.trim())
       const customer = res?.customer || {}
       const name = customer.name || mobile.trim()
-      auth.login(name, 'customer', {
-        id: customer.id,
-        email: customer.email,
-        mobile: customer.mobile || mobile.trim(),
-      })
+      const token = res?.accessToken || 'token'
+      auth.login(
+        name,
+        'customer',
+        {
+          id: customer.id,
+          email: customer.email,
+          mobile: customer.mobile || mobile.trim(),
+          uniqueCustomerId: customer.uniqueCustomerId,
+        },
+        token
+      )
       message.success(`Welcome back, ${name}!`)
       nav('/customer/loans')
     } catch (err: any) {

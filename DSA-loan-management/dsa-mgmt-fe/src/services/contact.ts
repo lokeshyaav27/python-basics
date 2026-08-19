@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export type ContactEnquiryInput = {
   name: string
@@ -23,11 +21,11 @@ export type ContactEnquiry = {
 }
 
 export async function submitContactEnquiry(payload: ContactEnquiryInput): Promise<{ status: string; enquiry: ContactEnquiry }> {
-  const res = await axios.post(`${API_BASE_URL}/api/contact`, payload)
+  const res = await apiClient.post('/api/contact', payload)
   return res.data
 }
 
 export async function fetchContactEnquiries(): Promise<ContactEnquiry[]> {
-  const res = await axios.get(`${API_BASE_URL}/api/contact`)
+  const res = await apiClient.get('/api/contact')
   return res.data || []
 }

@@ -1,20 +1,15 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit'
-
-const sampleSlice = createSlice({
-  name: 'sample',
-  initialState: { value: 0 },
-  reducers: {
-    increment: (state) => { state.value += 1 }
-  }
-})
-
-export const { increment } = sampleSlice.actions
+import { configureStore } from '@reduxjs/toolkit'
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import authReducer from './slices/authSlice'
 
 export const store = configureStore({
   reducer: {
-    sample: sampleSlice.reducer
-  }
+    auth: authReducer,
+  },
 })
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
+
+export const useAppDispatch: () => AppDispatch = useDispatch
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector

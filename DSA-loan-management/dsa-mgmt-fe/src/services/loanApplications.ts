@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+import apiClient from './apiClient'
 
 export type ClientGeneralDetailsData = {
   name?: string | null
@@ -45,38 +43,38 @@ export type PersonalLoanDetailsData = {
   existing_obligations?: number | null
 }
 
-export type LoanApplication = {
+export interface LoanApplication {
   id: number
+  email: string
+  name?: string | null
+  mobile?: string | null
+  uniqueCustomerId?: string | null
+  productId?: number | null
+  product_name?: string | null
+  product?: { id: number; name: string } | null
+  status?: string | null
+  bankId?: number | null
+  bank_name?: string | null
+  bank?: { id: number; name: string } | null
+  agentId?: number | null
+  agent_name?: string | null
+  agent?: { id: number; name: string; email?: string; mobile?: string } | null
+  description?: string | null
+  clientGeneralDetail?: ClientGeneralDetailsData | null
+  homeLoanDetail?: HomeLoanDetailsData | null
+  carLoanDetail?: CarLoanDetailsData | null
+  personalLoanDetail?: PersonalLoanDetailsData | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type FullLoanApplicationData = {
   name: string
   email: string
   mobile: string
   uniqueCustomerId?: string
-  agentId?: number | null
-  agentName?: string | null
-  agentPhoto?: string | null
-  agentMobile?: string | null
-  agentEmail?: string | null
-  bankId?: number | null
-  bankName?: string | null
-  bankLogo?: string | null
-  productId?: number | null
-  productName?: string | null
-  productImage?: string | null
-  status: 'approved' | 'rejected' | null | string
-  description?: string | null
-  isActive?: boolean
-  clientGeneralDetails?: ClientGeneralDetailsData | null
-  homeLoanDetails?: HomeLoanDetailsData | null
-  carLoanDetails?: CarLoanDetailsData | null
-  personalLoanDetails?: PersonalLoanDetailsData | null
-}
-
-export type FullLoanApplicationData = {
   productId: number
-  name: string
-  email: string
-  mobile: string
-  clientGeneralDetails?: ClientGeneralDetailsData | null
+  clientGeneralDetails: ClientGeneralDetailsData
   homeLoanDetails?: HomeLoanDetailsData | null
   carLoanDetails?: CarLoanDetailsData | null
   personalLoanDetails?: PersonalLoanDetailsData | null
@@ -86,7 +84,7 @@ export async function fetchLoanApplications(agentId?: number, mobile?: string): 
   const params: any = {}
   if (agentId !== undefined && agentId !== null) params.agent_id = agentId
   if (mobile !== undefined && mobile !== null) params.mobile = mobile
-  const res = await axios.get(`${API_BASE_URL}/api/loan-applications`, { params })
+  const res = await apiClient.get('/api/loan-applications', { params })
   return res.data || []
 }
 
@@ -98,7 +96,7 @@ export async function assignLoanApplicationAgent(
   applicationId: number,
   agentId: number | null
 ): Promise<LoanApplication> {
-  const res = await axios.put(`${API_BASE_URL}/api/loan-applications/${applicationId}/assign-agent`, { agentId })
+  const res = await apiClient.put(`/api/loan-applications/${applicationId}/assign-agent`, { agentId })
   return res.data
 }
 
@@ -106,12 +104,12 @@ export async function updateLoanApplicationStatus(
   applicationId: number,
   payload: { status?: string | null; bankId?: number | null; description?: string | null }
 ): Promise<LoanApplication> {
-  const res = await axios.put(`${API_BASE_URL}/api/loan-applications/${applicationId}/status`, payload)
+  const res = await apiClient.put(`/api/loan-applications/${applicationId}/status`, payload)
   return res.data
 }
 
 export async function createLoanApplication(payload: any): Promise<LoanApplication> {
-  const res = await axios.post(`${API_BASE_URL}/api/loan-applications`, payload)
+  const res = await apiClient.post('/api/loan-applications', payload)
   return res.data
 }
 
@@ -119,21 +117,21 @@ export async function updateLoanApplication(
   id: number,
   payload: Partial<FullLoanApplicationData>
 ): Promise<LoanApplication> {
-  const res = await axios.put(`${API_BASE_URL}/api/loan-applications/${id}`, payload)
+  const res = await apiClient.put(`/api/loan-applications/${id}`, payload)
   return res.data
 }
 
 export async function deleteLoanApplication(id: number): Promise<{ status: string }> {
-  const res = await axios.delete(`${API_BASE_URL}/api/loan-applications/${id}`)
+  const res = await apiClient.delete(`/api/loan-applications/${id}`)
   return res.data
 }
 
 export async function submitFullLoanApplication(payload: FullLoanApplicationData) {
-  const res = await axios.post(`${API_BASE_URL}/api/loan-applications/apply`, payload)
+  const res = await apiClient.post('/api/loan-applications/apply', payload)
   return res.data
 }
 
 export async function addLoanApplication(payload: any) {
-  const res = await axios.post(`${API_BASE_URL}/api/auth/customer/add`, payload)
+  const res = await apiClient.post('/api/auth/customer/add', payload)
   return res.data
 }
