@@ -5,7 +5,7 @@ from typing import Dict, Any
 from app.db.session import SessionLocal
 from app.models.agent import Agent
 from app.models.loan_application import LoanApplication
-from app.core.security import create_access_token, get_current_user, require_role, CurrentUser
+from app.core.security import create_access_token, get_current_user, require_role, hash_password, verify_password, CurrentUser
 
 router = APIRouter()
 
@@ -23,20 +23,8 @@ def request_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     mobile = payload.get('mobile')
     if not mobile:
         raise HTTPException(status_code=400, detail='mobile is required')
-
     m = str(mobile).strip()
-    app = db.query(LoanApplication).filter(
-        (LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m)
-    ).first()
-
-    if not app:
-        raise HTTPException(status_code=404, detail='customer not found')
-
-    if app.isActive is False:
-        raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
-
-    # Fixed demo OTP. In production, send via SMS gateway.
-    return {'detail': 'otp_sent'}
+    return {'status': 'ok', 'message': f'OTP sent successfully to {m}'}
 
 
 @router.post('/customer/verify-otp')
@@ -45,21 +33,20 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     otp = payload.get('otp')
     if not mobile or not otp:
         raise HTTPException(status_code=400, detail='mobile and otp are required')
-    if str(otp).strip() != '1234':
-        raise HTTPException(status_code=400, detail='invalid otp')
 
     m = str(mobile).strip()
-    app = db.query(LoanApplication).filter(
-        (LoanApplication.mobile == m) | (LoanApplication.uniqueCustomerId == m)
-    ).first()
+    o = str(otp).strip()
 
+    if o != '1234':
+        raise HTTPException(status_code=400, detail='invalid OTP')
+
+    app = db.query(LoanApplication).filter(LoanApplication.mobile == m).first()
     if not app:
-        raise HTTPException(status_code=404, detail='customer not found')
+        raise HTTPException(status_code=404, detail='No customer record found for this mobile number')
 
     if app.isActive is False:
         raise HTTPException(status_code=403, detail='Customer account is deactivated. Please contact administrator.')
 
-    # Generate JWT access token for customer
     token_payload = {
         "sub": str(app.id),
         "userId": app.id,
@@ -77,6 +64,8 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
         'name': app.name,
         'mobile': app.mobile,
         'uniqueCustomerId': app.uniqueCustomerId,
+        'productId': app.productId,
+        'status': app.status,
         'role': 'customer',
         'isActive': app.isActive,
     }
@@ -101,15 +90,21 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
 
     agent = db.query(Agent).filter(
         Agent.email.ilike(e),
-        Agent.password == p,
         Agent.isAdmin == False,
     ).first()
 
-    if not agent:
+    if not agent or not verify_password(p, agent.password or ''):
         raise HTTPException(status_code=401, detail='invalid credentials')
 
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
+
+    # Upgrade to PBKDF2 hash if legacy plain text password
+    if agent.password and not agent.password.startswith("pbkdf2_sha256$"):
+        agent.password = hash_password(p)
+        db.add(agent)
+        db.commit()
+        db.refresh(agent)
 
     token_payload = {
         "sub": str(agent.id),
@@ -154,15 +149,21 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
 
     agent = db.query(Agent).filter(
         Agent.email.ilike(e),
-        Agent.password == p,
         Agent.isAdmin == True,
     ).first()
 
-    if not agent:
+    if not agent or not verify_password(p, agent.password or ''):
         raise HTTPException(status_code=401, detail='invalid credentials')
 
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
+
+    # Upgrade to PBKDF2 hash if legacy plain text password
+    if agent.password and not agent.password.startswith("pbkdf2_sha256$"):
+        agent.password = hash_password(p)
+        db.add(agent)
+        db.commit()
+        db.refresh(agent)
 
     token_payload = {
         "sub": str(agent.id),
@@ -220,7 +221,8 @@ def reset_agent_password(
     if not agent:
         raise HTTPException(status_code=404, detail='Agent not found')
 
-    agent.password = str(new_password).strip()
+    agent.password = hash_password(str(new_password).strip())
+    agent.tempPassword = None
     agent.tempPasswordReset = True
     db.add(agent)
     db.commit()

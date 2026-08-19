@@ -48,6 +48,48 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     return encoded_jwt
 
 
+import hashlib
+import secrets
+
+
+def hash_password(password: str) -> str:
+    """
+    Hashes a password using PBKDF2-HMAC-SHA256 with a unique random 16-byte salt and 100,000 iterations.
+    Format: pbkdf2_sha256$<iterations>$<salt_hex>$<hash_hex>
+    """
+    if not password:
+        return ""
+    salt = secrets.token_hex(16)
+    iterations = 100_000
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), iterations)
+    return f"pbkdf2_sha256${iterations}${salt}${key.hex()}"
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verifies a plain password against the stored PBKDF2 hash.
+    Supports backward compatibility for legacy plain text passwords if found.
+    """
+    if not plain_password or not hashed_password:
+        return False
+
+    if hashed_password.startswith("pbkdf2_sha256$"):
+        try:
+            parts = hashed_password.split("$")
+            if len(parts) != 4:
+                return False
+            iterations = int(parts[1])
+            salt = parts[2]
+            stored_key = parts[3]
+            key = hashlib.pbkdf2_hmac('sha256', plain_password.encode('utf-8'), salt.encode('utf-8'), iterations)
+            return secrets.compare_digest(key.hex(), stored_key)
+        except Exception:
+            return False
+
+    # Backward compatibility with legacy plain text passwords
+    return secrets.compare_digest(plain_password, hashed_password)
+
+
 def decode_access_token(token: str) -> Dict[str, Any]:
     """
     Decodes and validates a signed JWT token.

@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from app.db.session import SessionLocal
 from app.models.agent import Agent
-from app.core.security import require_role, CurrentUser
+from app.core.security import require_role, hash_password, CurrentUser
 
 router = APIRouter()
 
@@ -65,12 +65,14 @@ def create_agent(
     if file is not None:
         photo_fname = _save_photo(file)
 
+    hashed_password = hash_password(password.strip())
+
     agent = Agent(
         name=name,
         email=email,
         mobile=mobile,
-        password=password,
-        tempPassword=password,
+        password=hashed_password,
+        tempPassword=None,
         tempPasswordReset=False,
         isAdmin=isAdmin,
         photo=photo_fname,
@@ -181,7 +183,6 @@ def _serialize(a: Agent) -> dict:
         "name": a.name,
         "email": a.email,
         "mobile": a.mobile,
-        "tempPassword": a.tempPassword,
         "tempPasswordReset": a.tempPasswordReset,
         "isAdmin": a.isAdmin,
         "photo": a.photo,
