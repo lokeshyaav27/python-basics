@@ -1,13 +1,11 @@
 import os
-import shutil
 import sys
 from pathlib import Path
-from decimal import Decimal
-import random
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from sqlalchemy import text
 from app.db.session import SessionLocal, engine
 from app.models.base import Base
 from app.models.product import Product
@@ -21,62 +19,32 @@ from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.loan_application import LoanApplication
 from app.models.contact_enquiry import ContactEnquiry
-from app.core.security import hash_password
+
+# Import modular seeders
+from seeds.seed_1_admin import seed_admin
+from seeds.seed_2_products_banks import seed_products_banks
+from seeds.seed_3_agents import seed_agents
+from seeds.seed_4_product_bank_mapping import seed_product_bank_mapping
+from seeds.seed_5_loan_applications import seed_loan_applications
 
 
-def copy_static_assets():
-    """Copies product, bank, and user images to the backend file storage."""
-    base_dir = Path(__file__).resolve().parent
-    source_img_dir = base_dir.parent / "dsa-loan-mgmt-images"
-    storage_dir = base_dir / "dsa-file-storage"
+def reset_and_seed_full_database():
+    """Resets database and executes all 5 modular seeders sequentially."""
+    print("\n=======================================================")
+    print("      STARTING FULL DATABASE SEEDING WORKFLOW         ")
+    print("=======================================================\n")
 
-    prod_dir = storage_dir / "product-images"
-    bank_dir = storage_dir / "bank-logo-images"
-    agent_dir = storage_dir / "agent-photos"
-
-    prod_dir.mkdir(parents=True, exist_ok=True)
-    bank_dir.mkdir(parents=True, exist_ok=True)
-    agent_dir.mkdir(parents=True, exist_ok=True)
-
-    if not source_img_dir.exists():
-        print(f"Source images directory not found at: {source_img_dir}")
-        return
-
-    # Copy Product Images
-    for p_img in ["home-loan.jpg", "car-loan.jpg", "personal-loan.jpg", "business-loan.jpg"]:
-        src = source_img_dir / p_img
-        if src.exists():
-            shutil.copy2(src, prod_dir / p_img)
-            print(f"Copied product image: {p_img}")
-
-    # Copy Bank Logos
-    for b_img in ["sbi.jpg", "icici.jpg"]:
-        src = source_img_dir / b_img
-        if src.exists():
-            shutil.copy2(src, bank_dir / b_img)
-            print(f"Copied bank logo: {b_img}")
-
-    # Copy Agent Photos
-    user_src_dir = source_img_dir / "dsa-user-images"
-    if user_src_dir.exists():
-        for user_img in user_src_dir.glob("*.png"):
-            shutil.copy2(user_img, agent_dir / user_img.name)
-            print(f"Copied agent photo: {user_img.name}")
-
-
-def seed_database():
-    copy_static_assets()
-
-    from sqlalchemy import text
+    # 1. Enable pgvector extension
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
 
+    # 2. Create tables
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        # Clean existing data in logical order
+        # Clean existing data in logical dependency order
         print("Cleaning existing database records...")
         db.query(LoanApplication).delete()
         db.query(BankDocument).delete()
@@ -90,315 +58,41 @@ def seed_database():
         db.query(Bank).delete()
         db.query(Product).delete()
         db.commit()
-
-        # ── 1. Create 3 Products ─────────────────────────────────────────
-        print("\n--- Seeding 3 Products ---")
-        p_home = Product(
-            name="Home Loan",
-            description="Low-interest housing loans with flexible 30-year tenure and up to 90% property value financing for purchase, construction, or renovation.",
-            image="home-loan.jpg",
-            isActive=True,
-        )
-        p_car = Product(
-            name="Car Loan",
-            description="Fast-track vehicle financing for brand new and pre-owned cars with 100% on-road funding and minimal documentation.",
-            image="car-loan.jpg",
-            isActive=True,
-        )
-        p_personal = Product(
-            name="Personal Loan",
-            description="Instant collateral-free personal loans for emergency expenses, weddings, medical needs, travel, and debt consolidation.",
-            image="personal-loan.jpg",
-            isActive=True,
-        )
-        db.add_all([p_home, p_car, p_personal])
-        db.commit()
-        db.refresh(p_home)
-        db.refresh(p_car)
-        db.refresh(p_personal)
-        products = [p_home, p_car, p_personal]
-        print(f"Created {len(products)} products: {[p.name for p in products]}")
-
-        # ── 2. Create 5 Banks & 2 NBFCs (Total 7 Institutions) ───────────
-        print("\n--- Seeding 5 Banks & 2 NBFCs ---")
-        banks = [
-            Bank(name="State Bank of India (SBI)", isNationalize=True, isPrivate=False, isNbfc=False, logo="sbi.jpg", isActive=True),
-            Bank(name="ICICI Bank", isNationalize=False, isPrivate=True, isNbfc=False, logo="icici.jpg", isActive=True),
-            Bank(name="HDFC Bank", isNationalize=False, isPrivate=True, isNbfc=False, logo=None, isActive=True),
-            Bank(name="Axis Bank", isNationalize=False, isPrivate=True, isNbfc=False, logo=None, isActive=True),
-            Bank(name="Punjab National Bank (PNB)", isNationalize=True, isPrivate=False, isNbfc=False, logo=None, isActive=True),
-            Bank(name="Bajaj Housing Finance", isNationalize=False, isPrivate=False, isNbfc=True, logo=None, isActive=True),
-            Bank(name="Tata Capital Financial Services", isNationalize=False, isPrivate=False, isNbfc=True, logo=None, isActive=True),
-        ]
-        db.add_all(banks)
-        db.commit()
-        for b in banks:
-            db.refresh(b)
-        print(f"Created {len(banks)} institutions: {[b.name for b in banks]}")
-
-        # ── 3. Link Banks with Multiple Products (No Documents) ──────────
-        print("\n--- Seeding Product-Bank Links ---")
-        links = []
-        commissions = [Decimal("0.75"), Decimal("1.00"), Decimal("1.25"), Decimal("1.50"), Decimal("1.75"), Decimal("2.00")]
-        for bank in banks:
-            for prod in products:
-                comm = random.choice(commissions)
-                link = ProductBankLink(
-                    bankId=bank.id,
-                    productId=prod.id,
-                    commission=comm,
-                    isActive=True,
-                )
-                links.append(link)
-        db.add_all(links)
-        db.commit()
-        print(f"Created {len(links)} product-bank links with custom commissions.")
-
-        # ── 3.1 Index Bank Policy Documents for Vector Search (pgvector) ──
-        print("\n--- Indexing Bank Policy Documents into pgvector ---")
-        from app.services import rag_service
-        base_dir = Path(__file__).resolve().parent
-        docs_src = base_dir.parent / "home-loan-bank-documents"
-        storage_dir = base_dir / "dsa-file-storage" / "bank-documents"
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-        folder_map = {
-            "Axis": "Axis Bank",
-            "Bajaj_Housing": "Bajaj Housing Finance",
-            "HDFC": "HDFC Bank",
-            "ICICI": "ICICI Bank",
-            "PNB": "Punjab National Bank (PNB)",
-            "SBI": "State Bank of India (SBI)",
-            "Tata_Capital": "Tata Capital Financial Services",
-        }
-
-        indexed_chunks_total = 0
-        if docs_src.exists():
-            for folder_name, b_name in folder_map.items():
-                target_bank = next((b for b in banks if b_name.lower() in b.name.lower()), None)
-                if not target_bank:
-                    continue
-
-                target_link = next((l for l in links if l.bankId == target_bank.id and l.productId == p_home.id), None)
-                if not target_link:
-                    continue
-
-                folder_path = docs_src / folder_name
-                if not folder_path.exists():
-                    continue
-
-                for pdf_file in folder_path.glob("*.pdf"):
-                    dest_filename = f"{target_bank.id}_{p_home.id}_{pdf_file.name}"
-                    dest_path = storage_dir / dest_filename
-                    shutil.copy2(pdf_file, dest_path)
-
-                    doc_name = pdf_file.stem.replace("_", " ")
-                    bdoc = BankDocument(
-                        productBankLinkId=target_link.id,
-                        documentName=doc_name,
-                        documentLocation=dest_filename,
-                    )
-                    db.add(bdoc)
-                    db.commit()
-                    db.refresh(bdoc)
-
-                    chunks_count = rag_service.index_document(
-                        db=db,
-                        bank_document_id=bdoc.id,
-                        bank_id=target_bank.id,
-                        product_id=p_home.id,
-                        file_path=dest_path,
-                    )
-                    indexed_chunks_total += chunks_count
-
-            print(f"Indexed {indexed_chunks_total} vector document chunks across all partner banks.")
-
-        # ── 4. Create 8 Agents (2 Admins + 6 Regular Agents) ─────────────
-        print("\n--- Seeding 8 Agents (2 Admins + 6 Regular Agents) ---")
-        agents_data = [
-            # Admins
-            {"name": "Lokesh Admin", "email": "lokesh_dsa_admin@yopmail.com", "mobile": "1111111111", "password": "azilen@123", "is_admin": True, "photo": "user-01.png"},
-            {"name": "Rajesh Sharma (Admin)", "email": "rajesh.admin@dsafinance.com", "mobile": "9810011223", "password": "azilen@123", "is_admin": True, "photo": "user-02.png"},
-            # Regular Agents
-            {"name": "Lokesh Agent", "email": "lokesh_agent@yopmail.com", "mobile": "2222222222", "password": "azilen@123", "is_admin": False, "photo": "user-03.png"},
-            {"name": "Priya Verma", "email": "priya.verma@dsafinance.com", "mobile": "9876500001", "password": "azilen@123", "is_admin": False, "photo": "user-04.png"},
-            {"name": "Amitabh Sen", "email": "amitabh.sen@dsafinance.com", "mobile": "9876500002", "password": "azilen@123", "is_admin": False, "photo": "user-05.png"},
-            {"name": "Sneha Kulkarni", "email": "sneha.k@dsafinance.com", "mobile": "9876500003", "password": "azilen@123", "is_admin": False, "photo": "user-06.png"},
-            {"name": "Vikram Malhotra", "email": "vikram.m@dsafinance.com", "mobile": "9876500004", "password": "azilen@123", "is_admin": False, "photo": "user-07.png"},
-            {"name": "Ananya Roy", "email": "ananya.roy@dsafinance.com", "mobile": "9876500005", "password": "azilen@123", "is_admin": False, "photo": "user-08.png"},
-        ]
-
-        created_agents = []
-        for ag in agents_data:
-            a = Agent(
-                name=ag["name"],
-                email=ag["email"],
-                mobile=ag["mobile"],
-                password=hash_password(ag["password"]),
-                tempPasswordReset=True,
-                isAdmin=ag["is_admin"],
-                photo=ag["photo"],
-                isActive=True,
-            )
-            created_agents.append(a)
-        db.add_all(created_agents)
-        db.commit()
-        for a in created_agents:
-            db.refresh(a)
-        regular_agents = [a for a in created_agents if not a.isAdmin]
-        print(f"Created {len(created_agents)} agents ({len([a for a in created_agents if a.isAdmin])} Admins, {len(regular_agents)} Regular Agents).")
-
-        # ── 5. Create Loan Applications (All Pending Review, Without Approval/Rejection) ──
-        print("\n--- Seeding Loan Applications (Pending Review) ---")
-        customers = [
-            {"name": "Lokesh Yadav", "mobile": "123123", "email": "lokesh@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
-            {"name": "Rahul Sharma", "mobile": "9876543210", "email": "rahul.sharma@gmail.com", "city": "Mumbai", "income": 120000, "age": 36, "gender": "Male"},
-            {"name": "Pooja Hegde", "mobile": "9822334455", "email": "pooja.h@yahoo.com", "city": "Bangalore", "income": 85000, "age": 29, "gender": "Female"},
-            {"name": "Rohan Gupta", "mobile": "9811223344", "email": "rohan.gupta@outlook.com", "city": "Pune", "income": 110000, "age": 34, "gender": "Male"},
-            {"name": "Neha Mehta", "mobile": "9844556677", "email": "neha.mehta@gmail.com", "city": "Ahmedabad", "income": 70000, "age": 31, "gender": "Female"},
-            {"name": "Siddharth Rao", "mobile": "9855667788", "email": "sid.rao@rediffmail.com", "city": "Hyderabad", "income": 140000, "age": 40, "gender": "Male"},
-            {"name": "Divya Sundaram", "mobile": "9866778899", "email": "divya.s@gmail.com", "city": "Chennai", "income": 90000, "age": 28, "gender": "Female"},
-            {"name": "Karan Kapoor", "mobile": "9877889900", "email": "karan.k@yahoo.com", "city": "Chandigarh", "income": 105000, "age": 35, "gender": "Male"},
-        ]
-
-        # 16 Loan Applications across 8 unique customers (all status=None for testing)
-        apps_plan = [
-            # Customer 1 (Lokesh)
-            {"cust_idx": 0, "prod_idx": 0, "req_amt": 5000000, "tenure": 240},
-            {"cust_idx": 0, "prod_idx": 1, "req_amt": 1200000, "tenure": 60},
-            {"cust_idx": 0, "prod_idx": 2, "req_amt": 300000, "tenure": 24},
-            # Customer 2 (Rahul)
-            {"cust_idx": 1, "prod_idx": 0, "req_amt": 7500000, "tenure": 300},
-            {"cust_idx": 1, "prod_idx": 2, "req_amt": 500000, "tenure": 36},
-            # Customer 3 (Pooja)
-            {"cust_idx": 2, "prod_idx": 1, "req_amt": 950000, "tenure": 48},
-            {"cust_idx": 2, "prod_idx": 0, "req_amt": 4200000, "tenure": 180},
-            # Customer 4 (Rohan)
-            {"cust_idx": 3, "prod_idx": 0, "req_amt": 6000000, "tenure": 240},
-            {"cust_idx": 3, "prod_idx": 1, "req_amt": 1500000, "tenure": 60},
-            # Customer 5 (Neha)
-            {"cust_idx": 4, "prod_idx": 2, "req_amt": 800000, "tenure": 36},
-            {"cust_idx": 4, "prod_idx": 0, "req_amt": 3500000, "tenure": 180},
-            # Customer 6 (Siddharth)
-            {"cust_idx": 5, "prod_idx": 0, "req_amt": 8500000, "tenure": 240},
-            {"cust_idx": 5, "prod_idx": 1, "req_amt": 2200000, "tenure": 60},
-            # Customer 7 (Divya)
-            {"cust_idx": 6, "prod_idx": 0, "req_amt": 4800000, "tenure": 240},
-            {"cust_idx": 6, "prod_idx": 2, "req_amt": 250000, "tenure": 24},
-            # Customer 8 (Karan)
-            {"cust_idx": 7, "prod_idx": 0, "req_amt": 5500000, "tenure": 180},
-            {"cust_idx": 7, "prod_idx": 1, "req_amt": 1100000, "tenure": 60},
-        ]
-
-        created_apps = []
-        for i, plan in enumerate(apps_plan, 1):
-            cust = customers[plan["cust_idx"]]
-            prod = products[plan["prod_idx"]]
-            assigned_agent = regular_agents[(i - 1) % len(regular_agents)]
-
-            # 1. Create client general details
-            cgd = ClientGeneralDetail(
-                name=cust["name"],
-                age=cust["age"],
-                gender=cust["gender"],
-                location=cust["city"],
-                employment_type="Salaried",
-                monthly_income=Decimal(str(cust["income"])),
-                monthly_obligation=Decimal("15000.00"),
-                existing_emi=Decimal("10000.00"),
-                cibil_score=random.randint(730, 810),
-                loan_amount_required=Decimal(str(plan["req_amt"])),
-                preferred_tenure=plan["tenure"],
-                isSalaried=True,
-            )
-            db.add(cgd)
-            db.flush()
-
-            # 2. Create product specific details
-            home_id = None
-            car_id = None
-            personal_id = None
-
-            if prod.name == "Home Loan":
-                hld = HomeLoanDetail(
-                    property_value=Decimal(str(int(plan["req_amt"] * 1.25))),
-                    property_location=f"{cust['city']} Prime Heights",
-                    propertyUsageType="Residential",
-                    down_payment=Decimal(str(int(plan["req_amt"] * 0.25))),
-                    isPartProperty=False,
-                    propertyRequirement="Ready to Move",
-                    propertyType="Apartment",
-                    propertyStatus="Freehold",
-                    femaleCoApplicant=(cust["gender"] == "Female"),
-                    propertyInsurance=True,
-                    applicantInsurance=True,
-                )
-                db.add(hld)
-                db.flush()
-                home_id = hld.id
-
-            elif prod.name == "Car Loan":
-                cld = CarLoanDetail(
-                    new_or_used="New",
-                    car_value=Decimal(str(int(plan["req_amt"] * 1.15))),
-                    down_payment=Decimal(str(int(plan["req_amt"] * 0.15))),
-                    vehicle_age=0,
-                )
-                db.add(cld)
-                db.flush()
-                car_id = cld.id
-
-            elif prod.name == "Personal Loan":
-                pld = PersonalLoanDetail(
-                    loan_purpose="Home Improvement",
-                    other=None,
-                    required_amount=Decimal(str(plan["req_amt"])),
-                    existing_obligations=Decimal("15000.00"),
-                )
-                db.add(pld)
-                db.flush()
-                personal_id = pld.id
-
-            # 3. Create Loan Application record (status=None -> Pending Review)
-            app = LoanApplication(
-                name=cust["name"],
-                email=cust["email"],
-                mobile=cust["mobile"],
-                uniqueCustomerId=cust["mobile"],
-                productId=prod.id,
-                agentId=assigned_agent.id,
-                bankId=None,
-                clientGeneralDetailTableId=cgd.id,
-                homeLoanDetailId=home_id,
-                carLoanDetailId=car_id,
-                personalLoanDetailId=personal_id,
-                status=None,
-                description=None,
-                isActive=True,
-            )
-            created_apps.append(app)
-
-        db.add_all(created_apps)
-        db.commit()
-        print(f"Created {len(created_apps)} loan applications (all Pending Review) across {len(customers)} unique customers.")
-
-        print("\n=======================================================")
-        print("DATABASE SEEDING COMPLETED SUCCESSFULLY!")
-        print(f"Summary:")
-        print(f" - 3 Products (Home, Car, Personal)")
-        print(f" - 7 Institutions (5 Banks + 2 NBFCs)")
-        print(f" - {len(links)} Product-Bank Links")
-        print(f" - 8 Agents (2 Admins, 6 Regular Agents)")
-        print(f" - {len(created_apps)} Loan Applications (All Pending Review)")
-        print("=======================================================\n")
-
     except Exception as e:
         db.rollback()
-        print(f"Error seeding database: {e}")
+        print(f"Error resetting database: {e}")
         raise
     finally:
         db.close()
 
+    # ── Execute 5 Modular Seeders Sequentially ─────────────────────────────
+
+    # 1. Seed Only One Admin User
+    admin = seed_admin()
+
+    # 2. Seed Products & Banks
+    products, banks = seed_products_banks()
+
+    # 3. Seed Agents
+    agents = seed_agents()
+
+    # 4. Seed Product-Bank Mapping & Vector Embeddings
+    links = seed_product_bank_mapping()
+
+    # 5. Seed Loan Applications
+    apps = seed_loan_applications()
+
+    print("\n=======================================================")
+    print("   ALL 5 MODULAR DATABASE SEEDERS COMPLETED SUCCESSFULLY! ")
+    print("=======================================================")
+    print(f"Summary:")
+    print(f" 1. Admin User: 1 ({admin.email})")
+    print(f" 2. Products & Banks: {len(products)} Products, {len(banks)} Institutions")
+    print(f" 3. DSA Agents: {len(agents)} Agents")
+    print(f" 4. Product-Bank Links: {len(links)} Links (with pgvector documents)")
+    print(f" 5. Loan Applications: {len(apps)} Applications (All Pending Review)")
+    print("=======================================================\n")
+
 
 if __name__ == "__main__":
-    seed_database()
+    reset_and_seed_full_database()

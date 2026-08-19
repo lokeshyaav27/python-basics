@@ -121,28 +121,26 @@ alembic upgrade head
 
 ---
 
-## 🌱 Database Seeder
+## 🌱 Database Seeders
 
-The project includes an automated database seeder (`seed_full_database.py`) that sets up the database with realistic demo data and syncs image assets.
+The platform uses a **modular seeder architecture** located under the `seeds/` directory, managed by a master orchestrator (`seed_full_database.py`). 
 
-### Run the Seeder Command
+Instead of a single monolithic script, the database seeding has been broken down into **5 small, independent seeders**. In `seed_full_database.py`, each seeder step is invoked as an isolated function call, allowing you to easily **comment out or disable any step** that is not needed for your current environment.
 
-Make sure to activate your virtual environment before running the seeder (or use the `.venv` Python executable directly):
+---
+
+### 1. Master Seeder Orchestrator (`seed_full_database.py`)
+
+You can run the full database seeding workflow all-at-once:
 
 #### Windows (PowerShell):
-```powershell
-.\.venv\Scripts\Activate.ps1
-python seed_full_database.py
-```
-*Or execute directly without activating:*
 ```powershell
 .\.venv\Scripts\python.exe seed_full_database.py
 ```
 
 #### Windows (Command Prompt):
 ```cmd
-.venv\Scripts\activate.bat
-python seed_full_database.py
+.venv\Scripts\python.exe seed_full_database.py
 ```
 
 #### macOS / Linux:
@@ -151,40 +149,39 @@ source .venv/bin/activate
 python seed_full_database.py
 ```
 
-### What the Seeder Does
-1. **Syncs Static Assets**: Copies product images, bank logos, and agent photos from `../dsa-loan-mgmt-images/` into `dsa-file-storage/`.
-2. **Enables Vector Extension**: Executes `CREATE EXTENSION IF NOT EXISTS vector;` in PostgreSQL.
-3. **Creates Tables**: Ensures all database tables are created via SQLAlchemy metadata if not already present.
-4. **Cleans Existing Records**: Resets previous demo data cleanly in dependency order.
-5. **Populates Core Data**:
-   - **3 Products**: Home Loan, Car Loan, Personal Loan.
-   - **7 Financial Institutions**: SBI, HDFC Bank, ICICI Bank, Axis Bank, PNB, Bajaj Finserv, Tata Capital.
-   - **Product-Bank Links**: Bank-specific loan products with commission rates (e.g. 1.25%, 0.85%).
-   - **8 Agents & Admins**: 2 Admin accounts and 6 Agent accounts with profile pictures and default passwords.
-   - **Demo Loan Applications**: 6 realistic applications across distinct customers with status set to *Pending Review*.
-   - **Contact Enquiries**: Sample customer inquiries and consultation requests.
+#### 💡 Customizing / Disabling Specific Seed Steps
+If you only need certain tables seeded (e.g. only Admin and Products/Banks without demo loan applications), simply open `seed_full_database.py` and **comment out** the unwanted function calls:
+
+```python
+# 1. Seed Only One Admin User
+admin = seed_admin()
+
+# 2. Seed Products & Banks
+products, banks = seed_products_banks()
+
+# 3. Seed Agents (Comment out if not needed)
+# agents = seed_agents()
+
+# 4. Seed Product-Bank Mapping & Vector Embeddings (Comment out if not needed)
+# links = seed_product_bank_mapping()
+
+# 5. Seed Loan Applications (Comment out if not needed)
+# apps = seed_loan_applications()
+```
 
 ---
 
-## 🔑 Seeded Demo Credentials
+### 2. Run Individual Modular Seeders Directly
 
-Use these pre-configured credentials to test authentication in the API or Frontend portal:
+Each seeder script in the `seeds/` directory is completely standalone and can be executed individually from the command line:
 
-### Admin Accounts
-| Name | Email | Password | Role |
-| :--- | :--- | :--- | :--- |
-| **Lokesh Admin** | `lokesh_dsa_admin@yopmail.com` | `azilen@123` | Administrator |
-| **Rajesh Sharma** | `rajesh.admin@dsafinance.com` | `azilen@123` | Administrator |
-
-### Agent Accounts
-| Name | Email | Password | Role |
-| :--- | :--- | :--- | :--- |
-| **Lokesh Agent** | `lokesh_agent@yopmail.com` | `azilen@123` | Agent |
-| **Priya Verma** | `priya.verma@dsafinance.com` | `azilen@123` | Agent |
-| **Amitabh Sen** | `amitabh.sen@dsafinance.com` | `azilen@123` | Agent |
-| **Sneha Kulkarni** | `sneha.k@dsafinance.com` | `azilen@123` | Agent |
-| **Vikram Malhotra** | `vikram.m@dsafinance.com` | `azilen@123` | Agent |
-| **Ananya Roy** | `ananya.roy@dsafinance.com` | `azilen@123` | Agent |
+| Step | Script | Description & Static Assets Handled | Standalone Command |
+| :---: | :--- | :--- | :--- |
+| **1** | `seeds/seed_1_admin.py` | **Default Admin Only**: Seeds 1 primary admin (`lokesh_dsa_admin@yopmail.com`) and copies `user-01.png`. | `python seeds/seed_1_admin.py` |
+| **2** | `seeds/seed_2_products_banks.py` | **Products & Banks**: Seeds 3 Products (Home, Car, Personal) & 7 Institutions (5 Banks + 2 NBFCs), copying product images and bank logos. | `python seeds/seed_2_products_banks.py` |
+| **3** | `seeds/seed_3_agents.py` | **DSA Agents**: Seeds 6 regular DSA Agents + 1 secondary admin with encrypted passwords, copying `user-02.png` to `user-08.png`. | `python seeds/seed_3_agents.py` |
+| **4** | `seeds/seed_4_product_bank_mapping.py` | **Product-Bank Mapping & Vectors**: Maps products to banks with commissions and indexes bank policy PDFs into `pgvector`. | `python seeds/seed_4_product_bank_mapping.py` |
+| **5** | `seeds/seed_5_loan_applications.py` | **Loan Applications**: Seeds 17 realistic applications across 8 unique customers in *Pending Review* status with linked financial details. | `python seeds/seed_5_loan_applications.py` |
 
 ---
 
@@ -215,20 +212,28 @@ dsa-mgmt-be/
 │   ├── api/
 │   │   └── routers/          # FastAPI Route handlers (auth, products, banks, loans, etc.)
 │   ├── core/
-│   │   └── config.py         # Application settings and environment variables
+│   │   ├── config.py         # Application settings and environment variables
+│   │   └── security.py       # JWT creation, PBKDF2 hashing, and role auth dependencies
 │   ├── db/
 │   │   └── session.py        # SQLAlchemy engine and SessionLocal setup
 │   ├── models/               # SQLAlchemy ORM models
 │   ├── schemas/              # Pydantic validation and serialization schemas
+│   ├── services/             # Underwriting, MCP tools, pgvector RAG, and Groq chat services
 │   └── main.py               # FastAPI application entrypoint & static mounts
 ├── dsa-file-storage/         # Static storage directory for uploads and seeded assets
 │   ├── agent-photos/
 │   ├── bank-documents/
 │   ├── bank-logo-images/
 │   └── product-images/
+├── seeds/                    # Modular database seeders
+│   ├── seed_1_admin.py               # 1. Primary admin seeder
+│   ├── seed_2_products_banks.py      # 2. Products and banks seeder
+│   ├── seed_3_agents.py              # 3. DSA agents seeder
+│   ├── seed_4_product_bank_mapping.py# 4. Product-bank links & RAG vector indexer
+│   └── seed_5_loan_applications.py   # 5. Customer loan applications seeder
 ├── sql/
 │   └── init_db.sql           # Direct raw SQL schema definitions
-├── seed_full_database.py     # Master database seeding script
+├── seed_full_database.py     # Master database seeding orchestrator
 ├── requirements.txt          # Python dependencies
 ├── .env.example              # Sample environment variables template
 └── README.md                 # Project documentation
@@ -238,13 +243,16 @@ dsa-mgmt-be/
 
 ## 📡 API Endpoints Overview
 
-| Endpoint Prefix | Description |
-| :--- | :--- |
-| `/api/auth` | Agent/Admin authentication, login, and profile info |
-| `/api/products` | Loan product catalog (Home, Car, Personal loans) |
-| `/api/banks` | Bank details, product-bank associations, and commission rates |
-| `/api/agents` | Agent creation, management, status toggles, and assignments |
-| `/api/loan-applications` | Loan application submission, status workflow, and customer tracking |
-| `/api/contact` | Public contact and loan consultation inquiries |
-| `/api/files` | File uploads for applicant documents and static asset handling |
-| `/api/rag` | Semantic similarity search and Q&A over bank policy documents |
+| Endpoint Prefix | Description | Auth Requirement |
+| :--- | :--- | :--- |
+| `/api/auth` | Agent/Admin login, Customer OTP verification, and profile lookup | Public / Bearer Token |
+| `/api/products` | Loan product catalog (Home, Car, Personal loans) | Public (Read) / Admin (Write) |
+| `/api/banks` | Partner banks & NBFCs, product mapping, document upload | Public (Read) / Admin (Write) |
+| `/api/agents` | Agent creation, management, status toggles, and assignments | Admin / Agent (Profile) |
+| `/api/loan-applications` | Loan application submission, workflow status, and customer tracking | Scoped Role Auth |
+| `/api/contact` | Public contact and loan consultation inquiries | Public (Post) / Admin (Manage) |
+| `/api/comparison` | Multi-bank loan comparison with CIBIL-to-ROI and DSA commissions | Admin / Agent / Customer |
+| `/api/eligibility` | Multi-factor underwriting calculator & natural language explanations | Admin / Agent / Customer |
+| `/api/mcp` | Model Context Protocol tools & pgvector semantic search | Admin / Agent / Customer |
+| `/api/chat` | AI Underwriter Conversational Assistant powered by Groq LLM | Admin / Agent / Customer |
+| `/api/files` | File storage and static asset serving | Public |
