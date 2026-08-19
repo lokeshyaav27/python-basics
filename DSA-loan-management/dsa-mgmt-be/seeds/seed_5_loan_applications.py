@@ -8,6 +8,7 @@ import random
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.session import SessionLocal, engine
+from app.db.db_utils import ensure_database_exists
 from app.models.base import Base
 from app.models.product import Product
 from app.models.agent import Agent
@@ -20,6 +21,7 @@ from app.models.loan_application import LoanApplication
 
 def seed_loan_applications():
     """Seeds demo loan applications (all Pending Review) across diverse customers."""
+    ensure_database_exists()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 

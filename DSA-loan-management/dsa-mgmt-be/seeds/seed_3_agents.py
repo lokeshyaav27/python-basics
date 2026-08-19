@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.session import SessionLocal, engine
+from app.db.db_utils import ensure_database_exists
 from app.models.base import Base
 from app.models.agent import Agent
 from app.core.security import hash_password
@@ -29,6 +30,7 @@ def copy_agents_static_assets():
 
 def seed_agents():
     """Seeds DSA agents and secondary admins."""
+    ensure_database_exists()
     copy_agents_static_assets()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

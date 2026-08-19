@@ -19,6 +19,7 @@ from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.loan_application import LoanApplication
 from app.models.contact_enquiry import ContactEnquiry
+from app.db.db_utils import ensure_database_exists
 
 # Import modular seeders
 from seeds.seed_1_admin import seed_admin
@@ -33,6 +34,9 @@ def reset_and_seed_full_database():
     print("\n=======================================================")
     print("      STARTING FULL DATABASE SEEDING WORKFLOW         ")
     print("=======================================================\n")
+
+    # 0. Ensure target database exists in PostgreSQL
+    ensure_database_exists()
 
     # 1. Enable pgvector extension
     with engine.connect() as conn:

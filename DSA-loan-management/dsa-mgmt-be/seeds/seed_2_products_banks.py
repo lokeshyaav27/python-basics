@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.session import SessionLocal, engine
+from app.db.db_utils import ensure_database_exists
 from app.models.base import Base
 from app.models.product import Product
 from app.models.bank import Bank
@@ -45,6 +46,7 @@ def copy_products_banks_static_assets():
 
 def seed_products_banks():
     """Seeds loan products and partner banking institutions."""
+    ensure_database_exists()
     copy_products_banks_static_assets()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sqlalchemy import text
 from app.db.session import SessionLocal, engine
+from app.db.db_utils import ensure_database_exists
 from app.models.base import Base
 from app.models.product import Product
 from app.models.bank import Bank
@@ -28,6 +29,7 @@ def copy_bank_documents_static_assets():
 
 def seed_product_bank_mapping():
     """Seeds product-bank mapping links and indexes policy documents into pgvector."""
+    ensure_database_exists()
     storage_dir = copy_bank_documents_static_assets()
     
     with engine.connect() as conn:
