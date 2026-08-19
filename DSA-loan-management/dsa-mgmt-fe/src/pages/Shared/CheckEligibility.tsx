@@ -26,8 +26,9 @@ import {
   CalculatorOutlined,
 } from '@ant-design/icons'
 import { Tooltip, message } from 'antd'
+import { ROUTES } from '../../constants/routes'
 
-export default function CheckEligibility() {
+const CheckEligibility: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -503,8 +504,8 @@ export default function CheckEligibility() {
                 onClick={() =>
                   navigate(
                     user?.role === 'customer'
-                      ? `/customer/loan-comparison?appId=${selectedAppId}`
-                      : `/agent/loan-comparison?appId=${selectedAppId}`
+                      ? `${ROUTES.CUSTOMER.LOAN_COMPARISON}?appId=${selectedAppId}`
+                      : `${ROUTES.AGENT.LOAN_COMPARISON}?appId=${selectedAppId}`
                   )
                 }
                 className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-purple-600/20 hover:bg-purple-700 transition active:scale-95"
@@ -520,7 +521,7 @@ export default function CheckEligibility() {
       {editingApplication && (
         <ApplicationDetailModal
           application={editingApplication}
-          allowEditing={true}
+          canEdit={true}
           onClose={() => setEditingApplication(null)}
           onUpdated={handleModalUpdated}
         />
@@ -528,3 +529,5 @@ export default function CheckEligibility() {
     </div>
   )
 }
+
+export default CheckEligibility

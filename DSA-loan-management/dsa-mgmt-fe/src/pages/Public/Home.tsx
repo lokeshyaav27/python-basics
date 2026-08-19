@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProducts } from '../../services/products'
 import { fetchBanks } from '../../services/banks'
+import { ROUTES } from '../../constants/routes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 // ── Interactive EMI Calculator Component ─────────────────────────────────────
-function EmiCalculator() {
+const EmiCalculator: React.FC = () => {
   const [amount, setAmount] = useState<number>(2500000)
   const [rate, setRate] = useState<number>(8.5)
   const [tenureYears, setTenureYears] = useState<number>(15)
@@ -171,7 +172,7 @@ function EmiCalculator() {
 }
 
 // ── Product Carousel Component ────────────────────────────────────────────────
-function ProductCarousel({ products }: { products: any[] }) {
+const ProductCarousel: React.FC<{ products: any[] }> = ({ products }) => {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const scroll = (direction: 'left' | 'right') => {
@@ -252,7 +253,7 @@ function ProductCarousel({ products }: { products: any[] }) {
 
             <div className="mt-6 pt-2">
               <Link
-                to={`/apply-for-loan?productId=${product.id}`}
+                to={`${ROUTES.APPLY_FOR_LOAN}?productId=${product.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-xs font-bold text-white hover:bg-blue-600 transition shadow-sm active:scale-[0.98]"
               >
                 Apply for {product.name} →
@@ -265,7 +266,7 @@ function ProductCarousel({ products }: { products: any[] }) {
   )
 }
 
-export default function Home() {
+const Home: React.FC = () => {
   const { data: products = [] } = useQuery({ queryKey: ['products-home'], queryFn: fetchProducts })
   const { data: banks = [] } = useQuery({ queryKey: ['banks-home'], queryFn: fetchBanks })
 
@@ -569,13 +570,13 @@ export default function Home() {
             </p>
             <div className="pt-4 flex flex-wrap gap-4 justify-center">
               <Link
-                to="/apply-for-loan"
+                to={ROUTES.APPLY_FOR_LOAN}
                 className="rounded-2xl bg-white px-8 py-4 text-sm font-bold text-blue-900 shadow-lg hover:bg-blue-50 transition active:scale-95"
               >
                 Start Multi-Step Application →
               </Link>
               <Link
-                to="/contact-us"
+                to={ROUTES.CONTACT_US}
                 className="rounded-2xl bg-white/10 border border-white/20 px-8 py-4 text-sm font-semibold text-white hover:bg-white/20 transition"
               >
                 Speak with an Advisor
@@ -587,3 +588,5 @@ export default function Home() {
     </div>
   )
 }
+
+export default Home

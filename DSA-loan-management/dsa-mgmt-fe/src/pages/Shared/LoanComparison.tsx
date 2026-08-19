@@ -29,7 +29,7 @@ import { Tooltip, message } from 'antd'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-export default function LoanComparison() {
+const LoanComparison: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -354,13 +354,10 @@ export default function LoanComparison() {
   )
 }
 
-function BankComparisonCard({
-  bank,
-  isAgentOrAdmin,
-}: {
+const BankComparisonCard: React.FC<{
   bank: BankComparisonItem
   isAgentOrAdmin: boolean
-}) {
+}> = ({ bank, isAgentOrAdmin }) => {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm flex flex-col justify-between">
       {/* ── Header ────────────────────────────────────────────────────── */}
@@ -559,3 +556,5 @@ function BankComparisonCard({
     </div>
   )
 }
+
+export default LoanComparison

@@ -37,7 +37,11 @@ type Bank = {
 const BLANK_FORM = { name: '', isNationalize: false, isPrivate: false, isnbfc: false, logo: '' }
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function BankLogo({ logo, name, size = 'md' }: { logo?: string; name: string; size?: 'sm' | 'md' | 'lg' }) {
+const BankLogo: React.FC<{ logo?: string; name: string; size?: 'sm' | 'md' | 'lg' }> = ({
+  logo,
+  name,
+  size = 'md',
+}) => {
   const sizeClasses = {
     sm: 'h-8 w-8',
     md: 'h-10 w-10',
@@ -66,7 +70,11 @@ function BankLogo({ logo, name, size = 'md' }: { logo?: string; name: string; si
   )
 }
 
-function BoolBadge({ value, activeLabel, activeColor = 'blue' }: { value: boolean; activeLabel: string; activeColor?: 'emerald' | 'blue' | 'purple' }) {
+const BoolBadge: React.FC<{
+  value: boolean
+  activeLabel: string
+  activeColor?: 'emerald' | 'blue' | 'purple'
+}> = ({ value, activeLabel, activeColor = 'blue' }) => {
   if (!value) {
     return (
       <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-400">
@@ -88,7 +96,7 @@ function BoolBadge({ value, activeLabel, activeColor = 'blue' }: { value: boolea
   )
 }
 
-export default function BanksPage() {
+const BanksPage: React.FC = () => {
   const qc = useQueryClient()
   const { data: banks = [], isLoading } = useQuery<Bank[]>({ queryKey: ['admin-banks'], queryFn: fetchBanks })
 
@@ -136,19 +144,19 @@ export default function BanksPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeLogo, setRemoveLogo] = useState(false)
 
-  function validateFileSize(file: File) {
+  const validateFileSize = (file: File) => {
     const max = 3 * 1024 * 1024
     return file.size <= max
   }
 
-  function openAdd() {
+  const openAdd = () => {
     setForm(BLANK_FORM)
     setSelectedFile(null)
     setRemoveLogo(false)
     setShowAdd(true)
   }
 
-  function openEdit(b: Bank) {
+  const openEdit = (b: Bank) => {
     setActive(b)
     setForm({ name: b.name, isNationalize: b.isNationalize, isPrivate: b.isPrivate, isnbfc: b.isnbfc, logo: b.logo || '' })
     setSelectedFile(null)
@@ -156,16 +164,16 @@ export default function BanksPage() {
     setShowEdit(true)
   }
 
-  function openView(b: Bank) {
+  const openView = (b: Bank) => {
     setActive(b)
     setShowView(true)
   }
 
-  function openLinkProducts(b: Bank) {
+  const openLinkProducts = (b: Bank) => {
     setLinkModal({ open: true, bank: b })
   }
 
-  async function handleAdd(e: React.FormEvent) {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (selectedFile && !validateFileSize(selectedFile)) {
       message.error('Logo file must be ≤ 3 MB')
@@ -182,7 +190,7 @@ export default function BanksPage() {
     setShowAdd(false)
   }
 
-  async function handleEdit(e: React.FormEvent) {
+  const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!active) return
     if (selectedFile && !validateFileSize(selectedFile)) {
@@ -204,7 +212,7 @@ export default function BanksPage() {
     setShowEdit(false)
   }
 
-  async function handleDelete() {
+  const handleDelete = async () => {
     if (!confirmDelete.id) return
     await deleteMut.mutateAsync(confirmDelete.id)
     setConfirmDelete({ open: false })
@@ -544,17 +552,12 @@ export default function BanksPage() {
 const inputCls =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition'
 
-function Modal({
-  title,
-  maxWidth = 'max-w-lg',
-  children,
-  onClose,
-}: {
+const Modal: React.FC<{
   title: string
   maxWidth?: string
   children: React.ReactNode
   onClose: () => void
-}) {
+}> = ({ title, maxWidth = 'max-w-lg', children, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className={`w-full ${maxWidth} rounded-xl bg-white shadow-2xl`}>
@@ -570,15 +573,11 @@ function Modal({
   )
 }
 
-function BankViewModal({
-  bank,
-  onClose,
-  onOpenLink,
-}: {
+const BankViewModal: React.FC<{
   bank: Bank
   onClose: () => void
   onOpenLink: () => void
-}) {
+}> = ({ bank, onClose, onOpenLink }) => {
   const { data: products = [], isLoading } = useQuery<BankProductLink[]>({
     queryKey: ['bank-products-view', bank.id],
     queryFn: () => fetchBankProducts(bank.id),
@@ -724,7 +723,7 @@ function BankViewModal({
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
@@ -733,7 +732,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
+const ViewRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => {
   return (
     <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
       <span className="font-medium text-slate-500">{label}</span>
@@ -742,15 +741,11 @@ function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-function ModalFooter({
-  onCancel,
-  submitLabel,
-  submitClass,
-}: {
+const ModalFooter: React.FC<{
   onCancel: () => void
   submitLabel: string
   submitClass: string
-}) {
+}> = ({ onCancel, submitLabel, submitClass }) => {
   return (
     <div className="flex justify-end gap-2 pt-2">
       <button
@@ -769,7 +764,7 @@ function ModalFooter({
 
 // ── Link Products Modal ───────────────────────────────────────────────────────
 
-function LinkProductsModal({ bank, onClose }: { bank: Bank; onClose: () => void }) {
+const LinkProductsModal: React.FC<{ bank: Bank; onClose: () => void }> = ({ bank, onClose }) => {
   const qc = useQueryClient()
   const { data: products = [], isLoading, refetch } = useQuery<BankProductLink[]>({
     queryKey: ['bank-products', bank.id],
@@ -846,15 +841,11 @@ function LinkProductsModal({ bank, onClose }: { bank: Bank; onClose: () => void 
   )
 }
 
-function ProductLinkRow({
-  bankId,
-  item,
-  onUpdated,
-}: {
+const ProductLinkRow: React.FC<{
   bankId: number
   item: BankProductLink
   onUpdated: () => void
-}) {
+}> = ({ bankId, item, onUpdated }) => {
   const [isLinked, setIsLinked] = useState(item.isLinked)
   const [commission, setCommission] = useState(
     item.commission !== null && item.commission !== undefined ? String(item.commission) : ''
@@ -875,7 +866,7 @@ function ProductLinkRow({
     )
   }, [item])
 
-  async function handleSaveLink() {
+  const handleSaveLink = async () => {
     setIsSaving(true)
     try {
       const commNum = commission.trim() === '' ? null : parseFloat(commission)
@@ -899,7 +890,7 @@ function ProductLinkRow({
     }
   }
 
-  async function handleUploadDocument(e: React.FormEvent) {
+  const handleUploadDocument = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!uploadFile) {
       message.error('Please select a file to upload')
@@ -921,7 +912,7 @@ function ProductLinkRow({
     }
   }
 
-  async function handleDeleteDocument(documentId: number, docName: string) {
+  const handleDeleteDocument = async (documentId: number, docName: string) => {
     if (!window.confirm(`Delete document "${docName}"?`)) return
     setDeletingDocId(documentId)
     try {
@@ -1111,5 +1102,7 @@ function ProductLinkRow({
     </tr>
   )
 }
+
+export default BanksPage
 
 

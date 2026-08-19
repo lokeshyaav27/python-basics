@@ -1,11 +1,11 @@
 import apiClient from './apiClient'
 
-export async function fetchProducts() {
+export const fetchProducts = async () => {
   const res = await apiClient.get('/api/products')
   return res.data || []
 }
 
-export async function createProduct(payload: { name: string; description: string; file: File }) {
+export const createProduct = async (payload: { name: string; description: string; file: File }) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('description', payload.description)
@@ -14,7 +14,7 @@ export async function createProduct(payload: { name: string; description: string
   return res.data
 }
 
-export async function updateProduct(id: number, payload: { name: string; description: string; file?: File | null }) {
+export const updateProduct = async (id: number, payload: { name: string; description: string; file?: File | null }) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('description', payload.description)
@@ -24,7 +24,7 @@ export async function updateProduct(id: number, payload: { name: string; descrip
   return res.data
 }
 
-export async function deleteProduct(id: number) {
+export const deleteProduct = async (id: number) => {
   const res = await apiClient.delete(`/api/products/${id}`)
   return res.data
 }

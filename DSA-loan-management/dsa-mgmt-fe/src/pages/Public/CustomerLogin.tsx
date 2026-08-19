@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { requestCustomerOtp, verifyCustomerOtp } from '../../services/auth'
+import { ROUTES } from '../../constants/routes'
 import { message } from 'antd'
 
-export default function CustomerLogin() {
+const CustomerLogin: React.FC = () => {
   const [searchParams] = useSearchParams()
   const [mobile, setMobile] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -52,20 +53,16 @@ export default function CustomerLogin() {
       const res = await verifyCustomerOtp(mobile.trim(), otp.trim())
       const user = res?.user || {}
       const name = user.name || mobile.trim()
-      const token = res?.accessToken || ''
-      auth.login(
+      auth.login(res.accessToken, {
+        id: user.id,
         name,
-        'customer',
-        {
-          id: user.id,
-          email: user.email,
-          mobile: user.mobile || mobile.trim(),
-          uniqueCustomerId: user.uniqueCustomerId,
-        },
-        token
-      )
+        email: user.email,
+        mobile: user.mobile || mobile.trim(),
+        uniqueCustomerId: user.uniqueCustomerId,
+        role: 'customer',
+      })
       message.success(`Welcome back, ${name}!`)
-      nav('/customer/loans')
+      nav(ROUTES.CUSTOMER.LOANS)
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'OTP verification failed')
     } finally {
@@ -165,7 +162,7 @@ export default function CustomerLogin() {
         <div className="mt-6 border-t border-slate-100 pt-4 text-center">
           <p className="text-xs text-slate-500">
             Want to explore loans?{' '}
-            <Link to="/products" className="font-semibold text-blue-600 hover:underline">
+            <Link to={ROUTES.PRODUCTS} className="font-semibold text-blue-600 hover:underline">
               View Loan Products
             </Link>
           </p>
@@ -174,3 +171,5 @@ export default function CustomerLogin() {
     </div>
   )
 }
+
+export default CustomerLogin

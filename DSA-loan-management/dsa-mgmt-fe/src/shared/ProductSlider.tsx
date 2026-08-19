@@ -1,16 +1,18 @@
 import React, { useRef } from 'react'
 
-function ProductCard({ item }: { item: any }) {
+const ProductCard: React.FC<{ item: any }> = ({ item }) => {
   return (
     <div className="w-64 flex-shrink-0 bg-white border rounded-lg p-4 shadow-sm mr-4">
-      <div className="h-36 bg-gray-100 rounded mb-3 flex items-center justify-center text-sm text-slate-500">{item.image ? <img src={item.image} alt={item.name} className="h-full" /> : 'Image'}</div>
+      <div className="h-36 bg-gray-100 rounded mb-3 flex items-center justify-center text-sm text-slate-500">
+        {item.image ? <img src={item.image} alt={item.name} className="h-full" /> : 'Image'}
+      </div>
       <h5 className="font-semibold">{item.name}</h5>
       <p className="text-sm text-slate-600 mt-1">{item.description?.slice(0, 80)}</p>
     </div>
   )
 }
 
-export default function ProductSlider({ items = [] }: { items: any[] }) {
+const ProductSlider: React.FC<{ items?: any[] }> = ({ items = [] }) => {
   const ref = useRef<HTMLDivElement | null>(null)
 
   const scroll = (dir: 'left' | 'right') => {
@@ -34,3 +36,5 @@ export default function ProductSlider({ items = [] }: { items: any[] }) {
     </div>
   )
 }
+
+export default ProductSlider

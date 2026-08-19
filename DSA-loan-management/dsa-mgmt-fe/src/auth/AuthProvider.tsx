@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store'
 import {
   Role,
@@ -15,48 +14,26 @@ type AuthContextType = {
   accessToken: string | null
   token: string | null
   isAuthenticated: boolean
-  login: (
-    name: string,
-    role: Role,
-    extra?: Partial<UserDetails>,
-    accessToken?: string
-  ) => void
-  loginWithCredentials: (accessToken: string, user: UserDetails) => void
+  login: (token: string, user: UserDetails) => void
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch()
   const { user, accessToken, isAuthenticated } = useAppSelector(
     (state) => state.auth
   )
 
-  const loginWithCredentials = (token: string, userDetails: UserDetails) => {
+  const login = (token: string, userDetails: UserDetails) => {
+    if (!token) {
+      console.error('Cannot create session without a valid token')
+      return
+    }
     dispatch(
       setCredentials({
         accessToken: token,
-        user: userDetails,
-      })
-    )
-  }
-
-  const login = (
-    name: string,
-    role: Role,
-    extra?: Partial<UserDetails>,
-    token?: string
-  ) => {
-    const userDetails: UserDetails = {
-      name,
-      role,
-      ...extra,
-    }
-    const finalToken = token || accessToken || 'demo-session-token'
-    dispatch(
-      setCredentials({
-        accessToken: finalToken,
         user: userDetails,
       })
     )
@@ -74,7 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         token: accessToken,
         isAuthenticated,
         login,
-        loginWithCredentials,
         logout,
       }}
     >
@@ -83,33 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
 }
 
-export function useAuth() {
+export const useAuth = (): AuthContextType => {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
-}
-
-export function ProtectedRoute({
-  children,
-  role,
-}: {
-  children: ReactNode
-  role?: Role
-}) {
-  const { user } = useAuth()
-  if (!user) return <NavigateToLogin />
-  if (role && user.role !== role) return <Unauthorized />
-  return <>{children}</>
-}
-
-function NavigateToLogin() {
-  return <Navigate to="/customer-login" replace />
-}
-
-function Unauthorized() {
-  return (
-    <div style={{ padding: 24 }}>
-      Unauthorized — you do not have access to this page.
-    </div>
-  )
 }

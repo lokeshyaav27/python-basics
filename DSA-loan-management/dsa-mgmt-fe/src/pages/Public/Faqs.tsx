@@ -34,7 +34,9 @@ const allFaqs = [
   },
 ]
 
-export default function Faqs() {
+import { ROUTES } from '../../constants/routes'
+
+const Faqs: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
@@ -132,7 +134,7 @@ export default function Faqs() {
         </p>
         <div className="pt-2 flex justify-center gap-3">
           <Link
-            to="/contact-us"
+            to={ROUTES.CONTACT_US}
             className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition"
           >
             Contact Advisor →
@@ -142,3 +144,5 @@ export default function Faqs() {
     </main>
   )
 }
+
+export default Faqs

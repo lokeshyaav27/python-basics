@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
 
-export default function LoanDetail() {
+const LoanDetail: React.FC = () => {
   const { id } = useParams()
   return (
     <div className="p-8">
@@ -10,3 +10,5 @@ export default function LoanDetail() {
     </div>
   )
 }
+
+export default LoanDetail

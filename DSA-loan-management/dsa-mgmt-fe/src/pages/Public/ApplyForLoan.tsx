@@ -5,13 +5,13 @@ import { fetchProducts } from '../../services/products'
 import { submitFullLoanApplication } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
 import { message } from 'antd'
+import { ROUTES } from '../../constants/routes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-export default function ApplyForLoan() {
+const ApplyForLoan: React.FC = () => {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const { user, login } = useAuth()
+  const { user } = useAuth()
 
   // Multi-step state (1: Product, 2: Basic Info, 3: Financial Info, 4: Specific Details)
   const [step, setStep] = useState(1)
@@ -959,7 +959,7 @@ export default function ApplyForLoan() {
                 type="button"
                 onClick={() =>
                   navigate(
-                    `/customer-login?mobile=${encodeURIComponent(basicInfo.mobile.trim())}`
+                    `${ROUTES.CUSTOMER_LOGIN}?mobile=${encodeURIComponent(basicInfo.mobile.trim())}`
                   )
                 }
                 className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.99]"
@@ -973,3 +973,5 @@ export default function ApplyForLoan() {
     </main>
   )
 }
+
+export default ApplyForLoan

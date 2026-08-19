@@ -37,7 +37,7 @@ export interface EligibilityResult {
   applicantData?: Record<string, any>
 }
 
-export async function fetchEligibility(applicationId: number): Promise<EligibilityResult> {
+export const fetchEligibility = async (applicationId: number): Promise<EligibilityResult> => {
   const res = await apiClient.get<EligibilityResult>('/api/eligibility/evaluate', {
     params: { applicationId },
   })

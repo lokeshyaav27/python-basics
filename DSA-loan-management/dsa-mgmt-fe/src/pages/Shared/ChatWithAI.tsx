@@ -42,7 +42,7 @@ interface DisplayChatMessage {
   referencedDocs?: string[]
 }
 
-export default function ChatWithAI() {
+const ChatWithAI: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
 
@@ -542,3 +542,5 @@ export default function ChatWithAI() {
     </div>
   )
 }
+
+export default ChatWithAI

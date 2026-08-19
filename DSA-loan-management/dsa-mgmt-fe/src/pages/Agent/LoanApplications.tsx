@@ -19,10 +19,11 @@ import {
   RobotOutlined,
 } from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
+import { ROUTES } from '../../constants/routes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
+const Avatar: React.FC<{ name: string; size?: 'sm' | 'md' | 'lg' }> = ({ name, size = 'md' }) => {
   const sizeClasses = {
     sm: 'h-7 w-7 text-xs',
     md: 'h-9 w-9 text-sm',
@@ -38,7 +39,10 @@ function Avatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg'
   )
 }
 
-function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
+  status,
+  bankName,
+}) => {
   if (!status) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
@@ -70,7 +74,7 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   )
 }
 
-export function checkApplicationCompleteness(app: any): { isComplete: boolean; message: string } {
+export const checkApplicationCompleteness = (app: any): { isComplete: boolean; message: string } => {
   if (!app) return { isComplete: false, message: 'Application details missing' }
   const missing: string[] = []
 
@@ -127,7 +131,7 @@ export function checkApplicationCompleteness(app: any): { isComplete: boolean; m
   }
 }
 
-export default function AgentLoanApplicationsPage() {
+const AgentLoanApplicationsPage: React.FC = () => {
   const qc = useQueryClient()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -186,23 +190,23 @@ export default function AgentLoanApplicationsPage() {
     },
   })
 
-  function openView(c: LoanApplication) {
+  const openView = (c: LoanApplication) => {
     setActiveApplication(c)
     setShowViewModal(true)
   }
 
-  function openApprove(c: LoanApplication) {
+  const openApprove = (c: LoanApplication) => {
     setSelectedBankId(c.bankId || (banks.length > 0 ? banks[0].id : null))
     setApproveRemarks(c.description || '')
     setApproveModal({ open: true, application: c })
   }
 
-  function openReject(c: LoanApplication) {
+  const openReject = (c: LoanApplication) => {
     setRejectReason(c.status === 'rejected' ? c.description || '' : '')
     setRejectModal({ open: true, application: c })
   }
 
-  async function handleApproveSubmit(e: React.FormEvent) {
+  const handleApproveSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!approveModal.application) return
     if (!selectedBankId) {
@@ -221,7 +225,7 @@ export default function AgentLoanApplicationsPage() {
     setApproveModal({ open: false, application: null })
   }
 
-  async function handleRejectSubmit(e: React.FormEvent) {
+  const handleRejectSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!rejectModal.application) return
     if (!rejectReason.trim()) {
@@ -320,7 +324,7 @@ export default function AgentLoanApplicationsPage() {
                       {/* Check Eligibility Button */}
                       <Tooltip title="Check Loan Eligibility">
                         <button
-                          onClick={() => navigate(`/agent/check-eligibility?appId=${c.id}`)}
+                          onClick={() => navigate(`${ROUTES.AGENT.CHECK_ELIGIBILITY}?appId=${c.id}`)}
                           className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
                           aria-label="Check Eligibility"
                         >
@@ -331,7 +335,7 @@ export default function AgentLoanApplicationsPage() {
                       {/* Loan Comparison Button */}
                       <Tooltip title="Loan Comparison Matrix">
                         <button
-                          onClick={() => navigate(`/agent/loan-comparison?appId=${c.id}`)}
+                          onClick={() => navigate(`${ROUTES.AGENT.LOAN_COMPARISON}?appId=${c.id}`)}
                           className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
                           aria-label="Loan Comparison"
                         >
@@ -611,7 +615,7 @@ export default function AgentLoanApplicationsPage() {
   )
 }
 
-function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
+const ViewRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => {
   return (
     <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
       <span className="font-medium text-slate-500">{label}</span>
@@ -619,3 +623,5 @@ function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
     </div>
   )
 }
+
+export default AgentLoanApplicationsPage

@@ -1,18 +1,24 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Footer from './Footer'
-import { useAuth } from '../auth/AuthProvider'
+import Sidebar from '../Sidebar'
+import Footer from '../Footer'
+import { useAuth } from '../../auth/AuthProvider'
+import { ROUTES } from '../../constants/routes'
 
 type Role = 'admin' | 'agent' | 'customer'
 
-export default function ProtectedLayout({ role, children }: { role: Role; children: React.ReactNode }) {
+interface ProtectedLayoutProps {
+  role: Role
+  children: React.ReactNode
+}
+
+const ProtectedLayout: React.FC<ProtectedLayoutProps> = ({ role, children }) => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
-    navigate('/')
+    navigate(ROUTES.HOME)
   }
 
   return (
@@ -20,7 +26,9 @@ export default function ProtectedLayout({ role, children }: { role: Role; childr
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-900 text-lg font-extrabold text-white">D</span>
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-900 text-lg font-extrabold text-white">
+              D
+            </span>
             <div>
               <div className="text-sm font-bold text-slate-900">DSA Finance</div>
               <div className="text-[11px] text-slate-500">{user ? user.name : ''}</div>
@@ -28,7 +36,10 @@ export default function ProtectedLayout({ role, children }: { role: Role; childr
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={handleLogout} className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700">
+            <button
+              onClick={handleLogout}
+              className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 transition shadow-sm"
+            >
               Logout
             </button>
           </div>
@@ -44,3 +55,5 @@ export default function ProtectedLayout({ role, children }: { role: Role; childr
     </div>
   )
 }
+
+export default ProtectedLayout

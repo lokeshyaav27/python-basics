@@ -11,7 +11,7 @@ type Product = {
   image?: string
 }
 
-export default function ProductsPage() {
+const ProductsPage: React.FC = () => {
   const qc = useQueryClient()
   const { data: products = [], isLoading } = useQuery<Product[]>({ queryKey: ['admin-products'], queryFn: fetchProducts })
 
@@ -60,12 +60,12 @@ export default function ProductsPage() {
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-  function validateFileSize(file: File) {
+  const validateFileSize = (file: File) => {
     const max = 3 * 1024 * 1024
     return file.size <= max
   }
 
-  function validateFileRatio(file: File) {
+  const validateFileRatio = (file: File) => {
     return new Promise<boolean>((resolve) => {
       const reader = new FileReader()
       reader.onload = () => {
@@ -85,14 +85,14 @@ export default function ProductsPage() {
     })
   }
 
-  function openAdd() {
+  const openAdd = () => {
     setForm({ name: '', description: '', image: '' })
     setSelectedFile(null)
     setRemoveImage(false)
     setShowAdd(true)
   }
 
-  function openEdit(p: Product) {
+  const openEdit = (p: Product) => {
     setActive(p)
     setForm({ name: p.name, description: p.description, image: p.image || '' })
     setSelectedFile(null)
@@ -102,12 +102,12 @@ export default function ProductsPage() {
 
   const [removeImage, setRemoveImage] = useState(false)
 
-  function openView(p: Product) {
+  const openView = (p: Product) => {
     setActive(p)
     setShowView(true)
   }
 
-  async function handleAdd(e: React.FormEvent) {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedFile) {
       alert('image is required')
@@ -129,14 +129,14 @@ export default function ProductsPage() {
     setShowAdd(false)
   }
 
-  async function handleEdit(e: React.FormEvent) {
+  const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!active) return
     await updateMut.mutateAsync({ id: active.id, payload: { name: form.name, description: form.description, file: selectedFile, remove_image: removeImage } })
     setShowEdit(false)
   }
 
-  async function handleDelete() {
+  const handleDelete = async () => {
     if (!confirmDelete.id) return
     await deleteMut.mutateAsync(confirmDelete.id)
     setConfirmDelete({ open: false })
@@ -332,3 +332,5 @@ export default function ProductsPage() {
     </div>
   )
 }
+
+export default ProductsPage

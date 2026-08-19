@@ -1,26 +1,26 @@
 import apiClient from './apiClient'
 
-export async function requestCustomerOtp(mobile: string) {
+export const requestCustomerOtp = async (mobile: string) => {
   const res = await apiClient.post('/api/auth/customer/request-otp', { mobile })
   return res.data
 }
 
-export async function verifyCustomerOtp(mobile: string, otp: string) {
+export const verifyCustomerOtp = async (mobile: string, otp: string) => {
   const res = await apiClient.post('/api/auth/customer/verify-otp', { mobile, otp })
   return res.data
 }
 
-export async function agentLogin(email: string, password: string) {
+export const agentLogin = async (email: string, password: string) => {
   const res = await apiClient.post('/api/auth/agent-login', { email, password })
   return res.data
 }
 
-export async function adminLogin(email: string, password: string) {
+export const adminLogin = async (email: string, password: string) => {
   const res = await apiClient.post('/api/auth/admin-login', { email, password })
   return res.data
 }
 
-export async function resetAgentPassword(newPassword: string, token?: string) {
+export const resetAgentPassword = async (newPassword: string, token?: string) => {
   const headers = token ? { Authorization: `Bearer ${token}` } : {}
   const res = await apiClient.post(
     '/api/auth/agent/reset-password',
@@ -30,7 +30,7 @@ export async function resetAgentPassword(newPassword: string, token?: string) {
   return res.data
 }
 
-export async function getAuthProfile() {
+export const getAuthProfile = async () => {
   const res = await apiClient.get('/api/auth/me')
   return res.data
 }

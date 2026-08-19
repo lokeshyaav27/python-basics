@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { agentLogin, resetAgentPassword } from '../../services/auth'
+import { ROUTES } from '../../constants/routes'
 import { message } from 'antd'
 
-export default function AgentLogin() {
+const AgentLogin: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,21 +49,17 @@ export default function AgentLogin() {
 
       // Normal login flow
       const name = user?.name || email
-      const token = res?.accessToken || ''
-      auth.login(
+      auth.login(res.accessToken, {
+        id: user.id,
         name,
-        'agent',
-        {
-          id: user.id,
-          email: user.email,
-          mobile: user.mobile,
-          photo: user.photo,
-          isAdmin: false,
-        },
-        token
-      )
+        email: user.email || email,
+        mobile: user.mobile,
+        role: 'agent',
+        photo: user.photo,
+        isAdmin: false,
+      })
       message.success(`Welcome back, ${name}!`)
-      nav('/agent/loan-applications')
+      nav(ROUTES.AGENT.LOAN_APPLICATIONS)
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Invalid email or password. Please try again.')
     } finally {
@@ -270,4 +267,6 @@ export default function AgentLogin() {
     </div>
   )
 }
+
+export default AgentLogin
 

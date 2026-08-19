@@ -1,18 +1,18 @@
 import apiClient from './apiClient'
 
-export async function fetchAgents() {
+export const fetchAgents = async () => {
   const res = await apiClient.get('/api/agents')
   return res.data || []
 }
 
-export async function createAgent(payload: {
+export const createAgent = async (payload: {
   name: string
   email: string
   mobile: string
   password: string
   isAdmin?: boolean
   file?: File | null
-}) {
+}) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('email', payload.email)
@@ -26,7 +26,7 @@ export async function createAgent(payload: {
   return res.data
 }
 
-export async function updateAgent(
+export const updateAgent = async (
   id: number,
   payload: {
     name: string
@@ -36,7 +36,7 @@ export async function updateAgent(
     file?: File | null
     remove_photo?: boolean
   }
-) {
+) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('email', payload.email)
@@ -50,7 +50,7 @@ export async function updateAgent(
   return res.data
 }
 
-export async function deleteAgent(id: number) {
+export const deleteAgent = async (id: number) => {
   const res = await apiClient.delete(`/api/agents/${id}`)
   return res.data
 }

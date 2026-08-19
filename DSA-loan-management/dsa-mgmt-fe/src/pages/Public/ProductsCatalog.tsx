@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchProducts } from '../../services/products'
 
+import { ROUTES } from '../../constants/routes'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-export default function ProductsCatalog() {
+const ProductsCatalog: React.FC = () => {
   const { data: products = [], isLoading } = useQuery({ queryKey: ['products-catalog-all'], queryFn: fetchProducts })
   const [selectedCategory, setSelectedCategory] = useState('all')
 
@@ -126,7 +128,7 @@ export default function ProductsCatalog() {
 
                 <div className="mt-8 pt-2">
                   <Link
-                    to={`/apply-for-loan?productId=${product.id}`}
+                    to={`${ROUTES.APPLY_FOR_LOAN}?productId=${product.id}`}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 transition active:scale-[0.98]"
                   >
                     Apply for {product.name} →
@@ -140,3 +142,5 @@ export default function ProductsCatalog() {
     </main>
   )
 }
+
+export default ProductsCatalog

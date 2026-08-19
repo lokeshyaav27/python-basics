@@ -1,7 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '../../constants/routes'
 
-export default function AboutUs() {
+const AboutUs: React.FC = () => {
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
       {/* Hero */}
@@ -69,7 +70,7 @@ export default function AboutUs() {
 
       <div className="mt-14 text-center">
         <Link
-          to="/apply-for-loan"
+          to={ROUTES.APPLY_FOR_LOAN}
           className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition"
         >
           Check Your Loan Eligibility →
@@ -78,3 +79,5 @@ export default function AboutUs() {
     </main>
   )
 }
+
+export default AboutUs

@@ -16,18 +16,18 @@ export type Bank = {
   logo?: string
 }
 
-export async function fetchBanks(): Promise<Bank[]> {
+export const fetchBanks = async (): Promise<Bank[]> => {
   const res = await apiClient.get('/api/banks')
   return res.data || []
 }
 
-export async function createBank(payload: {
+export const createBank = async (payload: {
   name: string
   isNationalize?: boolean
   isPrivate?: boolean
   isnbfc?: boolean
   file?: File
-}) {
+}) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('isNationalize', String(!!payload.isNationalize))
@@ -40,7 +40,7 @@ export async function createBank(payload: {
   return res.data
 }
 
-export async function updateBank(
+export const updateBank = async (
   id: number,
   payload: {
     name: string
@@ -50,7 +50,7 @@ export async function updateBank(
     file?: File | null
     remove_logo?: boolean
   }
-) {
+) => {
   const fd = new FormData()
   fd.append('name', payload.name)
   fd.append('isNationalize', String(!!payload.isNationalize))
@@ -64,7 +64,7 @@ export async function updateBank(
   return res.data
 }
 
-export async function deleteBank(id: number) {
+export const deleteBank = async (id: number) => {
   const res = await apiClient.delete(`/api/banks/${id}`)
   return res.data
 }
@@ -80,19 +80,19 @@ export type BankProductLink = {
   documents?: BankDocumentItem[]
 }
 
-export async function fetchBankProducts(bankId: number): Promise<BankProductLink[]> {
+export const fetchBankProducts = async (bankId: number): Promise<BankProductLink[]> => {
   const res = await apiClient.get(`/api/banks/${bankId}/products`)
   return res.data || []
 }
 
-export async function linkBankProduct(
+export const linkBankProduct = async (
   bankId: number,
   productId: number,
   payload: {
     is_linked: boolean
     commission?: number | null
   }
-) {
+) => {
   const fd = new FormData()
   fd.append('is_linked', String(payload.is_linked))
   if (payload.commission !== undefined && payload.commission !== null) {
@@ -104,12 +104,12 @@ export async function linkBankProduct(
   return res.data
 }
 
-export async function uploadBankProductDocument(
+export const uploadBankProductDocument = async (
   bankId: number,
   productId: number,
   file: File,
   documentName?: string
-) {
+) => {
   const fd = new FormData()
   fd.append('file', file)
   if (documentName && documentName.trim()) {
@@ -125,11 +125,11 @@ export async function uploadBankProductDocument(
   return res.data
 }
 
-export async function deleteBankProductDocument(
+export const deleteBankProductDocument = async (
   bankId: number,
   productId: number,
   documentId: number
-) {
+) => {
   const res = await apiClient.delete(
     `/api/banks/${bankId}/products/${productId}/documents/${documentId}`
   )

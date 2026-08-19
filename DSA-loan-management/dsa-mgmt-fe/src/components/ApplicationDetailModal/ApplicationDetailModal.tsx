@@ -8,11 +8,14 @@ import {
   HomeLoanDetailsData,
   CarLoanDetailsData,
   PersonalLoanDetailsData,
-} from '../services/loanApplications'
+} from '../../services/loanApplications'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
+  status,
+  bankName,
+}) => {
   if (!status) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200">
@@ -44,7 +47,7 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   )
 }
 
-function CibilBadge({ score }: { score?: number | null }) {
+const CibilBadge: React.FC<{ score?: number | null }> = ({ score }) => {
   if (!score) return <span className="text-slate-400 font-medium">Not provided</span>
   if (score >= 750) {
     return (
@@ -67,26 +70,26 @@ function CibilBadge({ score }: { score?: number | null }) {
   )
 }
 
-function formatCurrency(val?: number | string | null): string {
+const formatCurrency = (val?: number | string | null): string => {
   if (val === null || val === undefined || val === '') return '—'
   const num = Number(val)
   if (isNaN(num)) return '—'
   return `₹ ${num.toLocaleString('en-IN')}`
 }
 
-interface ApplicationDetailModalProps {
+export interface ApplicationDetailModalProps {
   application: LoanApplication | null
   onClose: () => void
   onUpdated?: () => void
   canEdit?: boolean
 }
 
-export default function ApplicationDetailModal({
+const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
   application,
   onClose,
   onUpdated,
   canEdit = true,
-}: ApplicationDetailModalProps) {
+}) => {
   if (!application) return null
 
   const isFinalized = application.status === 'approved' || application.status === 'rejected'
@@ -150,8 +153,12 @@ export default function ApplicationDetailModal({
   }
 
   const productName = application.productName || 'Loan Application'
-  const isHomeLoan = productName.toLowerCase().includes('home') || productName.toLowerCase().includes('housing')
-  const isCarLoan = productName.toLowerCase().includes('car') || productName.toLowerCase().includes('auto') || productName.toLowerCase().includes('vehicle')
+  const isHomeLoan =
+    productName.toLowerCase().includes('home') || productName.toLowerCase().includes('housing')
+  const isCarLoan =
+    productName.toLowerCase().includes('car') ||
+    productName.toLowerCase().includes('auto') ||
+    productName.toLowerCase().includes('vehicle')
   const isPersonalLoan = productName.toLowerCase().includes('personal') || (!isHomeLoan && !isCarLoan)
 
   return (
@@ -1042,3 +1049,5 @@ export default function ApplicationDetailModal({
     </div>
   )
 }
+
+export default ApplicationDetailModal

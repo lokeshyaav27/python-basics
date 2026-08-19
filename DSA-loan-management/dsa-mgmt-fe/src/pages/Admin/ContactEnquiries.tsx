@@ -26,7 +26,7 @@ const STATUS_OPTIONS = [
   { value: 'closed', label: 'Closed', color: 'bg-slate-100 text-slate-600 border-slate-200' },
 ]
 
-function getStatusBadge(status: string) {
+const getStatusBadge = (status: string) => {
   const normalized = (status || 'new').toLowerCase().replace(' ', '_')
   const opt = STATUS_OPTIONS.find((s) => s.value === normalized) || {
     value: normalized,
@@ -50,7 +50,7 @@ function getStatusBadge(status: string) {
   )
 }
 
-export default function ContactEnquiriesPage() {
+const ContactEnquiriesPage: React.FC = () => {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -436,3 +436,5 @@ export default function ContactEnquiriesPage() {
     </div>
   )
 }
+
+export default ContactEnquiriesPage

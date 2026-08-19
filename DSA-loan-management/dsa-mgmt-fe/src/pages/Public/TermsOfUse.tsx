@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function TermsOfUse() {
+const TermsOfUse: React.FC = () => {
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 md:py-16">
       <section>
@@ -25,3 +25,5 @@ export default function TermsOfUse() {
     </main>
   )
 }
+
+export default TermsOfUse

@@ -60,11 +60,11 @@ export interface BankComparisonResponse {
   disclaimer: string
 }
 
-export async function fetchBankComparison(
+export const fetchBankComparison = async (
   applicationId: number,
   bankIds: number[],
-  userRole: string = 'customer',
-): Promise<BankComparisonResponse> {
+  userRole: string = 'customer'
+): Promise<BankComparisonResponse> => {
   const res = await apiClient.get<BankComparisonResponse>('/api/comparison/banks', {
     params: {
       applicationId,

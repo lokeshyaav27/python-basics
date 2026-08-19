@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { adminLogin } from '../../services/auth'
+import { ROUTES } from '../../constants/routes'
 
-export default function AdminLogin() {
+const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -16,21 +17,16 @@ export default function AdminLogin() {
     try {
       const res = await adminLogin(email, password)
       const user = res?.user || {}
-      const name = user?.name || email
-      const token = res?.accessToken || ''
-      auth.login(
-        name,
-        'admin',
-        {
-          id: user.id,
-          email: user.email,
-          mobile: user.mobile,
-          photo: user.photo,
-          isAdmin: true,
-        },
-        token
-      )
-      nav('/admin')
+      auth.login(res.accessToken, {
+        id: user.id,
+        name: user.name || email,
+        email: user.email || email,
+        mobile: user.mobile,
+        role: 'admin',
+        photo: user.photo,
+        isAdmin: true,
+      })
+      nav(ROUTES.ADMIN.DASHBOARD)
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Login failed')
     }
@@ -48,3 +44,5 @@ export default function AdminLogin() {
     </div>
   )
 }
+
+export default AdminLogin

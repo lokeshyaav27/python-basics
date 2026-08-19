@@ -1,26 +1,31 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { ROUTES } from '../../constants/routes'
 
 const reasons = [
   {
     icon: '⚡',
     title: 'Multi-Bank Algorithmic Match',
-    description: 'We instantly analyze your credit and financial profile across 25+ partner banks to find you the absolute lowest interest rate without impacting your CIBIL score.',
+    description:
+      'We instantly analyze your credit and financial profile across 25+ partner banks to find you the absolute lowest interest rate without impacting your CIBIL score.',
   },
   {
     icon: '🔒',
     title: 'Zero Hidden Charges',
-    description: 'Our digital platform and expert advisory services are completely free for borrowers. No commission markups, no surprise processing deductions.',
+    description:
+      'Our digital platform and expert advisory services are completely free for borrowers. No commission markups, no surprise processing deductions.',
   },
   {
     icon: '⏱️',
     title: '48-Hour Approvals',
-    description: 'Direct digital API integrations and prioritized DSA processing channels cut down traditional approval times from 3 weeks to under 48 hours.',
+    description:
+      'Direct digital API integrations and prioritized DSA processing channels cut down traditional approval times from 3 weeks to under 48 hours.',
   },
   {
     icon: '👨‍💼',
     title: 'Dedicated Loan Specialist',
-    description: 'From documentation pickup to final disbursement check handover, your assigned DSA loan officer manages every bank query end-to-end.',
+    description:
+      'From documentation pickup to final disbursement check handover, your assigned DSA loan officer manages every bank query end-to-end.',
   },
 ]
 
@@ -33,7 +38,7 @@ const comparisonData = [
   { feature: 'Consultation Fee', dsa: 'Free (₹0)', direct: 'Branch processing charges apply' },
 ]
 
-export default function WhyChooseUs() {
+const WhyChooseUs: React.FC = () => {
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
       {/* Hero Banner */}
@@ -107,7 +112,7 @@ export default function WhyChooseUs() {
       {/* Bottom CTA */}
       <div className="mt-14 text-center">
         <Link
-          to="/apply-for-loan"
+          to={ROUTES.APPLY_FOR_LOAN}
           className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition active:scale-95"
         >
           Apply for Loan Today →
@@ -116,3 +121,5 @@ export default function WhyChooseUs() {
     </main>
   )
 }
+
+export default WhyChooseUs

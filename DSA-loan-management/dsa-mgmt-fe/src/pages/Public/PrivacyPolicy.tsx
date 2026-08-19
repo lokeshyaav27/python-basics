@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function PrivacyPolicy() {
+const PrivacyPolicy: React.FC = () => {
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 md:py-16">
       <section>
@@ -28,3 +28,5 @@ export default function PrivacyPolicy() {
     </main>
   )
 }
+
+export default PrivacyPolicy

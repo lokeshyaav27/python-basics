@@ -12,10 +12,14 @@ import {
   RobotOutlined,
 } from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
+import { ROUTES } from '../../constants/routes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
+  status,
+  bankName,
+}) => {
   if (!status) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200 shadow-xs">
@@ -47,7 +51,7 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   )
 }
 
-export default function CustomerLoanList() {
+const CustomerLoanList: React.FC = () => {
   const { user } = useAuth()
   const customerIdentifier = user?.mobile || user?.email || user?.name || ''
 
@@ -65,7 +69,7 @@ export default function CustomerLoanList() {
   const inReviewCount = loans.filter((l) => !l.status || ((l.status || '').toLowerCase() !== 'approved' && (l.status || '').toLowerCase() !== 'rejected')).length
   const rejectedCount = loans.filter((l) => (l.status || '').toLowerCase() === 'rejected').length
 
-  function openDetails(loan: LoanApplication) {
+  const openDetails = (loan: LoanApplication) => {
     setSelectedLoan(loan)
     setShowDetailModal(true)
   }
@@ -269,7 +273,7 @@ export default function CustomerLoanList() {
                     {/* Check Eligibility Button */}
                     <Tooltip title="Check Loan Eligibility">
                       <Link
-                        to={`/customer/check-eligibility?appId=${loan.id}`}
+                        to={`${ROUTES.CUSTOMER.CHECK_ELIGIBILITY}?appId=${loan.id}`}
                         className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
                         aria-label="Check Eligibility"
                       >
@@ -280,7 +284,7 @@ export default function CustomerLoanList() {
                     {/* Loan Comparison Button */}
                     <Tooltip title="Loan Comparison Matrix">
                       <Link
-                        to={`/customer/loan-comparison?appId=${loan.id}`}
+                        to={`${ROUTES.CUSTOMER.LOAN_COMPARISON}?appId=${loan.id}`}
                         className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/70 text-sm shadow-2xs hover:scale-105 active:scale-95 transition"
                         aria-label="Loan Comparison"
                       >
@@ -324,3 +328,5 @@ export default function CustomerLoanList() {
     </div>
   )
 }
+
+export default CustomerLoanList

@@ -80,7 +80,10 @@ export type FullLoanApplicationData = {
   personalLoanDetails?: PersonalLoanDetailsData | null
 }
 
-export async function fetchLoanApplications(agentId?: number, mobile?: string): Promise<LoanApplication[]> {
+export const fetchLoanApplications = async (
+  agentId?: number,
+  mobile?: string
+): Promise<LoanApplication[]> => {
   const params: any = {}
   if (agentId !== undefined && agentId !== null) params.agent_id = agentId
   if (mobile !== undefined && mobile !== null) params.mobile = mobile
@@ -88,45 +91,47 @@ export async function fetchLoanApplications(agentId?: number, mobile?: string): 
   return res.data || []
 }
 
-export async function fetchCustomerLoanApplications(mobile: string): Promise<LoanApplication[]> {
+export const fetchCustomerLoanApplications = async (
+  mobile: string
+): Promise<LoanApplication[]> => {
   return fetchLoanApplications(undefined, mobile)
 }
 
-export async function assignLoanApplicationAgent(
+export const assignLoanApplicationAgent = async (
   applicationId: number,
   agentId: number | null
-): Promise<LoanApplication> {
+): Promise<LoanApplication> => {
   const res = await apiClient.put(`/api/loan-applications/${applicationId}/assign-agent`, { agentId })
   return res.data
 }
 
-export async function updateLoanApplicationStatus(
+export const updateLoanApplicationStatus = async (
   applicationId: number,
   payload: { status?: string | null; bankId?: number | null; description?: string | null }
-): Promise<LoanApplication> {
+): Promise<LoanApplication> => {
   const res = await apiClient.put(`/api/loan-applications/${applicationId}/status`, payload)
   return res.data
 }
 
-export async function createLoanApplication(payload: any): Promise<LoanApplication> {
+export const createLoanApplication = async (payload: any): Promise<LoanApplication> => {
   const res = await apiClient.post('/api/loan-applications', payload)
   return res.data
 }
 
-export async function updateLoanApplication(
+export const updateLoanApplication = async (
   id: number,
   payload: Partial<FullLoanApplicationData>
-): Promise<LoanApplication> {
+): Promise<LoanApplication> => {
   const res = await apiClient.put(`/api/loan-applications/${id}`, payload)
   return res.data
 }
 
-export async function deleteLoanApplication(id: number): Promise<{ status: string }> {
+export const deleteLoanApplication = async (id: number): Promise<{ status: string }> => {
   const res = await apiClient.delete(`/api/loan-applications/${id}`)
   return res.data
 }
 
-export async function submitFullLoanApplication(payload: FullLoanApplicationData) {
+export const submitFullLoanApplication = async (payload: FullLoanApplicationData) => {
   const res = await apiClient.post('/api/loan-applications/apply', payload)
   return res.data
 }

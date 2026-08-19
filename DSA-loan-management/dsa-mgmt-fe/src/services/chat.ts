@@ -30,13 +30,13 @@ export interface ChatResponse {
   requiresConfirmation: boolean
 }
 
-export async function sendChatMessage(payload: {
+export const sendChatMessage = async (payload: {
   message: string
   history: ChatMessage[]
   authContext?: ChatAuthContext
   applicationId?: number
   customerId?: string
-}): Promise<ChatResponse> {
+}): Promise<ChatResponse> => {
   const res = await apiClient.post<ChatResponse>('/api/chat/assistant', payload)
   return res.data
 }

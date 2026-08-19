@@ -24,7 +24,11 @@ import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 const BLANK_FORM = { name: '', email: '', mobile: '', productId: null as number | null }
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function Avatar({ name, photo, size = 'md' }: { name: string; photo?: string | null; size?: 'sm' | 'md' | 'lg' }) {
+const Avatar: React.FC<{
+  name: string
+  photo?: string | null
+  size?: 'sm' | 'md' | 'lg'
+}> = ({ name, photo, size = 'md' }) => {
   const sizeClasses = {
     sm: 'h-7 w-7 text-xs',
     md: 'h-9 w-9 text-sm',
@@ -51,7 +55,10 @@ function Avatar({ name, photo, size = 'md' }: { name: string; photo?: string | n
   )
 }
 
-function StatusBadge({ status, bankName }: { status?: string | null; bankName?: string | null }) {
+const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
+  status,
+  bankName,
+}) => {
   if (!status) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">
@@ -83,7 +90,7 @@ function StatusBadge({ status, bankName }: { status?: string | null; bankName?: 
   )
 }
 
-export default function LoanApplicationsPage() {
+const LoanApplicationsPage: React.FC = () => {
   const qc = useQueryClient()
 
   const { data: applications = [], isLoading: isApplicationsLoading } = useQuery<LoanApplication[]>({
@@ -156,49 +163,49 @@ export default function LoanApplicationsPage() {
   const [form, setForm] = useState(BLANK_FORM)
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null)
 
-  function openAdd() {
+  const openAdd = () => {
     setForm(BLANK_FORM)
     setShowAdd(true)
   }
 
-  function openEdit(c: LoanApplication) {
+  const openEdit = (c: LoanApplication) => {
     setActive(c)
     setForm({ name: c.name, email: c.email, mobile: c.mobile, productId: c.productId ?? null })
     setShowEdit(true)
   }
 
-  function openView(c: LoanApplication) {
+  const openView = (c: LoanApplication) => {
     setActive(c)
     setShowView(true)
   }
 
-  function openAssign(c: LoanApplication) {
+  const openAssign = (c: LoanApplication) => {
     setActive(c)
     setSelectedAgentId(c.agentId ?? null)
     setShowAssign(true)
   }
 
-  async function handleAdd(e: React.FormEvent) {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     await createMut.mutateAsync(form)
     setShowAdd(false)
   }
 
-  async function handleEdit(e: React.FormEvent) {
+  const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!active) return
     await updateMut.mutateAsync({ id: active.id, payload: form })
     setShowEdit(false)
   }
 
-  async function handleAssignSubmit(e: React.FormEvent) {
+  const handleAssignSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!active) return
     await assignAgentMut.mutateAsync({ applicationId: active.id, agentId: selectedAgentId })
     setShowAssign(false)
   }
 
-  async function handleDelete() {
+  const handleDelete = async () => {
     if (!confirmDelete.id) return
     await deleteMut.mutateAsync(confirmDelete.id)
     setConfirmDelete({ open: false })
@@ -584,7 +591,11 @@ export default function LoanApplicationsPage() {
 const inputCls =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition'
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+const Modal: React.FC<{ title: string; children: React.ReactNode; onClose: () => void }> = ({
+  title,
+  children,
+  onClose,
+}) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl">
@@ -600,7 +611,7 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
@@ -609,7 +620,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
+const ViewRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => {
   return (
     <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
       <span className="font-medium text-slate-500">{label}</span>
@@ -618,15 +629,11 @@ function ViewRow({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-function ModalFooter({
-  onCancel,
-  submitLabel,
-  submitClass,
-}: {
+const ModalFooter: React.FC<{
   onCancel: () => void
   submitLabel: string
   submitClass: string
-}) {
+}> = ({ onCancel, submitLabel, submitClass }) => {
   return (
     <div className="flex justify-end gap-2 pt-2">
       <button
@@ -642,3 +649,5 @@ function ModalFooter({
     </div>
   )
 }
+
+export default LoanApplicationsPage

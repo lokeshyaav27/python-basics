@@ -5,7 +5,7 @@ import { fetchBanks } from '../../services/banks'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-export default function Partners() {
+const Partners: React.FC = () => {
   const { data: banks = [], isLoading } = useQuery({ queryKey: ['banks-all-partners'], queryFn: fetchBanks })
   const [filter, setFilter] = useState<'all' | 'nationalized' | 'private' | 'nbfc'>('all')
 
@@ -105,3 +105,5 @@ export default function Partners() {
     </main>
   )
 }
+
+export default Partners

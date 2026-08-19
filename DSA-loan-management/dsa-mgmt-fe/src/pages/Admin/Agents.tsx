@@ -16,10 +16,9 @@ type Agent = {
 }
 
 const BLANK_FORM = { name: '', email: '', mobile: '', password: '', isAdmin: false, photo: '' }
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-function Avatar({ photo, name }: { photo?: string; name: string }) {
+const Avatar: React.FC<{ photo?: string; name: string }> = ({ photo, name }) => {
   if (photo) {
     return (
       <img
@@ -36,7 +35,7 @@ function Avatar({ photo, name }: { photo?: string; name: string }) {
   )
 }
 
-export default function AgentsPage() {
+const AgentsPage: React.FC = () => {
   const qc = useQueryClient()
   const { data: agents = [], isLoading } = useQuery<Agent[]>({
     queryKey: ['admin-agents'],
@@ -70,14 +69,14 @@ export default function AgentsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removePhoto, setRemovePhoto]   = useState(false)
 
-  function openAdd() {
+  const openAdd = () => {
     setForm(BLANK_FORM)
     setSelectedFile(null)
     setRemovePhoto(false)
     setShowAdd(true)
   }
 
-  function openEdit(a: Agent) {
+  const openEdit = (a: Agent) => {
     setActive(a)
     setForm({ name: a.name, email: a.email, mobile: a.mobile, password: '', isAdmin: a.isAdmin, photo: a.photo || '' })
     setSelectedFile(null)
@@ -85,17 +84,17 @@ export default function AgentsPage() {
     setShowEdit(true)
   }
 
-  function openView(a: Agent) {
+  const openView = (a: Agent) => {
     setActive(a)
     setShowView(true)
   }
 
-  function validateFile(file: File) {
+  const validateFile = (file: File) => {
     if (file.size > 3 * 1024 * 1024) { message.error('Photo must be ≤ 3 MB'); return false }
     return true
   }
 
-  async function handleAdd(e: React.FormEvent) {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (selectedFile && !validateFile(selectedFile)) return
     await createMut.mutateAsync({
@@ -106,7 +105,7 @@ export default function AgentsPage() {
     setShowAdd(false)
   }
 
-  async function handleEdit(e: React.FormEvent) {
+  const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!active) return
     if (selectedFile && !validateFile(selectedFile)) return
@@ -120,7 +119,7 @@ export default function AgentsPage() {
     setShowEdit(false)
   }
 
-  async function handleDelete() {
+  const handleDelete = async () => {
     if (!confirmDelete.id) return
     await deleteMut.mutateAsync(confirmDelete.id)
     setConfirmDelete({ open: false })
@@ -344,7 +343,11 @@ export default function AgentsPage() {
 
 const inputCls = 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition'
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+const Modal: React.FC<{
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+}> = ({ title, children, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl">
@@ -358,7 +361,7 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
@@ -367,7 +370,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ViewRow({ label, value }: { label: string; value: string }) {
+const ViewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => {
   return (
     <div className="flex justify-between text-sm">
       <span className="font-medium text-slate-500">{label}</span>
@@ -376,7 +379,11 @@ function ViewRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function ModalFooter({ onCancel, submitLabel, submitClass }: { onCancel: () => void; submitLabel: string; submitClass: string }) {
+const ModalFooter: React.FC<{
+  onCancel: () => void
+  submitLabel: string
+  submitClass: string
+}> = ({ onCancel, submitLabel, submitClass }) => {
   return (
     <div className="flex justify-end gap-2 pt-2">
       <button type="button" onClick={onCancel} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition">Cancel</button>
@@ -384,3 +391,5 @@ function ModalFooter({ onCancel, submitLabel, submitClass }: { onCancel: () => v
     </div>
   )
 }
+
+export default AgentsPage

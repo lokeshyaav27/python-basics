@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { message } from 'antd'
 import { submitContactEnquiry } from '../../services/contact'
 
-export default function ContactUs() {
+const ContactUs: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', mobile: '', loanType: 'Home Loan', message: '' })
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -174,3 +174,5 @@ export default function ContactUs() {
     </main>
   )
 }
+
+export default ContactUs
