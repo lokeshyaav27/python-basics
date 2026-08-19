@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional
 
 from app.db.session import SessionLocal
-from app.schemas.comparison import BankComparisonResponse, BankComparisonRequest
-from app.services.mcp_comparison_tool import (
-    execute_mcp_comparison_tool,
-    MCP_COMPARISON_TOOL_SPEC,
-)
+from app.schemas.comparison import BankComparisonResponse
+from app.services.mcp_comparison_tool import execute_mcp_comparison_tool
 
 router = APIRouter()
 
@@ -21,7 +18,7 @@ def get_db():
 
 
 @router.get("/banks", response_model=BankComparisonResponse)
-def compare_banks_get(
+def compare_banks(
     applicationId: int = Query(..., description="ID of the loan application"),
     bankIds: str = Query(..., description="Comma-separated bank IDs to compare (e.g. '1,2'). Max 2 banks."),
     userRole: Optional[str] = Query("customer", description="User role ('agent', 'admin', or 'customer')"),
@@ -50,31 +47,3 @@ def compare_banks_get(
         bank_ids=parsed_bank_ids,
         user_role=userRole or "customer",
     )
-
-
-@router.post("/banks", response_model=BankComparisonResponse)
-def compare_banks_post(
-    req: BankComparisonRequest,
-    userRole: Optional[str] = Query("customer", description="User role ('agent', 'admin', or 'customer')"),
-    db: Session = Depends(get_db),
-):
-    """
-    POST endpoint for comparing up to 2 banks.
-    """
-    if len(req.bankIds) > 2:
-        raise HTTPException(status_code=400, detail="You cannot compare more than 2 banks at once.")
-
-    return execute_mcp_comparison_tool(
-        db=db,
-        application_id=req.applicationId,
-        bank_ids=req.bankIds,
-        user_role=userRole or "customer",
-    )
-
-
-@router.get("/mcp-spec")
-def get_comparison_mcp_spec():
-    """
-    Returns MCP tool specification for Compare Banks.
-    """
-    return MCP_COMPARISON_TOOL_SPEC

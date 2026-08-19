@@ -1,27 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional
 
 from app.db.session import SessionLocal
 from app.services.mcp_dsa_tools import (
-    execute_dsa_mcp_tool,
     MCP_DSA_TOOLS_SPECS,
-    get_customer_details_by_id,
-    get_loan_details_by_customer_id,
-    get_all_customer_of_agent,
-    get_all_loans_of_agent,
-    get_loan_by_id,
-    get_products,
-    get_product_by_id,
-    get_banks,
-    get_bank_by_id,
-    get_all_loans_of_customers,
+    execute_dsa_mcp_tool,
     search_bank_documents,
 )
-from app.services.mcp_eligibility_tool import MCP_ELIGIBILITY_TOOL_SPEC, execute_mcp_eligibility_tool
-from app.services.mcp_comparison_tool import MCP_COMPARISON_TOOL_SPEC, execute_mcp_comparison_tool
-
+from app.services.mcp_eligibility_tool import (
+    MCP_ELIGIBILITY_TOOL_SPEC,
+    execute_mcp_eligibility_tool,
+)
+from app.services.mcp_comparison_tool import (
+    MCP_COMPARISON_TOOL_SPEC,
+    execute_mcp_comparison_tool,
+)
 from app.core.security import get_current_user_optional, CurrentUser
 
 router = APIRouter()
@@ -110,107 +105,7 @@ def execute_mcp_tool(
     )
 
 
-# ── 3. Direct REST Endpoints for Convenience ─────────────────────────────────
-@router.get("/customer/{customer_id}")
-def mcp_get_customer_details(
-    customer_id: str,
-    userRole: Optional[str] = Query("admin"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId, "identifier": customer_id}
-    return get_customer_details_by_id(db, customer_id=customer_id, auth_user=auth)
-
-
-@router.get("/customer/{customer_id}/loans")
-def mcp_get_customer_loans(
-    customer_id: str,
-    userRole: Optional[str] = Query("admin"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId, "identifier": customer_id}
-    return get_loan_details_by_customer_id(db, customer_id=customer_id, auth_user=auth)
-
-
-@router.get("/agent/{agent_id}/customers")
-def mcp_get_agent_customers(
-    agent_id: int,
-    userRole: Optional[str] = Query("agent"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId or str(agent_id)}
-    return get_all_customer_of_agent(db, agent_id=agent_id, auth_user=auth)
-
-
-@router.get("/agent/{agent_id}/loans")
-def mcp_get_agent_loans(
-    agent_id: int,
-    status: Optional[str] = Query(None),
-    userRole: Optional[str] = Query("agent"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId or str(agent_id)}
-    return get_all_loans_of_agent(db, agent_id=agent_id, status_filter=status, auth_user=auth)
-
-
-@router.get("/loan/{loan_id}")
-def mcp_get_loan(
-    loan_id: int,
-    userRole: Optional[str] = Query("admin"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId}
-    return get_loan_by_id(db, loan_id=loan_id, auth_user=auth)
-
-
-@router.get("/products")
-def mcp_list_products(
-    isActive: bool = Query(True),
-    db: Session = Depends(get_db),
-):
-    return get_products(db, is_active=isActive)
-
-
-@router.get("/product/{product_id}")
-def mcp_get_product(
-    product_id: int,
-    db: Session = Depends(get_db),
-):
-    return get_product_by_id(db, product_id=product_id)
-
-
-@router.get("/banks")
-def mcp_list_banks(
-    productId: Optional[int] = Query(None),
-    isActive: bool = Query(True),
-    db: Session = Depends(get_db),
-):
-    return get_banks(db, product_id=productId, is_active=isActive)
-
-
-@router.get("/bank/{bank_id}")
-def mcp_get_bank(
-    bank_id: int,
-    db: Session = Depends(get_db),
-):
-    return get_bank_by_id(db, bank_id=bank_id)
-
-
-@router.get("/customers/loans")
-def mcp_get_all_loans(
-    customerIdentifier: Optional[str] = Query(None),
-    userRole: Optional[str] = Query("admin"),
-    userId: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-):
-    auth = {"role": userRole, "userId": userId, "identifier": customerIdentifier}
-    return get_all_loans_of_customers(db, customer_identifier=customerIdentifier, auth_user=auth)
-
-
+# ── 3. Semantic Search Endpoint ───────────────────────────────────────────────
 class SemanticSearchPayload(BaseModel):
     query: str = Field(..., min_length=2, description="Natural language search query or question")
     bankId: Optional[int] = Field(None, description="Optional bank filter")
@@ -232,21 +127,4 @@ def mcp_post_semantic_search(
         bank_id=payload.bankId,
         product_id=payload.productId,
         top_k=payload.topK,
-    )
-
-
-@router.get("/semantic-search")
-def mcp_get_semantic_search(
-    query: str = Query(..., min_length=2),
-    bankId: Optional[int] = Query(None),
-    productId: Optional[int] = Query(None),
-    topK: int = Query(5, ge=1, le=20),
-    db: Session = Depends(get_db),
-):
-    return search_bank_documents(
-        db=db,
-        query=query,
-        bank_id=bankId,
-        product_id=productId,
-        top_k=topK,
     )

@@ -6,10 +6,10 @@ import os
 from io import BytesIO
 from PIL import Image
 
+from pathlib import Path
 from app.db.session import SessionLocal
 from app.models.product import Product
 from app.schemas.product import ProductRead
-from app.api.routers.files import get_storage_dir
 
 router = APIRouter()
 
@@ -20,6 +20,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def get_storage_dir() -> Path:
+    project_root = Path(__file__).resolve().parents[3]
+    storage = project_root / 'dsa-file-storage' / 'product-images'
+    storage.mkdir(parents=True, exist_ok=True)
+    return storage
 
 
 def _sanitize_name(name: str) -> str:

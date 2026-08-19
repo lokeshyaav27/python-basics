@@ -28,8 +28,3 @@ export async function deleteProduct(id: number) {
   const res = await apiClient.delete(`/api/products/${id}`)
   return res.data
 }
-
-export async function deleteProductImage(filename: string) {
-  const res = await apiClient.delete(`/api/files/product-image/${filename}`)
-  return res.data
-}
