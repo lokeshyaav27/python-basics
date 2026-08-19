@@ -1,0 +1,15 @@
+{
+  "badge": "Admin Portal",
+  "title": "Executive Admin Dashboard",
+  "subtitle": "Configure loan products, manage partner banks, monitor DSA agents, and oversee loan applications.",
+  "cards": {
+    "productsTitle": "Manage Products",
+    "productsDesc": "Configure loan types and criteria",
+    "banksTitle": "Manage Banks",
+    "banksDesc": "Institutions & policy documents",
+    "agentsTitle": "Manage Agents",
+    "agentsDesc": "DSA loan advisors & credentials",
+    "loansTitle": "Loan Applications",
+    "loansDesc": "Review borrower submissions"
+  }
+}

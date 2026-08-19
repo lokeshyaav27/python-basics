@@ -1,0 +1,72 @@
+{
+  "brand": "DSA Finance",
+  "tagline": "Empowering Your Financial Dreams",
+  "language": "Language",
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "aboutUs": "About Us",
+    "whyUs": "Why Choose Us",
+    "partners": "Bank Partners",
+    "faqs": "FAQs",
+    "contact": "Contact",
+    "applyNow": "Apply for Loan",
+    "portalLogins": "Portals",
+    "customerPortal": "Customer Portal",
+    "agentPortal": "DSA Agent Portal",
+    "adminPortal": "Admin Portal",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "loanApplications": "Loan Applications",
+    "banks": "Partner Banks",
+    "agents": "Agents",
+    "contactEnquiries": "Enquiries",
+    "myLoans": "My Loans",
+    "checkEligibility": "Check Eligibility",
+    "loanComparison": "Compare Loans",
+    "aiAssistant": "AI Advisor"
+  },
+  "sidebar": {
+    "adminSection": "Administration",
+    "agentSection": "DSA Agent Desk",
+    "customerSection": "Borrower Hub",
+    "sharedTools": "Advisory Tools"
+  },
+  "footer": {
+    "aboutText": "India's leading DSA aggregator connecting borrowers with top national and private banks with instant eligibility checks and AI guidance.",
+    "quickLinks": "Quick Links",
+    "loanProducts": "Loan Products",
+    "legal": "Legal & Compliance",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "contactUs": "Contact Us",
+    "copyright": "© 2026 DSA Finance. All rights reserved."
+  },
+  "actions": {
+    "submit": "Submit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View Details",
+    "search": "Search",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "apply": "Apply Now",
+    "calculate": "Calculate"
+  },
+  "status": {
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "pendingReview": "Pending Review",
+    "underReview": "Under Review",
+    "inProgress": "In Progress",
+    "new": "New / Unread",
+    "contacted": "Contacted",
+    "resolved": "Resolved",
+    "closed": "Closed"
+  }
+}

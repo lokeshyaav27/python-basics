@@ -1,0 +1,17 @@
+{
+  "title": "Institutional Multi-Bank Loan Comparison",
+  "subtitle": "Side-by-side comparison of interest rates, monthly EMIs, processing fees, and commission structures",
+  "selectApp": "Select Application",
+  "selectBanks": "Select Lending Banks to Compare (Select up to 4)",
+  "compareBtn": "Generate Matrix Comparison",
+  "aiComparativeTitle": "AI Comparative Intelligence & Best Fit Recommendation",
+  "bankCard": {
+    "roi": "Interest Rate",
+    "emi": "Estimated EMI",
+    "processingFee": "Processing Fee",
+    "commission": "DSA Payout Commission",
+    "matchScore": "Profile Fit Score",
+    "features": "Key Advantages",
+    "policyDocs": "Bank Policy Documents"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "brand": "डीएसए फाइनेंस",
+  "tagline": "आपके वित्तीय सपनों को साकार करना",
+  "language": "भाषा",
+  "nav": {
+    "home": "होम",
+    "products": "ऋण उत्पाद",
+    "aboutUs": "हमारे बारे में",
+    "whyUs": "हमें क्यों चुनें",
+    "partners": "पार्टनर बैंक",
+    "faqs": "सामान्य प्रश्न",
+    "contact": "संपर्क करें",
+    "applyNow": "ऋण के लिए आवेदन करें",
+    "portalLogins": "पोर्टल लॉगिन",
+    "customerPortal": "ग्राहक पोर्टल",
+    "agentPortal": "डीएसए एजेंट पोर्टल",
+    "adminPortal": "व्यवस्थापक पोर्टल",
+    "logout": "लॉगआउट",
+    "dashboard": "डैशबोर्ड",
+    "loanApplications": "ऋण आवेदन",
+    "banks": "पार्टनर बैंक",
+    "agents": "एजेंट्स",
+    "contactEnquiries": "पूछताछ",
+    "myLoans": "मेरे ऋण",
+    "checkEligibility": "पात्रता जांचें",
+    "loanComparison": "ऋण तुलना",
+    "aiAssistant": "एआई सलाहकार"
+  },
+  "sidebar": {
+    "adminSection": "प्रशासन",
+    "agentSection": "डीएसए एजेंट डेस्क",
+    "customerSection": "ऋणदाता केंद्र",
+    "sharedTools": "परामर्श उपकरण"
+  },
+  "footer": {
+    "aboutText": "भारत का अग्रणी डीएसए मंच जो तुरंत पात्रता जांच और एआई सलाह के साथ राष्ट्रीय एवं निजी बैंकों से जोड़ता है।",
+    "quickLinks": "त्वरित लिंक",
+    "loanProducts": "ऋण उत्पाद",
+    "legal": "कानूनी व अनुपालन",
+    "terms": "उपयोग की शर्तें",
+    "privacy": "गोपनीयता नीति",
+    "contactUs": "संपर्क करें",
+    "copyright": "© 2026 डीएसए फाइनेंस। सर्वाधिकार सुरक्षित।"
+  },
+  "actions": {
+    "submit": "जमा करें",
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "close": "बंद करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "view": "विवरण देखें",
+    "search": "खोजें",
+    "confirm": "पुष्टि करें",
+    "back": "पीछे जाएं",
+    "next": "आगे बढ़ें",
+    "loading": "लोड हो रहा है...",
+    "apply": "आवेदन करें",
+    "calculate": "गणना करें"
+  },
+  "status": {
+    "approved": "स्वीकृत",
+    "rejected": "अस्वीकृत",
+    "pendingReview": "समीक्षा लंबित",
+    "underReview": "समीक्षाधीन",
+    "inProgress": "प्रगति में",
+    "new": "नया / अपठित",
+    "contacted": "संपर्क किया गया",
+    "resolved": "समाधानित",
+    "closed": "बंद"
+  }
+}

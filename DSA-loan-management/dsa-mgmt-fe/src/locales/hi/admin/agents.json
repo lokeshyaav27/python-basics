@@ -1,0 +1,17 @@
+{
+  "title": "डीएसए एजेंट प्रबंधन",
+  "subtitle": "ऋण सलाहकारों, लॉगिन क्रेडेंशियल और भूमिका विशेषाधिकारों का प्रबंधन करें",
+  "addAgent": "नया एजेंट जोड़ें",
+  "tableName": "एजेंट का नाम",
+  "tableEmail": "ईमेल",
+  "tableMobile": "मोबाइल नंबर",
+  "tableRole": "भूमिका / स्थिति",
+  "tableActions": "कार्य",
+  "adminBadge": "प्रशासक",
+  "advisorBadge": "डीएसए सलाहकार",
+  "addModalTitle": "डीएसए एजेंट बनाएं",
+  "editModalTitle": "डीएसए एजेंट संपादित करें",
+  "viewModalTitle": "एजेंट प्रोफ़ाइल",
+  "deleteModalTitle": "हटाने की पुष्टि करें",
+  "deletePrompt": "क्या आप वाकई इस एजेंट को हटाना चाहते हैं?"
+}

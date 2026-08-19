@@ -1,0 +1,13 @@
+{
+  "badge": "Customer Dashboard",
+  "welcome": "Welcome",
+  "subtitle": "Manage your loan applications, review approval status, and connect with your financial advisors.",
+  "viewMyLoans": "View My Loans",
+  "applyNewLoan": "+ Apply New Loan",
+  "activeApps": "Active Applications",
+  "activeAppsDesc": "Total submitted loan requests",
+  "approvedLoans": "Approved Loans",
+  "approvedLoansDesc": "Forwarded to partner banks",
+  "inVerification": "In Verification",
+  "inVerificationDesc": "Files being evaluated"
+}

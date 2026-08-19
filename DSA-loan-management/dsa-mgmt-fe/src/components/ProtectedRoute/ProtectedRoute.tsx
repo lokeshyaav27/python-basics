@@ -1,10 +1,12 @@
 import React, { ReactNode } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth, Role } from '../../auth/AuthProvider'
 import { ROUTES } from '../../constants/routes'
 import Unauthorized from '../../pages/Unauthorized'
 import Sidebar from '../Sidebar'
 import Footer from '../Footer'
+import { changeLanguage } from '../../i18n'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -15,6 +17,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const { t, i18n } = useTranslation()
 
   const handleLogout = () => {
     logout()
@@ -22,7 +25,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
   }
 
   if (!user) {
-    // Intelligently redirect to the correct portal login page
     let loginPath: string = ROUTES.CUSTOMER_LOGIN
     if (role === 'admin') {
       loginPath = ROUTES.ADMIN_LOGIN
@@ -38,6 +40,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
   }
 
   const effectiveRole = role || (user.role as Role)
+  const currentLang = i18n.language || 'en'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
@@ -48,17 +51,41 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
               D
             </span>
             <div>
-              <div className="text-sm font-bold text-slate-900">DSA Finance</div>
+              <div className="text-sm font-bold text-slate-900">{t('common.brand')}</div>
               <div className="text-[11px] text-slate-500">{user ? user.name : ''}</div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Language Switcher */}
+            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
+              <button
+                onClick={() => changeLanguage('en')}
+                className={`rounded-md px-2.5 py-1 transition ${
+                  currentLang.startsWith('en')
+                    ? 'bg-white text-blue-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage('hi')}
+                className={`rounded-md px-2.5 py-1 transition ${
+                  currentLang.startsWith('hi')
+                    ? 'bg-white text-blue-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                हिन्दी
+              </button>
+            </div>
+
             <button
               onClick={handleLogout}
               className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 transition shadow-sm"
             >
-              Logout
+              {t('common.nav.logout')}
             </button>
           </div>
         </div>

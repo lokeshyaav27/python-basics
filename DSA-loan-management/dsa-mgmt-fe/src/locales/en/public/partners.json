@@ -1,0 +1,11 @@
+{
+  "tag": "Banking Network",
+  "title": "Our Institutional Lending Partners",
+  "subtitle": "We collaborate directly with premier nationalized banks, leading private financial institutions, and top-tier NBFCs.",
+  "filterAll": "All Institutions",
+  "filterNationalized": "Nationalized Banks",
+  "filterPrivate": "Private Sector Banks",
+  "filterNbfc": "NBFCs",
+  "mappedProducts": "Offered Loan Categories",
+  "noBanks": "No partner banks matching the selected filter."
+}

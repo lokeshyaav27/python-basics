@@ -1,0 +1,12 @@
+{
+  "title": "AI Loan Advisory Assistant",
+  "subtitle": "Get instant answers on bank policies, loan eligibility, document requirements, and EMI planning",
+  "inputPlaceholder": "Ask anything about loan eligibility, bank policies, or requirements...",
+  "sendBtn": "Send",
+  "disclaimer": "AI answers are generated from bank policy guidelines and general credit rules. Final sanction terms depend on underwriting approvals.",
+  "suggestedPromptsTitle": "Suggested Questions",
+  "prompt1": "What is the minimum CIBIL score required for HDFC Home Loan?",
+  "prompt2": "How is FOIR calculated for salaried applicants?",
+  "prompt3": "Which bank offers the lowest interest rate for Car Loan?",
+  "prompt4": "What documents are needed for Personal Loan?"
+}

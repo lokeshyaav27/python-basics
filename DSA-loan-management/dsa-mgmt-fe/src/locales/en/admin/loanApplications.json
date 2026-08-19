@@ -1,0 +1,17 @@
+{
+  "title": "Loan Applications",
+  "subtitle": "Manage loan applicants, file status, and assigned DSA agents",
+  "newApplication": "New Application",
+  "tableApplicant": "Applicant",
+  "tableProduct": "Loan Product",
+  "tableEmail": "Email",
+  "tableMobile": "Mobile Number",
+  "tableAssignedAgent": "Assigned Advisor",
+  "tableStatus": "Decision / Status",
+  "tableActions": "Actions",
+  "unassigned": "Unassigned",
+  "assignAgent": "Assign Advisor",
+  "assignModalTitle": "Assign DSA Loan Advisor",
+  "selectAdvisor": "Select DSA Advisor",
+  "deletePrompt": "Are you sure you want to delete this loan application?"
+}

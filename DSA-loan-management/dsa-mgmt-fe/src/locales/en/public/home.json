@@ -1,0 +1,40 @@
+{
+  "badge": "India's #1 Loan Distribution & DSA Aggregator",
+  "heroTitle": "Smart Loan Financing with Instant Eligibility & Best Rates",
+  "heroSubtitle": "Compare tailored offers from 50+ leading national banks and NBFCs. Calculate EMIs in real-time, get AI recommendations, and apply online seamlessly.",
+  "ctaApply": "Apply For Loan",
+  "ctaProducts": "Explore Products",
+  "stats": {
+    "disbursed": "₹500Cr+ Disbursed",
+    "banks": "50+ Partner Banks",
+    "customers": "25,000+ Happy Borrowers",
+    "speed": "Fast Approval TAT"
+  },
+  "carousel": {
+    "tag": "Featured Solutions",
+    "title": "Tailored Loan Products",
+    "subtitle": "Discover competitive loan options designed for every stage of your life and business."
+  },
+  "calculator": {
+    "tag": "Financial Planning",
+    "title": "Interactive EMI Calculator",
+    "subtitle": "Estimate your monthly installments, total interest, and full repayment amount accurately.",
+    "loanAmount": "Loan Amount (₹)",
+    "interestRate": "Interest Rate (% p.a.)",
+    "tenure": "Tenure (Years)",
+    "monthlyEmi": "Monthly EMI",
+    "principal": "Principal Amount",
+    "totalInterest": "Total Interest Payable",
+    "totalPayment": "Total Amount Payable"
+  },
+  "features": {
+    "tag": "Why Us",
+    "title": "Why Borrowers Trust DSA Finance",
+    "aiTitle": "AI Matchmaking",
+    "aiDesc": "Our AI algorithms match your financial profile with the highest approval probability across banks.",
+    "paperlessTitle": "100% Digital Process",
+    "paperlessDesc": "Upload documents online and track file status in real-time without branch visits.",
+    "advisorsTitle": "Dedicated DSA Advisors",
+    "advisorsDesc": "Get personalized assistance from verified local loan advisors committed to securing the best rate."
+  }
+}

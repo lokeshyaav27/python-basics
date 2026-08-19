@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { fetchProducts } from '../../services/products'
-
 import { ROUTES } from '../../constants/routes'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 const ProductsCatalog: React.FC = () => {
+  const { t } = useTranslation()
   const { data: products = [], isLoading } = useQuery({ queryKey: ['products-catalog-all'], queryFn: fetchProducts })
-  const [selectedCategory, setSelectedCategory] = useState('all')
 
   const productFeaturesMap: Record<string, { rate: string; tenure: string; minIncome: string; highlights: string[] }> = {
     home: {
@@ -51,20 +51,20 @@ const ProductsCatalog: React.FC = () => {
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto mb-12">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 border border-blue-200 mb-2">
-          <span>✨ Curated Loan Marketplace</span>
+          <span>✨ {t('productsCatalog.tag')}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
-          Explore Our Loan Products
+          {t('productsCatalog.title')}
         </h1>
         <p className="mt-3 text-base text-slate-500 max-w-xl mx-auto">
-          Compare interest rates, tenure, and eligibility criteria from India's leading banks and financial institutions.
+          {t('productsCatalog.subtitle')}
         </p>
       </div>
 
       {isLoading ? (
-        <div className="py-20 text-center text-slate-400">Loading verified loan products…</div>
+        <div className="py-20 text-center text-slate-400">{t('common.actions.loading')}</div>
       ) : products.length === 0 ? (
-        <div className="py-20 text-center text-slate-400">No active products found.</div>
+        <div className="py-20 text-center text-slate-400">{t('productsCatalog.noProducts')}</div>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {products.map((product: any) => {
@@ -72,7 +72,7 @@ const ProductsCatalog: React.FC = () => {
             return (
               <div
                 key={product.id}
-                className="group rounded-3xl border border-slate-200 bg-white p-7 shadow-sm hover:shadow-2xl hover:border-blue-400 transition-all duration-300 flex flex-col justify-between"
+                className="group rounded-3xl border border-slate-200 bg-white p-7 shadow-xs hover:shadow-2xl hover:border-blue-400 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar */}
@@ -131,7 +131,7 @@ const ProductsCatalog: React.FC = () => {
                     to={`${ROUTES.APPLY_FOR_LOAN}?productId=${product.id}`}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 transition active:scale-[0.98]"
                   >
-                    Apply for {product.name} →
+                    {t('productsCatalog.applyBtn')} →
                   </Link>
                 </div>
               </div>

@@ -1,0 +1,19 @@
+{
+  "title": "AI Loan Eligibility Pre-Screening",
+  "subtitle": "Institutional policy rule evaluation engine and credit assessment",
+  "selectApplication": "Select Loan Application to Evaluate",
+  "evaluating": "Evaluating credit criteria against institutional guidelines...",
+  "eligibleTitle": "Pre-Qualified: High Approval Probability",
+  "eligibleDesc": "The applicant profile satisfies standard policy requirements across partner banks.",
+  "ineligibleTitle": "Policy Guideline Deviations Detected",
+  "ineligibleDesc": "Certain applicant criteria do not satisfy standard underwriting thresholds.",
+  "maxEligibleAmount": "Maximum Eligible Loan Amount",
+  "maxEmi": "Maximum Allowable Monthly EMI",
+  "foir": "FOIR (Fixed Obligation to Income Ratio)",
+  "cibilScore": "Applicant CIBIL Score",
+  "positiveFactors": "Approval Strength Factors",
+  "rejectionReasons": "Critical Policy Gaps / Rejection Factors",
+  "reductionNotes": "Loan Amount Adjustments & Caveats",
+  "aiAnalysis": "AI Comprehensive Underwriting Summary",
+  "compareBanksBtn": "Proceed to Multi-Bank Comparison"
+}

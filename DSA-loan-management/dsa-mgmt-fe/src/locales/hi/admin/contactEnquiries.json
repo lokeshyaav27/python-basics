@@ -1,0 +1,16 @@
+{
+  "title": "ग्राहक संपर्क पूछताछ",
+  "subtitle": "पूछताछ की समीक्षा करें, स्थिति अपडेट करें और कॉलबैक का समन्वय करें",
+  "searchPlaceholder": "नाम, मोबाइल, ईमेल या संदेश द्वारा खोजें...",
+  "filterStatus": "स्थिति अनुसार फिल्टर",
+  "allStatuses": "सभी स्थितियां",
+  "tableContact": "संपर्क नाम",
+  "tablePhone": "फोन",
+  "tableEmail": "ईमेल",
+  "tableProduct": "इच्छित उत्पाद",
+  "tableMessage": "संदेश",
+  "tableStatus": "स्थिति",
+  "tableActions": "कार्य",
+  "modalTitle": "पूछताछ विवरण",
+  "changeStatus": "स्थिति अपडेट करें"
+}

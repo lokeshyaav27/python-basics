@@ -1,0 +1,20 @@
+{
+  "badge": "My Applications",
+  "title": "My Loan Applications",
+  "subtitle": "Track your real-time loan progress, check pre-evaluated eligibility, and review partner bank sanction offers.",
+  "applyNewBtn": "+ Apply New Loan",
+  "statTotal": "Total Applications",
+  "statApproved": "Approved",
+  "statInReview": "Under Review",
+  "statRejected": "Rejected",
+  "noLoansTitle": "No loan applications found",
+  "noLoansDesc": "You haven't submitted any loan requests yet. Apply now for instant comparison and quotes.",
+  "cardApplicant": "Applicant",
+  "cardRequested": "Requested Amount",
+  "cardTenure": "Tenure",
+  "cardAdvisor": "Assigned Advisor",
+  "cardCallAdvisor": "Call Advisor",
+  "checkEligibility": "Check Eligibility",
+  "loanComparison": "Loan Comparison",
+  "viewDetails": "View Details"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "विस्तृत ऋण आवेदन फ़ाइल",
+  "tabGeneral": "व्यक्तिगत व वित्तीय",
+  "tabProduct": "ऋण विवरण",
+  "tabActions": "परामर्श कार्य",
+  "personalInfo": "व्यक्तिगत जानकारी",
+  "financialInfo": "वित्तीय प्रोफ़ाइल",
+  "loanInfo": "ऋण मानदंड",
+  "agentAssigned": "आवंटित सलाहकार",
+  "bankAssigned": "स्वीकृत पार्टनर बैंक",
+  "statusHeader": "स्थिति एवं निर्णय विवरण",
+  "editApplication": "आवेदन डेटा संपादित करें",
+  "saveChanges": "परिवर्तन सहेजें"
+}

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../auth/AuthProvider'
 import { requestCustomerOtp, verifyCustomerOtp } from '../../services/auth'
 import { ROUTES } from '../../constants/routes'
-import { message } from 'antd'
 
 const CustomerLogin: React.FC = () => {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [mobile, setMobile] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -77,9 +79,10 @@ const CustomerLogin: React.FC = () => {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-2xl font-bold text-white shadow-md">
             D
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Customer Login</h2>
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('auth.customer.badge')}</span>
+          <h2 className="text-2xl font-bold text-slate-900 mt-1">{t('auth.customer.title')}</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Sign in with your registered mobile number to track your loan status
+            {t('auth.customer.subtitle')}
           </p>
         </div>
 
@@ -87,13 +90,13 @@ const CustomerLogin: React.FC = () => {
           <form onSubmit={sendOtp} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
-                Mobile Number
+                {t('auth.customer.mobileLabel')}
               </label>
               <input
                 required
                 type="tel"
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
-                placeholder="Enter 10-digit mobile number"
+                placeholder={t('auth.customer.mobilePlaceholder')}
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
               />
@@ -110,7 +113,7 @@ const CustomerLogin: React.FC = () => {
               className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
               type="submit"
             >
-              {loading ? 'Sending OTP…' : 'Send OTP'}
+              {loading ? t('common.actions.loading') : t('auth.customer.sendOtp')}
             </button>
           </form>
         ) : (
@@ -129,7 +132,7 @@ const CustomerLogin: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
-                Enter 4-Digit OTP
+                {t('auth.customer.otpLabel')}
               </label>
               <input
                 required
@@ -140,7 +143,7 @@ const CustomerLogin: React.FC = () => {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
               />
-              <p className="text-[11px] text-slate-400 mt-1 text-center">Use demo OTP: 1234</p>
+              <p className="text-[11px] text-slate-400 mt-1 text-center">{t('auth.customer.demoHint')}</p>
             </div>
 
             {error && (
@@ -154,7 +157,7 @@ const CustomerLogin: React.FC = () => {
               className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition disabled:opacity-50"
               type="submit"
             >
-              {loading ? 'Verifying…' : 'Verify & Continue'}
+              {loading ? t('common.actions.loading') : t('auth.customer.verifyOtp')}
             </button>
           </form>
         )}
@@ -163,7 +166,7 @@ const CustomerLogin: React.FC = () => {
           <p className="text-xs text-slate-500">
             Want to explore loans?{' '}
             <Link to={ROUTES.PRODUCTS} className="font-semibold text-blue-600 hover:underline">
-              View Loan Products
+              {t('common.nav.products')}
             </Link>
           </p>
         </div>

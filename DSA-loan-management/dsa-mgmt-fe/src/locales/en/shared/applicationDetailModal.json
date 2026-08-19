@@ -1,0 +1,14 @@
+{
+  "title": "Comprehensive Loan Application File",
+  "tabGeneral": "Personal & Financial",
+  "tabProduct": "Loan Details",
+  "tabActions": "Advisory Actions",
+  "personalInfo": "Personal Information",
+  "financialInfo": "Financial Profile",
+  "loanInfo": "Loan Parameters",
+  "agentAssigned": "Assigned Advisor",
+  "bankAssigned": "Sanctioned Partner Bank",
+  "statusHeader": "Status & Decision Details",
+  "editApplication": "Edit Application Data",
+  "saveChanges": "Save Modifications"
+}

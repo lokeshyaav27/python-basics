@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { message } from 'antd'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../auth/AuthProvider'
 import { agentLogin, resetAgentPassword } from '../../services/auth'
 import { ROUTES } from '../../constants/routes'
-import { message } from 'antd'
 
 const AgentLogin: React.FC = () => {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,7 +15,7 @@ const AgentLogin: React.FC = () => {
 
   // First-time reset password state
   const [showResetModal, setShowResetModal] = useState(false)
-  const [pendingAgent, setPendingAgent] = useState<{ id: number; name: string; email: string } | null>(null)
+  const [pendingAgent, setPendingAgent] = useState<{ id: number; name: string; email: string; token: string } | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
@@ -31,7 +33,6 @@ const AgentLogin: React.FC = () => {
       const res = await agentLogin(email.trim(), password)
       const user = res?.user
 
-      // Check if this is the agent's first time logging in (temppasswordreset === false)
       const isFirstLogin =
         user?.temppasswordreset === false || user?.tempPasswordReset === false
 
@@ -47,7 +48,6 @@ const AgentLogin: React.FC = () => {
         return
       }
 
-      // Normal login flow
       const name = user?.name || email
       auth.login(res.accessToken, {
         id: user.id,
@@ -90,7 +90,7 @@ const AgentLogin: React.FC = () => {
 
     setResetLoading(true)
     try {
-      await resetAgentPassword(newPassword.trim(), (pendingAgent as any).token)
+      await resetAgentPassword(newPassword.trim(), pendingAgent.token)
       message.success('Password updated successfully! Please log in with your new password.')
       setShowResetModal(false)
       setPassword('')
@@ -114,8 +114,9 @@ const AgentLogin: React.FC = () => {
             <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-800 text-2xl font-black text-white shadow-md">
               A
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900">Agent Portal</h1>
-            <p className="mt-1 text-sm text-slate-500">Sign in to manage customers and loan files</p>
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('auth.agent.badge')}</span>
+            <h1 className="text-2xl font-extrabold text-slate-900 mt-1">{t('auth.agent.title')}</h1>
+            <p className="mt-1 text-sm text-slate-500">{t('auth.agent.subtitle')}</p>
           </div>
 
           {/* Error Alert */}
@@ -130,7 +131,7 @@ const AgentLogin: React.FC = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Email Address
+                {t('auth.agent.emailLabel')}
               </label>
               <input
                 required
@@ -138,13 +139,13 @@ const AgentLogin: React.FC = () => {
                 placeholder="agent@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
-                Password
+                {t('auth.agent.passwordLabel')}
               </label>
               <input
                 required
@@ -152,115 +153,96 @@ const AgentLogin: React.FC = () => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 active:scale-[0.99] disabled:opacity-50 transition"
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-600/30 hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 transition active:scale-[0.99]"
             >
-              {loading ? 'Signing in…' : 'Sign In as Agent'}
+              {loading ? t('common.actions.loading') : t('auth.agent.loginBtn')}
             </button>
           </form>
 
-          {/* Footer Links */}
-          <div className="mt-6 border-t border-slate-100 pt-5 text-center text-xs text-slate-500">
-            <span>Customer? </span>
-            <Link to="/customer-login" className="font-semibold text-blue-600 hover:underline">
-              Customer Login
-            </Link>
-            <span className="mx-2">•</span>
-            <span>Admin? </span>
-            <Link to="/admin-login" className="font-semibold text-slate-700 hover:underline">
-              Admin Login
-            </Link>
+          <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+            <p className="text-xs text-slate-500">
+              Not an agent?{' '}
+              <Link to={ROUTES.CUSTOMER_LOGIN} className="font-semibold text-blue-600 hover:underline">
+                {t('common.nav.customerPortal')}
+              </Link>
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ── First-Time Login Password Reset Modal ────────────────────── */}
-      {showResetModal && pendingAgent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-5 text-white">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/20 text-xl font-bold">
-                  🔐
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold">First-Time Login</h3>
-                  <p className="text-xs text-amber-100">Set your personal permanent password</p>
-                </div>
+      {/* First-time Reset Password Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center mb-6">
+              <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-2xl text-amber-700">
+                🔑
               </div>
+              <h2 className="text-xl font-extrabold text-slate-900">{t('auth.agent.resetRequiredTitle')}</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {t('auth.agent.resetRequiredDesc')}
+              </p>
             </div>
 
-            {/* Content */}
-            <div className="p-6">
-              <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 leading-relaxed">
-                Welcome, <strong className="font-semibold">{pendingAgent.name}</strong>! You are currently using a temporary password. Please set a new permanent password to secure your account.
+            {resetError && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                {resetError}
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
+                  {t('auth.agent.newPassword')}
+                </label>
+                <input
+                  required
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
               </div>
 
-              {resetError && (
-                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-center gap-2">
-                  <span>⚠️</span>
-                  <span>{resetError}</span>
-                </div>
-              )}
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
+                  {t('auth.agent.confirmNewPassword')}
+                </label>
+                <input
+                  required
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat new password"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
 
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    New Password
-                  </label>
-                  <input
-                    required
-                    type="password"
-                    placeholder="Enter new password (min. 6 chars)"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Confirm New Password
-                  </label>
-                  <input
-                    required
-                    type="password"
-                    placeholder="Re-enter new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowResetModal(false)
-                      setPendingAgent(null)
-                      setPassword('')
-                    }}
-                    className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={resetLoading}
-                    className="rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-amber-700 disabled:opacity-50 transition"
-                  >
-                    {resetLoading ? 'Updating…' : 'Set Password & Save'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 rounded-xl border border-slate-300 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  {t('common.actions.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition disabled:opacity-50"
+                >
+                  {resetLoading ? t('common.actions.loading') : t('auth.agent.updatePasswordBtn')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -269,4 +251,3 @@ const AgentLogin: React.FC = () => {
 }
 
 export default AgentLogin
-

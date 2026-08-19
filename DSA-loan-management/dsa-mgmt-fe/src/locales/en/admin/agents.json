@@ -1,0 +1,17 @@
+{
+  "title": "DSA Agents Management",
+  "subtitle": "Manage loan advisors, access credentials, and role privileges",
+  "addAgent": "Add New Agent",
+  "tableName": "Agent Name",
+  "tableEmail": "Email",
+  "tableMobile": "Mobile Number",
+  "tableRole": "Role / Status",
+  "tableActions": "Actions",
+  "adminBadge": "Administrator",
+  "advisorBadge": "DSA Advisor",
+  "addModalTitle": "Create DSA Agent",
+  "editModalTitle": "Edit DSA Agent",
+  "viewModalTitle": "Agent Profile",
+  "deleteModalTitle": "Confirm Deletion",
+  "deletePrompt": "Are you sure you want to delete this agent?"
+}

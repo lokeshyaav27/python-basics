@@ -1,8 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ROUTES } from '../../constants/routes'
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation()
+
   return (
     <footer className="bg-[#071b3d] pt-12 text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 pb-10 md:grid-cols-2 lg:grid-cols-4">
@@ -12,73 +15,73 @@ const Footer: React.FC = () => {
               D
             </span>
             <span className="leading-tight">
-              <span className="block text-lg font-bold">DSA Finance</span>
-              <span className="block text-[10px] text-slate-300">Your Trusted Loan Partner</span>
+              <span className="block text-lg font-bold">{t('common.brand')}</span>
+              <span className="block text-[10px] text-slate-300">{t('common.tagline')}</span>
             </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-slate-300">
-            Helping customers compare and access suitable loan options from leading banks and NBFCs.
+            {t('common.footer.aboutText')}
           </p>
         </div>
 
         <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Loan Products</h4>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">{t('common.footer.loanProducts')}</h4>
           <ul className="space-y-3 text-sm text-slate-300">
             <li>
               <Link to={ROUTES.PRODUCTS} className="hover:text-white transition">
-                Home Loan
+                {t('common.nav.products')}
               </Link>
             </li>
             <li>
-              <Link to={ROUTES.PRODUCTS} className="hover:text-white transition">
-                Car Loan
+              <Link to={ROUTES.APPLY_FOR_LOAN} className="hover:text-white transition">
+                {t('common.nav.applyNow')}
               </Link>
             </li>
             <li>
-              <Link to={ROUTES.PRODUCTS} className="hover:text-white transition">
-                Personal Loan
+              <Link to={ROUTES.PARTNERS} className="hover:text-white transition">
+                {t('common.nav.partners')}
               </Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Company</h4>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">{t('common.footer.quickLinks')}</h4>
           <ul className="space-y-3 text-sm text-slate-300">
             <li>
               <Link to={ROUTES.ABOUT_US} className="hover:text-white transition">
-                About Us
+                {t('common.nav.aboutUs')}
               </Link>
             </li>
             <li>
               <Link to={ROUTES.WHY_CHOOSE_US} className="hover:text-white transition">
-                Why Choose Us
+                {t('common.nav.whyUs')}
               </Link>
             </li>
             <li>
               <Link to={ROUTES.CONTACT_US} className="hover:text-white transition">
-                Contact Us
+                {t('common.nav.contact')}
               </Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">Support</h4>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-white">{t('common.footer.legal')}</h4>
           <ul className="space-y-3 text-sm text-slate-300">
             <li>
               <Link to={ROUTES.FAQS} className="hover:text-white transition">
-                FAQs
+                {t('common.nav.faqs')}
               </Link>
             </li>
             <li>
               <Link to={ROUTES.PRIVACY_POLICY} className="hover:text-white transition">
-                Privacy Policy
+                {t('common.footer.privacy')}
               </Link>
             </li>
             <li>
               <Link to={ROUTES.TERMS_OF_USE} className="hover:text-white transition">
-                Terms of Use
+                {t('common.footer.terms')}
               </Link>
             </li>
           </ul>
@@ -87,8 +90,15 @@ const Footer: React.FC = () => {
 
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-4 text-[11px] text-slate-300 md:flex-row">
-          <span>© 2026 DSA Finance. All rights reserved.</span>
-          <span>Privacy Policy · Terms of Use</span>
+          <span>{t('common.footer.copyright')}</span>
+          <div className="flex gap-4">
+            <Link to={ROUTES.PRIVACY_POLICY} className="hover:underline">
+              {t('common.footer.privacy')}
+            </Link>
+            <Link to={ROUTES.TERMS_OF_USE} className="hover:underline">
+              {t('common.footer.terms')}
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

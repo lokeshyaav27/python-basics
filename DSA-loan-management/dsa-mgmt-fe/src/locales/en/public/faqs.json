@@ -1,0 +1,23 @@
+{
+  "tag": "Help Center",
+  "title": "Frequently Asked Questions",
+  "subtitle": "Get clear answers on the loan application workflow, CIBIL requirements, interest rates, and loan processing timelines.",
+  "items": [
+    {
+      "q": "What is a Direct Selling Agent (DSA)?",
+      "a": "A Direct Selling Agent (DSA) acts as an authorized referral partner representing multiple leading banks and NBFCs to assist borrowers in choosing and acquiring the best loan product."
+    },
+    {
+      "q": "Does checking loan eligibility on DSA Finance affect my CIBIL score?",
+      "a": "No, our pre-qualification engine performs a soft evaluation against bank criteria without initiating hard credit bureau inquiries."
+    },
+    {
+      "q": "What documents are required to apply for a loan?",
+      "a": "Basic KYC (Aadhaar, PAN), recent salary slips / ITR returns, last 6 months bank statements, and relevant property/vehicle quotation documents."
+    },
+    {
+      "q": "How long does it take for loan approval?",
+      "a": "Pre-screened applications forwarded by our DSA advisors typically receive bank sanction within 24 to 72 business hours depending on loan category."
+    }
+  ]
+}

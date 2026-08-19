@@ -1,0 +1,17 @@
+{
+  "title": "ऋण आवेदन",
+  "subtitle": "ऋण आवेदकों, फ़ाइल स्थिति और नियुक्त डीएसए सलाहकारों का प्रबंधन करें",
+  "newApplication": "नया आवेदन",
+  "tableApplicant": "आवेदक",
+  "tableProduct": "ऋण उत्पाद",
+  "tableEmail": "ईमेल",
+  "tableMobile": "मोबाइल नंबर",
+  "tableAssignedAgent": "आवंटित सलाहकार",
+  "tableStatus": "निर्णय / स्थिति",
+  "tableActions": "कार्य",
+  "unassigned": "अनावंटित",
+  "assignAgent": "सलाहकार नियुक्त करें",
+  "assignModalTitle": "डीएसए ऋण सलाहकार नियुक्त करें",
+  "selectAdvisor": "डीएसए सलाहकार चुनें",
+  "deletePrompt": "क्या आप वाकई इस ऋण आवेदन को हटाना चाहते हैं?"
+}

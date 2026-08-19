@@ -1,0 +1,27 @@
+{
+  "tag": "Get in Touch",
+  "title": "Contact Our Financial Advisory Team",
+  "subtitle": "Have questions about loan eligibility, interest rates, or need assistance with your application? Reach out to us.",
+  "form": {
+    "name": "Full Name",
+    "namePlaceholder": "e.g. Ramesh Kumar",
+    "email": "Email Address",
+    "emailPlaceholder": "e.g. ramesh@example.com",
+    "mobile": "Mobile Number",
+    "mobilePlaceholder": "e.g. 9876543210",
+    "loanType": "Interested Loan Type",
+    "selectLoanType": "Select loan product (optional)",
+    "message": "Your Query / Message",
+    "messagePlaceholder": "Describe your loan requirement or questions...",
+    "submit": "Send Message",
+    "submitting": "Sending...",
+    "success": "Your enquiry has been received. Our advisory team will contact you shortly!"
+  },
+  "info": {
+    "office": "Corporate Headquarters",
+    "address": "Financial District, BKC, Mumbai, Maharashtra 400051",
+    "phone": "+91 (022) 4987-6543",
+    "email": "support@dsafinance.in",
+    "hours": "Mon – Sat: 9:30 AM – 6:30 PM"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Partner Banks & NBFCs Management",
+  "subtitle": "Manage lending partners, map loan products, configure commissions, and upload policy guidelines",
+  "addBank": "Add New Bank",
+  "tableName": "Bank / Financial Institution",
+  "tableCategory": "Category",
+  "tableProducts": "Linked Products",
+  "tableActions": "Actions",
+  "linkProducts": "Link Products & Guidelines",
+  "nationalized": "Nationalized",
+  "private": "Private Sector",
+  "nbfc": "NBFC",
+  "addModalTitle": "Add Partner Bank",
+  "editModalTitle": "Edit Partner Bank",
+  "viewModalTitle": "Bank Profile & Mappings",
+  "deleteModalTitle": "Confirm Deletion",
+  "deletePrompt": "Are you sure you want to delete this bank? This will remove all associated product linkages."
+}

@@ -1,0 +1,15 @@
+{
+  "tag": "Advantages",
+  "title": "Why Choose DSA Finance?",
+  "subtitle": "Discover the distinctive advantages that make us the preferred loan partner for thousands of borrowers.",
+  "cards": {
+    "comparison": "Multi-Bank Comparison",
+    "comparisonDesc": "Compare interest rates, processing fees, and loan tenures from 50+ lenders in one single platform.",
+    "aiEngine": "AI-Powered Pre-Screening",
+    "aiEngineDesc": "Check your exact eligibility across bank criteria before submitting to prevent unnecessary credit score hard-inquiries.",
+    "doorstep": "Dedicated Advisor Support",
+    "doorstepDesc": "Your dedicated DSA agent assists with document preparation, doorstep collection, and fast-tracked bank coordination.",
+    "transparent": "Zero Hidden Charges",
+    "transparentDesc": "Complete transparency on loan charges, commissions, and bank processing fees."
+  }
+}

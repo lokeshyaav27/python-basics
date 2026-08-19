@@ -1,0 +1,13 @@
+{
+  "unauthorized": {
+    "title": "Access Restricted",
+    "subtitle": "You do not have administrative or advisor privileges to view this portal page.",
+    "backHome": "Back to Home",
+    "switchAccount": "Sign in with Different Account"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "subtitle": "The requested financial page or portal resource could not be found.",
+    "backHome": "Return to Homepage"
+  }
+}

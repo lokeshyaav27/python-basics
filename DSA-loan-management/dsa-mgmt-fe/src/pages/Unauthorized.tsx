@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../auth/AuthProvider'
 import { ROUTES } from '../constants/routes'
 import { LockOutlined, ArrowLeftOutlined, HomeOutlined } from '@ant-design/icons'
@@ -10,6 +11,7 @@ interface UnauthorizedProps {
 }
 
 const Unauthorized: React.FC<UnauthorizedProps> = ({ requiredRole, currentRole }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const activeRole = currentRole || user?.role
@@ -28,9 +30,9 @@ const Unauthorized: React.FC<UnauthorizedProps> = ({ requiredRole, currentRole }
           <LockOutlined />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('system.unauthorized.title')}</h1>
         <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-          You do not have the required permissions to access this page.
+          {t('system.unauthorized.subtitle')}
           {requiredRole && (
             <span className="block mt-2 font-medium text-slate-700">
               Required Role: <span className="capitalize text-blue-600 font-semibold">{requiredRole}</span>
@@ -47,7 +49,7 @@ const Unauthorized: React.FC<UnauthorizedProps> = ({ requiredRole, currentRole }
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm"
           >
             <ArrowLeftOutlined />
-            Go Back
+            {t('common.actions.back')}
           </button>
 
           <Link
@@ -55,7 +57,7 @@ const Unauthorized: React.FC<UnauthorizedProps> = ({ requiredRole, currentRole }
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 transition shadow-sm"
           >
             <HomeOutlined />
-            Go to Dashboard
+            {t('common.nav.dashboard')}
           </Link>
         </div>
       </div>

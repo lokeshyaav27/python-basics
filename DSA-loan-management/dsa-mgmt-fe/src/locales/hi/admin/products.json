@@ -1,0 +1,14 @@
+{
+  "title": "ऋण उत्पाद प्रबंधन",
+  "subtitle": "उपलब्ध वित्तीय उत्पादों को बनाएं, संपादित करें और कॉन्फ़िगर करें",
+  "addProduct": "नया उत्पाद जोड़ें",
+  "tableName": "उत्पाद का नाम",
+  "tableDesc": "विवरण",
+  "tableImage": "चित्र",
+  "tableActions": "कार्य",
+  "addModalTitle": "ऋण उत्पाद जोड़ें",
+  "editModalTitle": "ऋण उत्पाद संपादित करें",
+  "viewModalTitle": "उत्पाद विवरण",
+  "deleteModalTitle": "हटाने की पुष्टि करें",
+  "deletePrompt": "क्या आप वाकई इस उत्पाद को हटाना चाहते हैं?"
+}

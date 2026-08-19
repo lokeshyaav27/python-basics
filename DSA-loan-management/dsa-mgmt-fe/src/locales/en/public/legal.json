@@ -1,0 +1,18 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: January 2026",
+    "intro": "At DSA Finance, we prioritize the protection of your personal and financial information. This policy outlines our data collection, usage, encryption, and regulatory compliance practices.",
+    "section1Title": "Information We Collect",
+    "section1Text": "We collect applicant KYC information (name, contact, PAN/Aadhaar references), financial data (monthly income, CIBIL score, obligations), and property/vehicle loan specifications solely for evaluating loan eligibility.",
+    "section2Title": "Security & Encryption",
+    "section2Text": "All sensitive transmission is protected via industry-standard TLS encryption, and borrower documents are stored in secure access-controlled cloud repositories."
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last updated: January 2026",
+    "intro": "By accessing DSA Finance platform services, loan calculators, and eligibility evaluators, you agree to the following terms and conditions.",
+    "section1Title": "Advisory & Aggregation Services",
+    "section1Text": "DSA Finance functions as an authorized distribution and technology facilitator. Final loan approval, interest rate determination, and disbursals are subject to the underwriting discretion of our partner lending institutions."
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { fetchProducts } from '../../services/products'
 import { fetchBanks } from '../../services/banks'
 import { ROUTES } from '../../constants/routes'
@@ -9,6 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000
 
 // ── Interactive EMI Calculator Component ─────────────────────────────────────
 const EmiCalculator: React.FC = () => {
+  const { t } = useTranslation()
   const [amount, setAmount] = useState<number>(2500000)
   const [rate, setRate] = useState<number>(8.5)
   const [tenureYears, setTenureYears] = useState<number>(15)
@@ -267,6 +269,7 @@ const ProductCarousel: React.FC<{ products: any[] }> = ({ products }) => {
 }
 
 const Home: React.FC = () => {
+  const { t } = useTranslation()
   const { data: products = [] } = useQuery({ queryKey: ['products-home'], queryFn: fetchProducts })
   const { data: banks = [] } = useQuery({ queryKey: ['banks-home'], queryFn: fetchBanks })
 
@@ -287,32 +290,29 @@ const Home: React.FC = () => {
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold backdrop-blur-md border border-white/15">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Instant Pre-Approvals & Best Rate Match</span>
+                <span>{t('home.badge')}</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
-                Your Dream. Our Support.{' '}
-                <span className="bg-gradient-to-r from-blue-200 via-sky-300 to-emerald-300 bg-clip-text text-transparent">
-                  Your Best Loan.
-                </span>
+                {t('home.heroTitle')}
               </h1>
 
               <p className="text-base sm:text-lg text-blue-100/80 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
-                Compare and secure tailored Home, Car, and Personal loans from over 25+ top partner banks and NBFCs with zero branch visits and maximum savings.
+                {t('home.heroSubtitle')}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2">
                 <Link
-                  to="/apply-for-loan"
+                  to={ROUTES.APPLY_FOR_LOAN}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-7 py-4 text-base font-bold text-white shadow-xl shadow-blue-500/30 hover:bg-blue-400 transition active:scale-95"
                 >
-                  <span>⚡ Apply for Loan Now</span>
+                  <span>⚡ {t('home.ctaApply')}</span>
                 </Link>
                 <Link
-                  to="/customer-login"
+                  to={ROUTES.CUSTOMER_LOGIN}
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 border border-white/20 px-7 py-4 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition"
                 >
-                  Track Existing Application
+                  {t('common.nav.customerPortal')}
                 </Link>
               </div>
 

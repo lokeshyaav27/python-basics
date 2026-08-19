@@ -1,0 +1,16 @@
+{
+  "title": "Borrower Contact Enquiries",
+  "subtitle": "Review inquiries, update resolution status, and coordinate callback follow-ups",
+  "searchPlaceholder": "Search inquiries by name, mobile, email, or message...",
+  "filterStatus": "Filter Status",
+  "allStatuses": "All Statuses",
+  "tableContact": "Contact Name",
+  "tablePhone": "Phone",
+  "tableEmail": "Email",
+  "tableProduct": "Interested Product",
+  "tableMessage": "Message Snippet",
+  "tableStatus": "Status",
+  "tableActions": "Actions",
+  "modalTitle": "Enquiry Details",
+  "changeStatus": "Update Status"
+}

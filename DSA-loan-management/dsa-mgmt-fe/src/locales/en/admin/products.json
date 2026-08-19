@@ -1,0 +1,14 @@
+{
+  "title": "Loan Products Management",
+  "subtitle": "Create, edit, and configure available financial products",
+  "addProduct": "Add New Product",
+  "tableName": "Product Name",
+  "tableDesc": "Description",
+  "tableImage": "Image",
+  "tableActions": "Actions",
+  "addModalTitle": "Add Loan Product",
+  "editModalTitle": "Edit Loan Product",
+  "viewModalTitle": "Product Details",
+  "deleteModalTitle": "Confirm Deletion",
+  "deletePrompt": "Are you sure you want to delete this product?"
+}
