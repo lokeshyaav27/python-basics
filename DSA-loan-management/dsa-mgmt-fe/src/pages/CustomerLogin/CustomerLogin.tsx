@@ -121,11 +121,11 @@ const CustomerLogin: React.FC = () => {
           </p>
           <div className="mt-2 flex justify-center gap-4 text-xs font-semibold text-blue-600">
             <Link to={ROUTES.AGENT_LOGIN} className="hover:underline">
-              Agent Login
+              {t('auth.customer.agentLoginLink')}
             </Link>
             <span>•</span>
             <Link to={ROUTES.ADMIN_LOGIN} className="hover:underline">
-              Admin Login
+              {t('auth.customer.adminLoginLink')}
             </Link>
           </div>
         </div>

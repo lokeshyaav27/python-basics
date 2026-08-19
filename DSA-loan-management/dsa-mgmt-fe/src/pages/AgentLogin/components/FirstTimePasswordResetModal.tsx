@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface FirstTimePasswordResetModalProps {
   isOpen: boolean
@@ -23,6 +24,7 @@ export const FirstTimePasswordResetModal: React.FC<FirstTimePasswordResetModalPr
   resetError,
   onSubmit,
 }) => {
+  const { t } = useTranslation()
   if (!isOpen || !pendingAgent) return null
 
   return (
@@ -33,8 +35,8 @@ export const FirstTimePasswordResetModal: React.FC<FirstTimePasswordResetModalPr
             🔐
           </div>
           <div>
-            <h3 className="text-lg font-extrabold text-slate-900">Set New Password</h3>
-            <p className="text-xs text-slate-500">First-time login security requirement</p>
+            <h3 className="text-lg font-extrabold text-slate-900">{t('auth.agent.resetRequiredTitle')}</h3>
+            <p className="text-xs text-slate-500">{t('auth.agent.resetRequiredDesc')}</p>
           </div>
         </div>
 
@@ -52,7 +54,7 @@ export const FirstTimePasswordResetModal: React.FC<FirstTimePasswordResetModalPr
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              New Password <span className="text-rose-500">*</span>
+              {t('auth.agent.newPassword')} <span className="text-rose-500">*</span>
             </label>
             <input
               required
@@ -66,7 +68,7 @@ export const FirstTimePasswordResetModal: React.FC<FirstTimePasswordResetModalPr
 
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1.5">
-              Confirm New Password <span className="text-rose-500">*</span>
+              {t('auth.agent.confirmNewPassword')} <span className="text-rose-500">*</span>
             </label>
             <input
               required
@@ -83,7 +85,7 @@ export const FirstTimePasswordResetModal: React.FC<FirstTimePasswordResetModalPr
             disabled={resetLoading}
             className="w-full rounded-2xl bg-blue-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition active:scale-95"
           >
-            {resetLoading ? 'Setting Password…' : 'Save & Activate Account'}
+            {resetLoading ? t('common.actions.loading') : t('auth.agent.updatePasswordBtn')}
           </button>
         </form>
       </div>

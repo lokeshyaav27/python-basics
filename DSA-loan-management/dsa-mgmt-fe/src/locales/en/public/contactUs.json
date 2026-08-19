@@ -3,6 +3,7 @@
   "title": "Contact Our Financial Advisory Team",
   "subtitle": "Have questions about loan eligibility, interest rates, or need assistance with your application? Reach out to us.",
   "form": {
+    "title": "Send Us a Message",
     "name": "Full Name",
     "namePlaceholder": "e.g. Ramesh Kumar",
     "email": "Email Address",
@@ -18,10 +19,17 @@
     "success": "Your enquiry has been received. Our advisory team will contact you shortly!"
   },
   "info": {
-    "office": "Corporate Headquarters",
-    "address": "Financial District, BKC, Mumbai, Maharashtra 400051",
-    "phone": "+91 (022) 4987-6543",
-    "email": "support@dsafinance.in",
-    "hours": "Mon – Sat: 9:30 AM – 6:30 PM"
+    "officeTitle": "Corporate Headquarters",
+    "officeAddress": "Financial District, BKC, Mumbai, Maharashtra 400051",
+    "phoneTitle": "Direct Phone Consultation",
+    "phoneNumber": "+91 (022) 4987-6543",
+    "phoneHours": "Mon – Sat: 9:30 AM – 6:30 PM",
+    "emailTitle": "Email Support Desk",
+    "emailAddress": "support@dsafinance.in",
+    "emailHours": "Guaranteed 4-hour response on business days"
+  },
+  "partnerCard": {
+    "title": "Are you a Bank or Lending Partner?",
+    "desc": "Join our network of 40+ lending institutions. Integrate your retail loan products, configure policy rules, and access verified applications."
   }
 }

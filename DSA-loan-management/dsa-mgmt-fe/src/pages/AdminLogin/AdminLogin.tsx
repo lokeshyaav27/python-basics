@@ -99,16 +99,13 @@ const AdminLogin: React.FC = () => {
           </form>
 
           <div className="mt-6 border-t border-slate-100 pt-4 text-center">
-            <p className="text-xs text-slate-500">
-              DSA Loan Management Portal • Admin Gateway
-            </p>
-            <div className="mt-2 flex justify-center gap-4 text-xs font-semibold text-blue-600">
+            <div className="flex justify-center gap-4 text-xs font-semibold text-blue-600">
               <Link to={ROUTES.CUSTOMER_LOGIN} className="hover:underline">
-                Customer Login
+                {t('auth.admin.customerLoginLink')}
               </Link>
               <span>•</span>
               <Link to={ROUTES.AGENT_LOGIN} className="hover:underline">
-                Agent Login
+                {t('auth.admin.agentLoginLink')}
               </Link>
             </div>
           </div>

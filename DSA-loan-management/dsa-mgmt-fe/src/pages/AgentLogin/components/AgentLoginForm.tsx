@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ROUTES } from '../../../constants'
 
 interface AgentLoginFormProps {
@@ -21,15 +22,18 @@ export const AgentLoginForm: React.FC<AgentLoginFormProps> = ({
   error,
   onSubmit,
 }) => {
+  const { t } = useTranslation()
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
       <div className="text-center mb-8">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-2xl shadow-inner mb-3">
           💼
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Agent Portal Login</h1>
+        <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">{t('auth.agent.badge')}</span>
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{t('auth.agent.title')}</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Access your assigned loan applications and underwriting workspace
+          {t('auth.agent.subtitle')}
         </p>
       </div>
 
@@ -42,7 +46,7 @@ export const AgentLoginForm: React.FC<AgentLoginFormProps> = ({
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Agent Email Address <span className="text-rose-500">*</span>
+            {t('auth.agent.emailLabel')} <span className="text-rose-500">*</span>
           </label>
           <input
             required
@@ -56,7 +60,7 @@ export const AgentLoginForm: React.FC<AgentLoginFormProps> = ({
 
         <div>
           <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Password <span className="text-rose-500">*</span>
+            {t('auth.agent.passwordLabel')} <span className="text-rose-500">*</span>
           </label>
           <input
             required
@@ -73,14 +77,17 @@ export const AgentLoginForm: React.FC<AgentLoginFormProps> = ({
           disabled={loading}
           className="w-full rounded-2xl bg-blue-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition active:scale-95"
         >
-          {loading ? 'Authenticating…' : 'Log In to Agent Workspace →'}
+          {loading ? t('common.actions.loading') : t('auth.agent.loginBtn')}
         </button>
       </form>
 
       <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
-        <span>Looking for customer portal? </span>
         <Link to={ROUTES.CUSTOMER_LOGIN} className="font-bold text-blue-600 hover:underline">
-          Customer Login
+          {t('auth.agent.customerLoginLink')}
+        </Link>
+        <span className="mx-2">•</span>
+        <Link to={ROUTES.ADMIN_LOGIN} className="font-bold text-blue-600 hover:underline">
+          {t('auth.agent.adminLoginLink')}
         </Link>
       </div>
     </div>
