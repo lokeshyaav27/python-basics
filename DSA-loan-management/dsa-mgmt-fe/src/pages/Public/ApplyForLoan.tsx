@@ -79,49 +79,16 @@ export default function ApplyForLoan() {
     queryFn: fetchProducts,
   })
 
-  // Fetch logged in customer's profile/applications to populate email/mobile
-  const customerIdent = user?.mobile || user?.name || user?.email || ''
-  const { data: customerApplications = [] } = useQuery({
-    queryKey: ['customer-auto-info', customerIdent],
-    queryFn: () => fetchCustomerLoanApplications(customerIdent),
-    enabled: !!user && !!customerIdent,
-  })
-
-  // Auto-fill logged-in customer info
+  // Auto-fill basic info if user is already logged in
   useEffect(() => {
-    if (customerApplications && customerApplications.length > 0) {
-      const existing = customerApplications[0]
-      setBasicInfo({
-        name: existing.name || user?.name || '',
-        email: existing.email || user?.email || '',
-        mobile: existing.mobile || user?.mobile || '',
-      })
-
-      // Also pre-fill financial profile if previously saved
-      if (existing.clientGeneralDetails) {
-        const cgd = existing.clientGeneralDetails
-        setFinancialInfo((prev) => ({
-          ...prev,
-          age: cgd.age ? String(cgd.age) : prev.age,
-          gender: cgd.gender || prev.gender,
-          location: cgd.location || prev.location,
-          employment_type: cgd.employment_type || prev.employment_type,
-          monthly_income: cgd.monthly_income ? String(cgd.monthly_income) : prev.monthly_income,
-          monthly_obligation: cgd.monthly_obligation ? String(cgd.monthly_obligation) : prev.monthly_obligation,
-          existing_emi: cgd.existing_emi ? String(cgd.existing_emi) : prev.existing_emi,
-          cibil_score: cgd.cibil_score ? String(cgd.cibil_score) : prev.cibil_score,
-          loan_amount_required: cgd.loan_amount_required ? String(cgd.loan_amount_required) : prev.loan_amount_required,
-          preferred_tenure: cgd.preferred_tenure ? String(cgd.preferred_tenure) : prev.preferred_tenure,
-        }))
-      }
-    } else if (user) {
+    if (user) {
       setBasicInfo((prev) => ({
         name: user.name || prev.name || '',
         email: user.email || prev.email || '',
         mobile: user.mobile || (!isNaN(Number(user.name)) ? user.name : '') || prev.mobile || '',
       }))
     }
-  }, [user, customerApplications])
+  }, [user])
 
   // Pre-select product if productId query param exists
   useEffect(() => {
@@ -244,15 +211,6 @@ export default function ApplyForLoan() {
 
       const res = await submitFullLoanApplication(payload)
       const createdApp = res?.application || {}
-
-      // Log in customer session if not already logged in
-      if (!user) {
-        login(basicInfo.name.trim(), 'customer', {
-          id: createdApp.id,
-          email: basicInfo.email.trim(),
-          mobile: basicInfo.mobile.trim(),
-        })
-      }
 
       message.success('Loan application submitted successfully!')
       setSuccessModal({ open: true, appId: createdApp.id })
@@ -999,10 +957,14 @@ export default function ApplyForLoan() {
             <div className="mt-6 flex flex-col gap-2.5">
               <button
                 type="button"
-                onClick={() => navigate('/customer/loans')}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition"
+                onClick={() =>
+                  navigate(
+                    `/customer-login?mobile=${encodeURIComponent(basicInfo.mobile.trim())}`
+                  )
+                }
+                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition active:scale-[0.99]"
               >
-                Go to My Loan Dashboard →
+                Login to view application status →
               </button>
             </div>
           </div>

@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
 import { requestCustomerOtp, verifyCustomerOtp } from '../../services/auth'
 import { message } from 'antd'
 
 export default function CustomerLogin() {
+  const [searchParams] = useSearchParams()
   const [mobile, setMobile] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [otp, setOtp] = useState('')
@@ -12,6 +13,13 @@ export default function CustomerLogin() {
   const [loading, setLoading] = useState(false)
   const auth = useAuth()
   const nav = useNavigate()
+
+  useEffect(() => {
+    const m = searchParams.get('mobile')
+    if (m) {
+      setMobile(m.trim())
+    }
+  }, [searchParams])
 
   const sendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
