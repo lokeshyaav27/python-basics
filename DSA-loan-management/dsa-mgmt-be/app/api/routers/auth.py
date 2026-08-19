@@ -5,7 +5,7 @@ from typing import Dict, Any
 from app.db.session import SessionLocal
 from app.models.agent import Agent
 from app.models.loan_application import LoanApplication
-from app.core.security import create_access_token, get_current_user, CurrentUser
+from app.core.security import create_access_token, get_current_user, require_role, CurrentUser
 
 router = APIRouter()
 
@@ -207,13 +207,16 @@ def get_authenticated_user_profile(current_user: CurrentUser = Depends(get_curre
 
 
 @router.post('/agent/reset-password')
-def reset_agent_password(payload: Dict, db: Session = Depends(get_db)):
-    agent_id = payload.get('agentId')
+def reset_agent_password(
+    payload: Dict,
+    current_user: CurrentUser = Depends(require_role(["agent"])),
+    db: Session = Depends(get_db),
+):
     new_password = payload.get('newPassword')
-    if not agent_id or not new_password:
-        raise HTTPException(status_code=400, detail='agentId and newPassword are required')
+    if not new_password:
+        raise HTTPException(status_code=400, detail='newPassword is required')
 
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    agent = db.query(Agent).filter(Agent.id == current_user.id, Agent.isAdmin == False).first()
     if not agent:
         raise HTTPException(status_code=404, detail='Agent not found')
 

@@ -20,11 +20,13 @@ export async function adminLogin(email: string, password: string) {
   return res.data
 }
 
-export async function resetAgentPassword(agentId: number, newPassword: string) {
-  const res = await apiClient.post('/api/auth/agent/reset-password', {
-    agentId,
-    newPassword,
-  })
+export async function resetAgentPassword(newPassword: string, token?: string) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const res = await apiClient.post(
+    '/api/auth/agent/reset-password',
+    { newPassword },
+    { headers }
+  )
   return res.data
 }
 

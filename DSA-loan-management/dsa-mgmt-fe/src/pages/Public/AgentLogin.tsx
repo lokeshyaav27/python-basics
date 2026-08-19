@@ -39,6 +39,7 @@ export default function AgentLogin() {
           id: user.id,
           name: user.name || email,
           email: user.email || email,
+          token: res?.accessToken || '',
         })
         setShowResetModal(true)
         setLoading(false)
@@ -92,7 +93,7 @@ export default function AgentLogin() {
 
     setResetLoading(true)
     try {
-      await resetAgentPassword(pendingAgent.id, newPassword.trim())
+      await resetAgentPassword(newPassword.trim(), (pendingAgent as any).token)
       message.success('Password updated successfully! Please log in with your new password.')
       setShowResetModal(false)
       setPassword('')
