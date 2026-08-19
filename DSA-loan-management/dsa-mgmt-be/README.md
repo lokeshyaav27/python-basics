@@ -74,47 +74,96 @@ DATABASE_URL=postgresql://postgres:admin@localhost:5432/dsa-mgmt
 
 ## 🗄️ Database Migrations (Alembic)
 
-Database schema changes in this project are tracked and managed using **[Alembic](https://alembic.sqlalchemy.org/)**.
+Database schema versioning and incremental table migrations in this platform are managed using **[Alembic](https://alembic.sqlalchemy.org/)**.
 
-### How Database Migration Works
+---
 
-1. **Model Discovery**: SQLAlchemy models defined in `app/models/` inherit from `Base` (`app/models/base.py`). The Alembic environment configuration (`alembic/env.py`) imports all models (`app.models`) and binds `Base.metadata` to track table schemas.
-2. **Version Scripts**: Each migration script inside `alembic/versions/` contains an `upgrade()` function (applying changes) and a `downgrade()` function (reverting changes).
-3. **Database Tracking**: Alembic automatically creates and maintains an `alembic_version` table in PostgreSQL to track which migration revisions have been executed.
+### 1. Alembic vs Database Seeder: What's the Difference?
 
-### Common Migration Commands
+| Feature | Alembic Migrations (`alembic upgrade head`) | Database Seeder (`seed_full_database.py`) |
+|---|---|---|
+| **Primary Purpose** | **Schema Version Control (DDL)** | **Data & Asset Provisioning (DML)** |
+| **Creates Tables?** | ✅ Yes (via tracked Python migration files) | ✅ Yes (via SQLAlchemy `Base.metadata.create_all`) |
+| **Does Seeder use Alembic?** | ❌ No (Seeder does **not** use Alembic) | ✅ Direct SQLAlchemy ORM |
+| **Alters / Migrates Columns?** | ✅ Yes (tracks historical revisions & rollback) | ❌ No (re-creates tables) |
+| **Inserts Demo Data?** | ❌ No (creates clean, empty schema structure) | ✅ Yes (products, banks, agents, loan leads) |
+| **Copies Files & Static Images?** | ❌ No | ✅ Yes (product images, bank logos, user photos) |
+| **Indexes pgvector Embeddings?** | ❌ No | ✅ Yes (generates vectors from policy PDFs) |
+| **Best Used In** | **Production & CI/CD Deployment Pipelines** | **Local Development & QA Testing** |
 
-> Ensure your virtual environment is active and your current working directory is `DSA-loan-management/dsa-mgmt-be`.
+---
 
-#### 1. Generate a New Migration (Autogenerate from Models)
-When you modify or add SQLAlchemy models in `app/models/`, generate a new migration script:
+### 2. How to Initialize the Database Using Alembic Only (No Demo Data)
+
+If you are setting up a production or clean staging database where you want the exact schema structure **without any demo records**:
+
+#### Step 1: Create the Target Database
+Before connecting to the database, create it in PostgreSQL:
+
+- **Via PostgreSQL CLI (`psql`) or pgAdmin:**
+  ```sql
+  CREATE DATABASE "dsa-mgmt";
+  ```
+- **Or via Python Auto-Creation Utility:**
+  ```bash
+  python -c "from app.db.db_utils import ensure_database_exists; ensure_database_exists()"
+  ```
+
+#### Step 2: Connect and Enable the `pgvector` Extension
+Connect to the newly created database and enable vector similarity search:
+```sql
+\c "dsa-mgmt"
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+#### Step 3: Generate the Baseline Migration File
+Run Alembic's auto-generator. Alembic inspects your SQLAlchemy models (`app/models/*.py`), compares them against the empty PostgreSQL database, and creates a revision script in `alembic/versions/`:
+```bash
+alembic revision --autogenerate -m "Initial schema setup"
+```
+
+#### Step 4: Apply the Migration
+Apply all pending migrations to bring the database schema to the latest version:
+```bash
+alembic upgrade head
+```
+PostgreSQL will now have all 10 application tables created along with the `alembic_version` tracking table.
+
+---
+
+### 3. Common Alembic Migration Commands
+
+> Ensure your virtual environment is active (or prefix commands with `.venv\Scripts\python.exe -m alembic` on Windows).
+
+#### 1. Generate an Incremental Migration
+Whenever you add, modify, or delete columns/tables in `app/models/`:
 ```bash
 alembic revision --autogenerate -m "describe_your_changes_here"
 ```
-*(Example: `alembic revision --autogenerate -m "add_status_to_loan_application"`)*
+*(Example: `alembic revision --autogenerate -m "add_cibil_score_to_general_details"`)*
 
 #### 2. Apply Migrations to the Database
-Apply all pending migrations to bring the database schema to the latest version:
+Apply all unapplied migrations to the latest revision:
 ```bash
 alembic upgrade head
 ```
 
 #### 3. Roll Back Migrations
-- Revert the most recent migration:
+- **Revert the most recent migration:**
   ```bash
   alembic downgrade -1
   ```
-- Revert all migrations back to the initial state:
+- **Revert all migrations back to an empty database:**
   ```bash
   alembic downgrade base
   ```
 
-#### 4. Check Current Migration Status & History
-- View the currently applied revision:
+#### 4. Inspect Migration Status & History
+- **View current database schema revision:**
   ```bash
   alembic current
   ```
-- View migration history log:
+- **View chronological history log:**
   ```bash
   alembic history --verbose
   ```
