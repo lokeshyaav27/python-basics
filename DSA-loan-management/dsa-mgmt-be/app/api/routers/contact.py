@@ -6,6 +6,7 @@ from typing import Optional, List
 from app.db.session import SessionLocal
 from app.models.contact_enquiry import ContactEnquiry
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -67,7 +68,11 @@ def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(
     db.commit()
     db.refresh(enquiry)
 
-    return {"status": "ok", "enquiry": _serialize(enquiry)}
+    return success_response(
+        result=_serialize(enquiry),
+        message="Enquiry submitted successfully",
+        status_code=201,
+    )
 
 
 # Admin Only: List all customer enquiries
@@ -82,7 +87,10 @@ def list_contact_enquiries(
         .order_by(ContactEnquiry.id.desc())
         .all()
     )
-    return [_serialize(e) for e in enquiries]
+    return success_response(
+        result=[_serialize(e) for e in enquiries],
+        message="Contact enquiries fetched successfully",
+    )
 
 
 # Admin Only: Update enquiry status
@@ -101,4 +109,8 @@ def update_enquiry_status(
     db.add(enquiry)
     db.commit()
     db.refresh(enquiry)
-    return {"status": "ok", "enquiry": _serialize(enquiry)}
+
+    return success_response(
+        result=_serialize(enquiry),
+        message=f"Enquiry status updated to {enquiry.status}",
+    )

@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from app.api import routers as api_routers
 from app.db.session import engine
 from app.models.base import Base
 from app.core.config import settings
+from app.core.response import error_response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
@@ -19,6 +21,35 @@ app = FastAPI(
     redoc_url="/redoc" if not is_production else None,
     openapi_url="/openapi.json" if not is_production else None,
 )
+
+
+# Global Exception Handlers for Unified Response Structure
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return error_response(
+        message=str(exc.detail),
+        status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    first_error_msg = errors[0].get("msg", "Validation Error") if errors else "Validation Error"
+    return error_response(
+        message=f"Validation error: {first_error_msg}",
+        status_code=422,
+        result=errors,
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    return error_response(
+        message=str(exc) or "Internal Server Error",
+        status_code=500,
+    )
+
 
 # Also serve Swagger UI directly at /docs for convenience in non-production environments
 if not is_production:

@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 from app.models.agent import Agent
 from app.models.loan_application import LoanApplication
 from app.core.security import create_access_token, get_current_user, require_role, hash_password, verify_password, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -22,9 +23,12 @@ def get_db():
 def request_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     mobile = payload.get('mobile')
     if not mobile:
-        raise HTTPException(status_code=400, detail='mobile is required')
+        raise HTTPException(status_code=400, detail='Mobile number is required')
     m = str(mobile).strip()
-    return {'status': 'ok', 'message': f'OTP sent successfully to {m}'}
+    return success_response(
+        result={'mobile': m},
+        message=f'OTP sent successfully to {m}',
+    )
 
 
 @router.post('/customer/verify-otp')
@@ -32,13 +36,13 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
     mobile = payload.get('mobile')
     otp = payload.get('otp')
     if not mobile or not otp:
-        raise HTTPException(status_code=400, detail='mobile and otp are required')
+        raise HTTPException(status_code=400, detail='Mobile and OTP are required')
 
     m = str(mobile).strip()
     o = str(otp).strip()
 
     if o != '1234':
-        raise HTTPException(status_code=400, detail='invalid OTP')
+        raise HTTPException(status_code=400, detail='Invalid OTP')
 
     app = db.query(LoanApplication).filter(LoanApplication.mobile == m).first()
     if not app:
@@ -70,12 +74,14 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
         'isActive': app.isActive,
     }
 
-    return {
-        'status': 'ok',
-        'accessToken': access_token,
-        'tokenType': 'bearer',
-        'user': customer_dict,
-    }
+    return success_response(
+        result={
+            'accessToken': access_token,
+            'tokenType': 'bearer',
+            'user': customer_dict,
+        },
+        message='Customer verified and logged in successfully',
+    )
 
 
 @router.post('/agent-login')
@@ -83,7 +89,7 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
     email = payload.get('email')
     password = payload.get('password')
     if not email or not password:
-        raise HTTPException(status_code=400, detail='email and password are required')
+        raise HTTPException(status_code=400, detail='Email and password are required')
 
     e = str(email).strip().lower()
     p = str(password).strip()
@@ -94,7 +100,7 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
     ).first()
 
     if not agent or not verify_password(p, agent.password or ''):
-        raise HTTPException(status_code=401, detail='invalid credentials')
+        raise HTTPException(status_code=401, detail='Invalid email or password')
 
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
@@ -129,12 +135,14 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
         'isActive': agent.isActive,
     }
 
-    return {
-        'status': 'ok',
-        'accessToken': access_token,
-        'tokenType': 'bearer',
-        'user': agent_dict,
-    }
+    return success_response(
+        result={
+            'accessToken': access_token,
+            'tokenType': 'bearer',
+            'user': agent_dict,
+        },
+        message='Agent logged in successfully',
+    )
 
 
 @router.post('/admin-login')
@@ -142,7 +150,7 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
     email = payload.get('email')
     password = payload.get('password')
     if not email or not password:
-        raise HTTPException(status_code=400, detail='email and password are required')
+        raise HTTPException(status_code=400, detail='Email and password are required')
 
     e = str(email).strip().lower()
     p = str(password).strip()
@@ -153,7 +161,7 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
     ).first()
 
     if not agent or not verify_password(p, agent.password or ''):
-        raise HTTPException(status_code=401, detail='invalid credentials')
+        raise HTTPException(status_code=401, detail='Invalid admin credentials')
 
     if agent.isActive is False:
         raise HTTPException(status_code=403, detail='Account is deactivated. Please contact administrator.')
@@ -188,12 +196,14 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
         'isActive': agent.isActive,
     }
 
-    return {
-        'status': 'ok',
-        'accessToken': access_token,
-        'tokenType': 'bearer',
-        'user': admin_dict,
-    }
+    return success_response(
+        result={
+            'accessToken': access_token,
+            'tokenType': 'bearer',
+            'user': admin_dict,
+        },
+        message='Admin logged in successfully',
+    )
 
 
 @router.get('/me')
@@ -201,10 +211,10 @@ def get_authenticated_user_profile(current_user: CurrentUser = Depends(get_curre
     """
     Returns current user profile authenticated via Bearer JWT token.
     """
-    return {
-        "status": "ok",
-        "user": current_user.dict()
-    }
+    return success_response(
+        result=current_user.dict(),
+        message="User profile fetched successfully",
+    )
 
 
 @router.post('/agent/reset-password')
@@ -226,4 +236,7 @@ def reset_agent_password(
     db.add(agent)
     db.commit()
     db.refresh(agent)
-    return {'status': 'ok', 'message': 'Password reset successfully'}
+    return success_response(
+        result=None,
+        message='Password reset successfully',
+    )

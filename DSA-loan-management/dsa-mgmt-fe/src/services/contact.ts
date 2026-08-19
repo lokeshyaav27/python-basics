@@ -1,5 +1,6 @@
 import apiClient from './apiClient'
 import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
+import { ApiResponse } from '../types/api'
 
 export type ContactEnquiryInput = {
   name: string
@@ -24,19 +25,21 @@ export type ContactEnquiry = {
 export const submitContactEnquiry = async (
   payload: ContactEnquiryInput
 ): Promise<{ status: string; enquiry: ContactEnquiry }> => {
-  const res = await apiClient.post(API_ENDPOINT_NAMES.CONTACT.BASE, payload)
-  return res.data
+  const res = await apiClient.post<ApiResponse<ContactEnquiry>>(API_ENDPOINT_NAMES.CONTACT.BASE, payload)
+  const enquiry = res.data?.result ?? (res.data as any)?.enquiry ?? res.data
+  return { status: 'ok', enquiry }
 }
 
 export const fetchContactEnquiries = async (): Promise<ContactEnquiry[]> => {
-  const res = await apiClient.get(API_ENDPOINT_NAMES.CONTACT.BASE)
-  return res.data || []
+  const res = await apiClient.get<ApiResponse<ContactEnquiry[]>>(API_ENDPOINT_NAMES.CONTACT.BASE)
+  return res.data?.result ?? res.data ?? []
 }
 
 export const updateContactEnquiryStatus = async (
   enquiryId: number,
   status: string
 ): Promise<{ status: string; enquiry: ContactEnquiry }> => {
-  const res = await apiClient.put(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), { status })
-  return res.data
+  const res = await apiClient.put<ApiResponse<ContactEnquiry>>(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), { status })
+  const enquiry = res.data?.result ?? (res.data as any)?.enquiry ?? res.data
+  return { status: 'ok', enquiry }
 }

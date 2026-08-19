@@ -1,9 +1,21 @@
 import apiClient from './apiClient'
 import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
+import { ApiResponse } from '../types/api'
 
-export const fetchAgents = async () => {
-  const res = await apiClient.get(API_ENDPOINT_NAMES.AGENTS.BASE)
-  return res.data || []
+export interface AgentItem {
+  id: number
+  name: string
+  email: string
+  mobile: string
+  tempPasswordReset?: boolean
+  isAdmin?: boolean
+  photo?: string | null
+  isActive?: boolean
+}
+
+export const fetchAgents = async (): Promise<AgentItem[]> => {
+  const res = await apiClient.get<ApiResponse<AgentItem[]>>(API_ENDPOINT_NAMES.AGENTS.BASE)
+  return res.data?.result ?? res.data ?? []
 }
 
 export const createAgent = async (payload: {
@@ -21,10 +33,10 @@ export const createAgent = async (payload: {
   fd.append('password', payload.password)
   fd.append('isAdmin', String(!!payload.isAdmin))
   if (payload.file) fd.append('file', payload.file)
-  const res = await apiClient.post(API_ENDPOINT_NAMES.AGENTS.BASE, fd, {
+  const res = await apiClient.post<ApiResponse<AgentItem>>(API_ENDPOINT_NAMES.AGENTS.BASE, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
-  return res.data
+  return res.data?.result ?? res.data
 }
 
 export const updateAgent = async (
@@ -45,13 +57,13 @@ export const updateAgent = async (
   fd.append('isAdmin', String(!!payload.isAdmin))
   if (payload.file) fd.append('file', payload.file)
   if (payload.remove_photo) fd.append('remove_photo', 'true')
-  const res = await apiClient.put(API_ENDPOINT_NAMES.AGENTS.BY_ID(id), fd, {
+  const res = await apiClient.put<ApiResponse<AgentItem>>(API_ENDPOINT_NAMES.AGENTS.BY_ID(id), fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
-  return res.data
+  return res.data?.result ?? res.data
 }
 
 export const deleteAgent = async (id: number) => {
-  const res = await apiClient.delete(API_ENDPOINT_NAMES.AGENTS.BY_ID(id))
-  return res.data
+  const res = await apiClient.delete<ApiResponse<any>>(API_ENDPOINT_NAMES.AGENTS.BY_ID(id))
+  return res.data?.result ?? res.data
 }

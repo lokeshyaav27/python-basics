@@ -13,6 +13,7 @@ from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.client_general_detail import ClientGeneralDetail
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -127,6 +128,7 @@ def _serialize(app: LoanApplication) -> dict:
         } if app.personalLoanDetail else None,
         "status": app.status,
         "description": app.description,
+        "createdAt": app.createdAt.isoformat() if app.createdAt else None,
         "isActive": app.isActive,
     }
 
@@ -159,7 +161,7 @@ def list_loan_applications(
             from sqlalchemy import or_
             query = query.filter(or_(*ident_filters))
         else:
-            return []
+            return success_response(result=[], message="Loan applications fetched successfully")
     elif current_user.role == "agent":
         # Agent sees applications assigned to them
         query = query.filter(LoanApplication.agentId == current_user.id)
@@ -178,7 +180,10 @@ def list_loan_applications(
         )
 
     applications = query.order_by(LoanApplication.id.desc()).all()
-    return [_serialize(a) for a in applications]
+    return success_response(
+        result=[_serialize(a) for a in applications],
+        message="Loan applications fetched successfully",
+    )
 
 
 # ── Get Single Loan Application (Ownership Checked) ───────────────────────────
@@ -206,7 +211,10 @@ def get_loan_application(
         if app.agentId is not None and app.agentId != current_user.id:
             raise HTTPException(status_code=403, detail="Forbidden: This application is assigned to another agent.")
 
-    return _serialize(app)
+    return success_response(
+        result=_serialize(app),
+        message="Loan application fetched successfully",
+    )
 
 
 # ── Public Apply Wizard (No Token Required) ───────────────────────────────────
@@ -305,7 +313,11 @@ def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Sessio
     db.add(app)
     db.commit()
     db.refresh(app)
-    return {"status": "ok", "application": _serialize(app)}
+    return success_response(
+        result=_serialize(app),
+        message="Loan application submitted successfully",
+        status_code=201,
+    )
 
 
 # ── Create Quick Application (Admin Only) ─────────────────────────────────────
@@ -334,7 +346,11 @@ def create_loan_application(
     db.add(app)
     db.commit()
     db.refresh(app)
-    return _serialize(app)
+    return success_response(
+        result=_serialize(app),
+        message="Loan application created successfully",
+        status_code=201,
+    )
 
 
 # ── Update Loan Application (Ownership Checked) ───────────────────────────────
@@ -488,7 +504,10 @@ def update_loan_application(
     db.add(app)
     db.commit()
     db.refresh(app)
-    return _serialize(app)
+    return success_response(
+        result=_serialize(app),
+        message="Loan application updated successfully",
+    )
 
 
 # ── Assign Agent (Admin Only) ─────────────────────────────────────────────────
@@ -515,7 +534,10 @@ def assign_agent(
     db.add(app)
     db.commit()
     db.refresh(app)
-    return _serialize(app)
+    return success_response(
+        result=_serialize(app),
+        message="Agent assigned successfully",
+    )
 
 
 def _is_application_complete(app: LoanApplication) -> tuple[bool, str]:
@@ -596,7 +618,10 @@ def update_application_status(
     db.add(app)
     db.commit()
     db.refresh(app)
-    return _serialize(app)
+    return success_response(
+        result=_serialize(app),
+        message=f"Application has been {app.status} successfully",
+    )
 
 
 # ── Delete Loan Application (Admin Only) ──────────────────────────────────────
@@ -614,4 +639,7 @@ def delete_loan_application(
     app.isActive = False
     db.add(app)
     db.commit()
-    return {"status": "success", "message": "Loan application deactivated successfully"}
+    return success_response(
+        result={"deleted_id": application_id},
+        message="Loan application deactivated successfully",
+    )

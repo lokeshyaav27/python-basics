@@ -39,15 +39,27 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response Interceptor: Handle 401 Unauthorized globally via Redux action
+// Response Interceptor: Handle errors and 401 Unauthorized globally via Redux action
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      const isAuthEndpoint = error.config?.url?.includes('/api/auth/')
-      if (!isAuthEndpoint) {
-        console.warn('Session expired or unauthorized request, dispatching logout.')
-        store.dispatch(logout())
+    if (error.response) {
+      // Normalize error message & detail for uniform toast handling
+      const data = error.response.data
+      if (data && typeof data === 'object') {
+        const errorMsg = data.message || data.detail
+        if (errorMsg) {
+          data.message = errorMsg
+          data.detail = errorMsg
+        }
+      }
+
+      if (error.response.status === 401) {
+        const isAuthEndpoint = error.config?.url?.includes('/api/auth/')
+        if (!isAuthEndpoint) {
+          console.warn('Session expired or unauthorized request, dispatching logout.')
+          store.dispatch(logout())
+        }
       }
     }
     return Promise.reject(error)

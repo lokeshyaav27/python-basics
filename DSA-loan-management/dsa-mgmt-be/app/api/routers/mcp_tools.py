@@ -18,6 +18,7 @@ from app.services.mcp_comparison_tool import (
     execute_mcp_comparison_tool,
 )
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -50,10 +51,13 @@ def list_all_mcp_tools(
     all_specs = list(MCP_DSA_TOOLS_SPECS)
     all_specs.append(MCP_ELIGIBILITY_TOOL_SPEC)
     all_specs.append(MCP_COMPARISON_TOOL_SPEC)
-    return {
-        "totalTools": len(all_specs),
-        "tools": all_specs,
-    }
+    return success_response(
+        result={
+            "totalTools": len(all_specs),
+            "tools": all_specs,
+        },
+        message="MCP tools schemas retrieved successfully",
+    )
 
 
 # ── 2. Unified MCP Tool Execution Endpoint ───────────────────────────────────
@@ -80,21 +84,24 @@ def execute_mcp_tool(
     # Route specialized tools
     if tool == "check_loan_eligibility":
         app_id = int(req.arguments.get("application_id") or req.arguments.get("applicationId"))
-        return execute_mcp_eligibility_tool(db=db, application_id=app_id)
+        res = execute_mcp_eligibility_tool(db=db, application_id=app_id)
+        return success_response(result=res, message="Eligibility evaluation completed")
 
     elif tool == "compare_banks":
         app_id = int(req.arguments.get("application_id") or req.arguments.get("applicationId"))
         bank_ids = req.arguments.get("bank_ids") or req.arguments.get("bankIds") or []
         user_role = auth.get("role", "customer")
-        return execute_mcp_comparison_tool(db=db, application_id=app_id, bank_ids=bank_ids, user_role=user_role)
+        res = execute_mcp_comparison_tool(db=db, application_id=app_id, bank_ids=bank_ids, user_role=user_role)
+        return success_response(result=res, message="Bank comparison completed")
 
     # Route DSA Core Tools
-    return execute_dsa_mcp_tool(
+    res = execute_dsa_mcp_tool(
         db=db,
         tool_name=tool,
         arguments=req.arguments,
         auth_user=auth,
     )
+    return success_response(result=res, message=f"Tool {tool} executed successfully")
 
 
 # ── 3. Semantic Search Endpoint ───────────────────────────────────────────────
@@ -114,10 +121,11 @@ def mcp_post_semantic_search(
     """
     Semantic vector search over bank policy documents via pgvector, returning both structured matches and formatted LLM knowledge context.
     """
-    return search_bank_documents(
+    res = search_bank_documents(
         db=db,
         query=payload.query,
         bank_id=payload.bankId,
         product_id=payload.productId,
         top_k=payload.topK,
     )
+    return success_response(result=res, message="Semantic vector search completed")

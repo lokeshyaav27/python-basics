@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.db.session import SessionLocal
-from app.schemas.comparison import BankComparisonResponse
 from app.services.mcp_comparison_tool import execute_mcp_comparison_tool
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ def get_db():
         db.close()
 
 
-@router.get("/banks", response_model=BankComparisonResponse)
+@router.get("/banks")
 def compare_banks(
     applicationId: int = Query(..., description="ID of the loan application"),
     bankIds: str = Query(..., description="Comma-separated bank IDs to compare (e.g. '1,2'). Max 2 banks."),
@@ -46,9 +46,14 @@ def compare_banks(
     # Secure role determination from validated JWT token
     effective_role = current_user.role
 
-    return execute_mcp_comparison_tool(
+    result = execute_mcp_comparison_tool(
         db=db,
         application_id=applicationId,
         bank_ids=parsed_bank_ids,
         user_role=effective_role,
+    )
+
+    return success_response(
+        result=result,
+        message="Loan comparison completed successfully",
     )

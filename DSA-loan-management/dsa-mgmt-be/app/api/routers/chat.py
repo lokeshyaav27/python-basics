@@ -5,6 +5,7 @@ from app.db.session import SessionLocal
 from app.schemas.chat import ChatRequest, ChatResponse, ChatAuthContext
 from app.services.chat_orchestrator import process_chat_conversation
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ def get_db():
         db.close()
 
 
-@router.post("/assistant", response_model=ChatResponse)
+@router.post("/assistant")
 def chat_with_loan_assistant(
     req: ChatRequest,
     current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
@@ -36,4 +37,8 @@ def chat_with_loan_assistant(
     auth.identifier = current_user.uniqueCustomerId or str(current_user.id or "")
 
     req.authContext = auth
-    return process_chat_conversation(db=db, request=req)
+    result = process_chat_conversation(db=db, request=req)
+    return success_response(
+        result=result,
+        message="Assistant response generated successfully",
+    )

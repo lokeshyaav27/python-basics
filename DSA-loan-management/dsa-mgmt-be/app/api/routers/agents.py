@@ -10,6 +10,7 @@ from uuid import uuid4
 from app.db.session import SessionLocal
 from app.models.agent import Agent
 from app.core.security import require_role, hash_password, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -41,7 +42,10 @@ def list_agents(
     if not include_inactive:
         query = query.filter(Agent.isActive == True)
     agents = query.all()
-    return [_serialize(a) for a in agents]
+    return success_response(
+        result=[_serialize(a) for a in agents],
+        message="Agents fetched successfully",
+    )
 
 
 # ── Create (Admin Only) ───────────────────────────────────────────────────────
@@ -59,7 +63,7 @@ def create_agent(
 ):
     existing = db.query(Agent).filter(Agent.email == email).first()
     if existing:
-        raise HTTPException(status_code=400, detail="email already in use")
+        raise HTTPException(status_code=400, detail="Email already in use")
 
     photo_fname: Optional[str] = None
     if file is not None:
@@ -79,7 +83,11 @@ def create_agent(
     db.add(agent)
     db.commit()
     db.refresh(agent)
-    return _serialize(agent)
+    return success_response(
+        result=_serialize(agent),
+        message="Agent created successfully",
+        status_code=201,
+    )
 
 
 # ── Update (Admin or Self-Agent) ──────────────────────────────────────────────
@@ -104,11 +112,11 @@ def update_agent(
 
     a = db.query(Agent).filter(Agent.id == agent_id).first()
     if not a:
-        raise HTTPException(status_code=404, detail="agent not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
 
     conflict = db.query(Agent).filter(Agent.email == email, Agent.id != agent_id).first()
     if conflict:
-        raise HTTPException(status_code=400, detail="email already in use")
+        raise HTTPException(status_code=400, detail="Email already in use")
 
     storage = get_photo_storage()
 
@@ -129,7 +137,10 @@ def update_agent(
     db.add(a)
     db.commit()
     db.refresh(a)
-    return _serialize(a)
+    return success_response(
+        result=_serialize(a),
+        message="Agent updated successfully",
+    )
 
 
 # ── Delete (Admin Only) ───────────────────────────────────────────────────────
@@ -142,11 +153,14 @@ def delete_agent(
 ):
     a = db.query(Agent).filter(Agent.id == agent_id).first()
     if not a:
-        raise HTTPException(status_code=404, detail="agent not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     a.isActive = False
     db.add(a)
     db.commit()
-    return {"status": "ok"}
+    return success_response(
+        result={"deleted_id": agent_id},
+        message="Agent deleted successfully",
+    )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -155,11 +169,11 @@ def _save_photo(file: UploadFile) -> str:
     contents = file.file.read()
     size_limit = 3 * 1024 * 1024
     if len(contents) > size_limit:
-        raise HTTPException(status_code=400, detail="file too large; max 3MB")
+        raise HTTPException(status_code=400, detail="File too large; max 3MB")
     try:
         Image.open(BytesIO(contents)).verify()
     except Exception:
-        raise HTTPException(status_code=400, detail="invalid image file")
+        raise HTTPException(status_code=400, detail="Invalid image file")
     ext = os.path.splitext(file.filename or "")[1].lower() or ".jpg"
     fname = f"{uuid4().hex}{ext}"
     storage = get_photo_storage()

@@ -11,6 +11,7 @@ from app.db.session import SessionLocal
 from app.models.product import Product
 from app.schemas.product import ProductRead
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -37,7 +38,7 @@ def _sanitize_name(name: str) -> str:
 
 # ── Create Product (Admin Only) ───────────────────────────────────────────────
 
-@router.post("", response_model=ProductRead)
+@router.post("")
 async def create_product(
     name: str = Form(...),
     description: str = Form(...),
@@ -48,16 +49,16 @@ async def create_product(
     contents = await file.read()
     size_limit = 3 * 1024 * 1024
     if len(contents) > size_limit:
-        raise HTTPException(status_code=400, detail='file too large; max 3MB')
+        raise HTTPException(status_code=400, detail='File too large; max 3MB')
 
     try:
         img = Image.open(BytesIO(contents))
         width, height = img.size
     except Exception:
-        raise HTTPException(status_code=400, detail='invalid image file')
+        raise HTTPException(status_code=400, detail='Invalid image file')
 
     if abs((height / width) - (2.0 / 3.0)) > 0.03:
-        raise HTTPException(status_code=400, detail='image must have 2:3 (height:width) ratio')
+        raise HTTPException(status_code=400, detail='Image must have 2:3 (height:width) ratio')
 
     ext = os.path.splitext(file.filename)[1] or '.jpg'
     base = _sanitize_name(name)
@@ -71,22 +72,30 @@ async def create_product(
     db.add(p)
     db.commit()
     db.refresh(p)
-    return p
+    return success_response(
+        result=ProductRead.from_orm(p),
+        message="Product created successfully",
+        status_code=201,
+    )
 
 
 # ── List Products (Public) ───────────────────────────────────────────────────
 
-@router.get("", response_model=List[ProductRead])
+@router.get("")
 def list_products(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Product)
     if not include_inactive:
         query = query.filter(Product.isActive != False)
-    return query.all()
+    items = query.all()
+    return success_response(
+        result=[ProductRead.from_orm(p) for p in items],
+        message="Products fetched successfully",
+    )
 
 
 # ── Update Product (Admin Only) ───────────────────────────────────────────────
 
-@router.put("/{product_id}", response_model=ProductRead)
+@router.put("/{product_id}")
 async def update_product(
     product_id: int,
     name: str = Form(...),
@@ -98,7 +107,7 @@ async def update_product(
 ):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
-        raise HTTPException(status_code=404, detail="product not found")
+        raise HTTPException(status_code=404, detail="Product not found")
 
     storage = get_storage_dir()
     if remove_image and file is None:
@@ -115,14 +124,14 @@ async def update_product(
         contents = await file.read()
         size_limit = 3 * 1024 * 1024
         if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail='file too large; max 3MB')
+            raise HTTPException(status_code=400, detail='File too large; max 3MB')
         try:
             img = Image.open(BytesIO(contents))
             width, height = img.size
         except Exception:
-            raise HTTPException(status_code=400, detail='invalid image file')
+            raise HTTPException(status_code=400, detail='Invalid image file')
         if abs((height / width) - (2.0 / 3.0)) > 0.03:
-            raise HTTPException(status_code=400, detail='image must have 2:3 (height:width) ratio')
+            raise HTTPException(status_code=400, detail='Image must have 2:3 (height:width) ratio')
 
         ext = os.path.splitext(file.filename)[1] or '.jpg'
         base = _sanitize_name(name)
@@ -147,7 +156,10 @@ async def update_product(
     db.add(p)
     db.commit()
     db.refresh(p)
-    return p
+    return success_response(
+        result=ProductRead.from_orm(p),
+        message="Product updated successfully",
+    )
 
 
 # ── Delete Product (Admin Only) ───────────────────────────────────────────────
@@ -160,8 +172,11 @@ def delete_product(
 ):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
-        raise HTTPException(status_code=404, detail="product not found")
+        raise HTTPException(status_code=404, detail="Product not found")
     p.isActive = False
     db.add(p)
     db.commit()
-    return {"status": "ok", "deleted_id": product_id}
+    return success_response(
+        result={"deleted_id": product_id},
+        message="Product deleted successfully",
+    )

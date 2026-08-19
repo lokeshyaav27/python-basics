@@ -1,5 +1,6 @@
 import apiClient from './apiClient'
 import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
+import { ApiResponse } from '../types/api'
 
 export interface EligibilityResult {
   applicationId: number
@@ -39,8 +40,8 @@ export interface EligibilityResult {
 }
 
 export const fetchEligibility = async (applicationId: number): Promise<EligibilityResult> => {
-  const res = await apiClient.get<EligibilityResult>(API_ENDPOINT_NAMES.ELIGIBILITY.EVALUATE, {
+  const res = await apiClient.get<ApiResponse<EligibilityResult>>(API_ENDPOINT_NAMES.ELIGIBILITY.EVALUATE, {
     params: { applicationId },
   })
-  return res.data
+  return res.data?.result ?? res.data
 }

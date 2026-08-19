@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.models.loan_application import LoanApplication
-from app.schemas.eligibility import EligibilityResponse
 from app.services.mcp_eligibility_tool import (
     execute_mcp_eligibility_tool,
     generate_ai_explanation,
 )
 from app.core.security import require_role, CurrentUser
+from app.core.response import success_response
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ def get_db():
         db.close()
 
 
-@router.get("/evaluate", response_model=EligibilityResponse)
+@router.get("/evaluate")
 def evaluate_eligibility(
     applicationId: int = Query(..., description="ID of the loan application to evaluate"),
     current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
@@ -57,4 +57,7 @@ def evaluate_eligibility(
     ai_summary = generate_ai_explanation(raw_result)
     raw_result["aiExplanation"] = ai_summary
 
-    return raw_result
+    return success_response(
+        result=raw_result,
+        message="Loan eligibility evaluated successfully",
+    )
