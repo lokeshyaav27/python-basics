@@ -2,41 +2,35 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 
-// Public Pages
-import Home from '../pages/Home'
-import AboutUs from '../pages/AboutUs'
-import WhyChooseUs from '../pages/WhyChooseUs'
-import ContactUs from '../pages/ContactUs'
-import Faqs from '../pages/Faqs'
-import PrivacyPolicy from '../pages/PrivacyPolicy'
-import TermsOfUse from '../pages/TermsOfUse'
-import Partners from '../pages/Partners'
-import ProductsCatalog from '../pages/ProductsCatalog'
-import CustomerLogin from '../pages/CustomerLogin'
-import AgentLogin from '../pages/AgentLogin'
-import AdminLogin from '../pages/AdminLogin'
-import ApplyForLoan from '../pages/ApplyForLoan'
-
-// Admin Pages
-import AdminDashboard from '../pages/AdminDashboard'
-import AdminProducts from '../pages/AdminProducts'
-import AdminBanks from '../pages/AdminBanks'
-import AdminAgents from '../pages/AdminAgents'
-import AdminLoanApplications from '../pages/AdminLoanApplications'
-import AdminContactEnquiries from '../pages/AdminContactEnquiries'
-
-// Agent Pages
-import AgentLoanApplications from '../pages/AgentLoanApplications'
-
-// Customer Pages
-import CustomerPortal from '../pages/CustomerPortal'
-import CustomerLoanList from '../pages/CustomerLoanList'
-import CustomerLoanDetail from '../pages/CustomerLoanDetail'
-
-// Shared & System Pages
-import CheckEligibility from '../pages/CheckEligibility'
-import LoanComparison from '../pages/LoanComparison'
-import ChatWithAI from '../pages/ChatWithAI'
+// Pages
+import {
+  Home,
+  AboutUs,
+  WhyChooseUs,
+  ContactUs,
+  Faqs,
+  PrivacyPolicy,
+  TermsOfUse,
+  Partners,
+  ProductsCatalog,
+  CustomerLogin,
+  AgentLogin,
+  AdminLogin,
+  ApplyForLoan,
+  AdminDashboard,
+  AdminProducts,
+  AdminBanks,
+  AdminAgents,
+  AdminLoanApplications,
+  AdminContactEnquiries,
+  AgentLoanApplications,
+  CustomerPortal,
+  CustomerLoanList,
+  CustomerLoanDetail,
+  CheckEligibility,
+  LoanComparison,
+  ChatWithAI,
+} from '../pages'
 
 // Components
 import { NotFound, Unauthorized, ProtectedRoute } from '../components'
