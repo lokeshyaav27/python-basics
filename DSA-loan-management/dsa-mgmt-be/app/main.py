@@ -43,7 +43,6 @@ app.include_router(api_routers.agents.router, prefix="/api/agents", tags=["agent
 app.include_router(api_routers.auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(api_routers.loan_applications.router, prefix="/api/loan-applications", tags=["loan-applications"])
 app.include_router(api_routers.contact.router, prefix="/api/contact", tags=["contact"])
-app.include_router(api_routers.rag.router, prefix="/api/rag", tags=["rag"])
 app.include_router(api_routers.eligibility.router, prefix="/api/eligibility", tags=["eligibility"])
 app.include_router(api_routers.comparison.router, prefix="/api/comparison", tags=["comparison"])
 app.include_router(api_routers.mcp_tools.router, prefix="/api/mcp", tags=["mcp"])
