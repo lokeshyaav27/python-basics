@@ -12,6 +12,7 @@ from app.models.home_loan_detail import HomeLoanDetail
 from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.client_general_detail import ClientGeneralDetail
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -130,18 +131,43 @@ def _serialize(app: LoanApplication) -> dict:
     }
 
 
+# ── List Loan Applications (Role-Scoped) ──────────────────────────────────────
+
 @router.get("")
 def list_loan_applications(
     agent_id: Optional[int] = None,
     mobile: Optional[str] = None,
     include_inactive: bool = False,
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db)
 ):
     query = db.query(LoanApplication)
     if not include_inactive:
         query = query.filter(LoanApplication.isActive != False)
-    if agent_id is not None:
-        query = query.filter(LoanApplication.agentId == agent_id)
+
+    # Role Scope Filtering
+    if current_user.role == "customer":
+        # Customer only sees their own applications
+        ident_filters = []
+        if current_user.uniqueCustomerId:
+            ident_filters.append(LoanApplication.uniqueCustomerId == current_user.uniqueCustomerId)
+        if current_user.mobile:
+            ident_filters.append(LoanApplication.mobile == current_user.mobile)
+        if current_user.id:
+            ident_filters.append(LoanApplication.id == current_user.id)
+        if ident_filters:
+            from sqlalchemy import or_
+            query = query.filter(or_(*ident_filters))
+        else:
+            return []
+    elif current_user.role == "agent":
+        # Agent sees applications assigned to them
+        query = query.filter(LoanApplication.agentId == current_user.id)
+    elif current_user.role == "admin":
+        # Admin can filter by agent_id if requested
+        if agent_id is not None:
+            query = query.filter(LoanApplication.agentId == agent_id)
+
     if mobile is not None and mobile.strip():
         m = mobile.strip()
         query = query.filter(
@@ -150,17 +176,40 @@ def list_loan_applications(
             | (LoanApplication.email.ilike(f"%{m}%"))
             | (LoanApplication.name.ilike(f"%{m}%"))
         )
-    applications = query.all()
+
+    applications = query.order_by(LoanApplication.id.desc()).all()
     return [_serialize(a) for a in applications]
 
 
+# ── Get Single Loan Application (Ownership Checked) ───────────────────────────
+
 @router.get("/{application_id}")
-def get_loan_application(application_id: int, db: Session = Depends(get_db)):
+def get_loan_application(
+    application_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
+    db: Session = Depends(get_db)
+):
     app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
+
+    # Ownership / Scope check
+    if current_user.role == "customer":
+        is_owner = (
+            app.id == current_user.id
+            or (current_user.uniqueCustomerId and app.uniqueCustomerId == current_user.uniqueCustomerId)
+            or (current_user.mobile and app.mobile == current_user.mobile)
+        )
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this application.")
+    elif current_user.role == "agent":
+        if app.agentId is not None and app.agentId != current_user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: This application is assigned to another agent.")
+
     return _serialize(app)
 
+
+# ── Public Apply Wizard (No Token Required) ───────────────────────────────────
 
 @router.post("/apply")
 def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Session = Depends(get_db)):
@@ -259,8 +308,14 @@ def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Sessio
     return {"status": "ok", "application": _serialize(app)}
 
 
+# ── Create Quick Application (Admin Only) ─────────────────────────────────────
+
 @router.post("")
-def create_loan_application(payload: LoanApplicationCreate, db: Session = Depends(get_db)):
+def create_loan_application(
+    payload: LoanApplicationCreate,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
     name = payload.name.strip()
     email = payload.email.strip()
     mobile = payload.mobile.strip()
@@ -282,15 +337,31 @@ def create_loan_application(payload: LoanApplicationCreate, db: Session = Depend
     return _serialize(app)
 
 
+# ── Update Loan Application (Ownership Checked) ───────────────────────────────
+
 @router.put("/{application_id}")
 def update_loan_application(
     application_id: int,
     payload: LoanApplicationUpdate,
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db)
 ):
     app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
+
+    # Ownership / Scope check
+    if current_user.role == "customer":
+        is_owner = (
+            app.id == current_user.id
+            or (current_user.uniqueCustomerId and app.uniqueCustomerId == current_user.uniqueCustomerId)
+            or (current_user.mobile and app.mobile == current_user.mobile)
+        )
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to modify this application.")
+    elif current_user.role == "agent":
+        if app.agentId is not None and app.agentId != current_user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: This application is assigned to another agent.")
 
     # Lock editing if application is already approved or rejected
     if app.status in ["approved", "rejected"]:
@@ -420,10 +491,13 @@ def update_loan_application(
     return _serialize(app)
 
 
+# ── Assign Agent (Admin Only) ─────────────────────────────────────────────────
+
 @router.put("/{application_id}/assign-agent")
 def assign_agent(
     application_id: int,
     payload: AssignAgentPayload,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db)
 ):
     app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
@@ -466,15 +540,22 @@ def _is_application_complete(app: LoanApplication) -> tuple[bool, str]:
     return True, ""
 
 
+# ── Update Status (Admin or Assigned Agent) ───────────────────────────────────
+
 @router.put("/{application_id}/status")
 def update_application_status(
     application_id: int,
     payload: ApplicationStatusPayload,
+    current_user: CurrentUser = Depends(require_role(["admin", "agent"])),
     db: Session = Depends(get_db)
 ):
     app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")
+
+    if current_user.role == "agent":
+        if app.agentId != current_user.id:
+            raise HTTPException(status_code=403, detail="Forbidden: You can only update status for applications assigned to you.")
 
     # Enforce non-reversible one-time decision rule
     if app.status in ["approved", "rejected"]:
@@ -518,8 +599,14 @@ def update_application_status(
     return _serialize(app)
 
 
+# ── Delete Loan Application (Admin Only) ──────────────────────────────────────
+
 @router.delete("/{application_id}")
-def delete_loan_application(application_id: int, db: Session = Depends(get_db)):
+def delete_loan_application(
+    application_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
     app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="Loan application not found")

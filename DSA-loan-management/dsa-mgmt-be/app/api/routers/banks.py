@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
+import os
+from uuid import uuid4
 
 from app.db.session import SessionLocal
 from app.models.bank import Bank
@@ -8,12 +13,8 @@ from app.models.product import Product
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
 from app.schemas.bank import BankCreate, BankRead
-from pathlib import Path
-from io import BytesIO
-from PIL import Image
-import os
-from uuid import uuid4
 from app.services import rag_service
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -40,6 +41,8 @@ def get_document_storage() -> Path:
     return storage
 
 
+# ── Create Bank (Admin Only) ──────────────────────────────────────────────────
+
 @router.post("", response_model=BankRead)
 def create_bank(
     name: str = Form(...),
@@ -47,6 +50,7 @@ def create_bank(
     isPrivate: bool = Form(False),
     isnbfc: bool = Form(False),
     file: UploadFile | None = File(None),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     logo_fname: Optional[str] = None
@@ -74,6 +78,8 @@ def create_bank(
     return b
 
 
+# ── List Banks (Public) ───────────────────────────────────────────────────────
+
 @router.get("", response_model=List[BankRead])
 def list_banks(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Bank)
@@ -81,6 +87,8 @@ def list_banks(include_inactive: bool = False, db: Session = Depends(get_db)):
         query = query.filter(Bank.isActive == True)
     return query.all()
 
+
+# ── Update Bank (Admin Only) ──────────────────────────────────────────────────
 
 @router.put("/{bank_id}", response_model=BankRead)
 def update_bank(
@@ -91,6 +99,7 @@ def update_bank(
     isnbfc: bool = Form(False),
     file: UploadFile | None = File(None),
     remove_logo: bool = Form(False),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     b = db.query(Bank).filter(Bank.id == bank_id).first()
@@ -99,7 +108,6 @@ def update_bank(
 
     storage = get_logo_storage()
 
-    # handle new file upload
     if file is not None:
         contents = file.file.read()
         size_limit = 3 * 1024 * 1024
@@ -116,7 +124,6 @@ def update_bank(
         with open(storage / logo_fname, 'wb') as f:
             f.write(contents)
 
-        # delete old logo
         if b.logo:
             old = storage / b.logo
             if old.exists():
@@ -126,7 +133,6 @@ def update_bank(
                     pass
         b.logo = logo_fname
 
-    # handle remove flag — only when no new file was uploaded
     elif remove_logo and b.logo:
         old = storage / b.logo
         if old.exists():
@@ -146,8 +152,14 @@ def update_bank(
     return b
 
 
+# ── Delete Bank (Admin Only) ──────────────────────────────────────────────────
+
 @router.delete("/{bank_id}")
-def delete_bank(bank_id: int, db: Session = Depends(get_db)):
+def delete_bank(
+    bank_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
     b = db.query(Bank).filter(Bank.id == bank_id).first()
     if not b:
         raise HTTPException(status_code=404, detail='bank not found')
@@ -159,16 +171,14 @@ def delete_bank(bank_id: int, db: Session = Depends(get_db)):
 
 # ── Product Linking Endpoints ─────────────────────────────────────────────────
 
+# Public: Anyone can view products linked to a bank (e.g. loan wizard, comparisons)
 @router.get("/{bank_id}/products")
 def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
     bank = db.query(Bank).filter(Bank.id == bank_id).first()
     if not bank:
         raise HTTPException(status_code=404, detail="Bank not found")
 
-    # Get all active products
     products = db.query(Product).filter(Product.isActive == True).all()
-
-    # Get existing links for this bank
     links = db.query(ProductBankLink).filter(ProductBankLink.bankId == bank_id).all()
     links_map = {link.productId: link for link in links}
 
@@ -177,7 +187,6 @@ def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
         link = links_map.get(p.id)
         docs = []
         if link:
-            # Query multiple documents from bank_documents table
             db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).order_by(BankDocument.id.asc()).all()
             for d in db_docs:
                 docs.append({
@@ -200,12 +209,14 @@ def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
     return result
 
 
+# Admin Only: Link or unlink product to bank
 @router.post("/{bank_id}/products/{product_id}/link")
 def link_bank_product(
     bank_id: int,
     product_id: int,
     is_linked: bool = Form(...),
     commission: Optional[float] = Form(None),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     bank = db.query(Bank).filter(Bank.id == bank_id).first()
@@ -223,10 +234,8 @@ def link_bank_product(
 
     storage = get_document_storage()
 
-    # If unlinking, delete the link record and attached documents
     if not is_linked:
         if link:
-            # Delete attached bank_documents
             attached_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
             for doc in attached_docs:
                 try:
@@ -239,7 +248,6 @@ def link_bank_product(
             db.commit()
         return {"status": "ok", "isLinked": False}
 
-    # If linking (or updating existing link)
     if not link:
         link = ProductBankLink(bankId=bank_id, productId=product_id)
         db.add(link)
@@ -251,7 +259,6 @@ def link_bank_product(
     db.commit()
     db.refresh(link)
 
-    # Fetch all docs
     db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
     docs = [{"id": d.id, "name": d.documentName, "fileName": d.documentLocation} for d in db_docs]
 
@@ -264,12 +271,14 @@ def link_bank_product(
     }
 
 
+# Admin Only: Upload bank product policy document
 @router.post("/{bank_id}/products/{product_id}/documents")
 def upload_bank_product_document(
     bank_id: int,
     product_id: int,
     file: UploadFile = File(...),
     document_name: Optional[str] = Form(None),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     bank = db.query(Bank).filter(Bank.id == bank_id).first()
@@ -280,7 +289,6 @@ def upload_bank_product_document(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # Get or create link
     link = db.query(ProductBankLink).filter(
         ProductBankLink.bankId == bank_id,
         ProductBankLink.productId == product_id,
@@ -292,7 +300,7 @@ def upload_bank_product_document(
         db.flush()
 
     contents = file.file.read()
-    size_limit = 20 * 1024 * 1024  # 20MB limit
+    size_limit = 20 * 1024 * 1024
     if len(contents) > size_limit:
         raise HTTPException(status_code=400, detail="Document too large; max 20MB")
 
@@ -314,7 +322,6 @@ def upload_bank_product_document(
     db.commit()
     db.refresh(new_doc)
 
-    # Automatically chunk, embed, and index into pgvector table (bank_document_chunks)
     indexed_chunks_count = 0
     try:
         indexed_chunks_count = rag_service.index_document(
@@ -339,11 +346,13 @@ def upload_bank_product_document(
     }
 
 
+# Admin Only: Delete bank product document
 @router.delete("/{bank_id}/products/{product_id}/documents/{document_id}")
 def delete_bank_product_document(
     bank_id: int,
     product_id: int,
     document_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     link = db.query(ProductBankLink).filter(

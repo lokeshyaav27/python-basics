@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
+from app.models.loan_application import LoanApplication
 from app.schemas.eligibility import EligibilityResponse
 from app.services.mcp_eligibility_tool import (
     execute_mcp_eligibility_tool,
     generate_ai_explanation,
 )
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -22,6 +24,7 @@ def get_db():
 @router.get("/evaluate", response_model=EligibilityResponse)
 def evaluate_eligibility(
     applicationId: int = Query(..., description="ID of the loan application to evaluate"),
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db),
 ):
     """
@@ -32,6 +35,19 @@ def evaluate_eligibility(
       checking CIBIL, Age, Income, FOIR, LTV, EMI, and caps.
     - Attaches Groq AI (openai/gpt-oss-120b) natural language explanation.
     """
+    # Verify customer ownership
+    if current_user.role == "customer":
+        app = db.query(LoanApplication).filter(LoanApplication.id == applicationId).first()
+        if not app:
+            raise HTTPException(status_code=404, detail="Loan application not found")
+        is_owner = (
+            app.id == current_user.id
+            or (current_user.uniqueCustomerId and app.uniqueCustomerId == current_user.uniqueCustomerId)
+            or (current_user.mobile and app.mobile == current_user.mobile)
+        )
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Forbidden: You can only evaluate eligibility for your own loan application.")
+
     raw_result = execute_mcp_eligibility_tool(db=db, application_id=applicationId)
     
     if raw_result.get("status") == "ERROR":

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from app.db.session import SessionLocal
 from app.models.agent import Agent
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -28,10 +29,14 @@ def get_photo_storage() -> Path:
     return storage
 
 
-# ── List ──────────────────────────────────────────────────────────────────────
+# ── List (Admin Only) ─────────────────────────────────────────────────────────
 
 @router.get("")
-def list_agents(include_inactive: bool = False, db: Session = Depends(get_db)):
+def list_agents(
+    include_inactive: bool = False,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
     query = db.query(Agent)
     if not include_inactive:
         query = query.filter(Agent.isActive == True)
@@ -39,7 +44,7 @@ def list_agents(include_inactive: bool = False, db: Session = Depends(get_db)):
     return [_serialize(a) for a in agents]
 
 
-# ── Create ────────────────────────────────────────────────────────────────────
+# ── Create (Admin Only) ───────────────────────────────────────────────────────
 
 @router.post("")
 def create_agent(
@@ -49,6 +54,7 @@ def create_agent(
     password: str = Form(...),
     isAdmin: bool = Form(False),
     file: UploadFile | None = File(None),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     existing = db.query(Agent).filter(Agent.email == email).first()
@@ -75,7 +81,7 @@ def create_agent(
     return _serialize(agent)
 
 
-# ── Update ────────────────────────────────────────────────────────────────────
+# ── Update (Admin or Self-Agent) ──────────────────────────────────────────────
 
 @router.put("/{agent_id}")
 def update_agent(
@@ -86,8 +92,15 @@ def update_agent(
     isAdmin: bool = Form(False),
     file: UploadFile | None = File(None),
     remove_photo: bool = Form(False),
+    current_user: CurrentUser = Depends(require_role(["admin", "agent"])),
     db: Session = Depends(get_db),
 ):
+    # Agent can only update their own profile and cannot escalate privileges
+    if current_user.role == "agent":
+        if current_user.id != agent_id:
+            raise HTTPException(status_code=403, detail="Agents can only update their own profile.")
+        isAdmin = False
+
     a = db.query(Agent).filter(Agent.id == agent_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="agent not found")
@@ -110,17 +123,22 @@ def update_agent(
     a.name = name
     a.email = email
     a.mobile = mobile
-    a.isAdmin = isAdmin
+    if current_user.role == "admin":
+        a.isAdmin = isAdmin
     db.add(a)
     db.commit()
     db.refresh(a)
     return _serialize(a)
 
 
-# ── Delete ────────────────────────────────────────────────────────────────────
+# ── Delete (Admin Only) ───────────────────────────────────────────────────────
 
 @router.delete("/{agent_id}")
-def delete_agent(agent_id: int, db: Session = Depends(get_db)):
+def delete_agent(
+    agent_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
     a = db.query(Agent).filter(Agent.id == agent_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="agent not found")

@@ -5,11 +5,12 @@ from uuid import uuid4
 import os
 from io import BytesIO
 from PIL import Image
-
 from pathlib import Path
+
 from app.db.session import SessionLocal
 from app.models.product import Product
 from app.schemas.product import ProductRead
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -30,16 +31,18 @@ def get_storage_dir() -> Path:
 
 
 def _sanitize_name(name: str) -> str:
-    # simple sanitize: lowercase, replace spaces with -, keep alnum and -
     s = name.strip().lower().replace(' ', '-')
     return ''.join(ch for ch in s if (ch.isalnum() or ch == '-')) or uuid4().hex
 
+
+# ── Create Product (Admin Only) ───────────────────────────────────────────────
 
 @router.post("", response_model=ProductRead)
 async def create_product(
     name: str = Form(...),
     description: str = Form(...),
     file: UploadFile = File(...),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     contents = await file.read()
@@ -71,6 +74,8 @@ async def create_product(
     return p
 
 
+# ── List Products (Public) ───────────────────────────────────────────────────
+
 @router.get("", response_model=List[ProductRead])
 def list_products(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Product)
@@ -79,6 +84,8 @@ def list_products(include_inactive: bool = False, db: Session = Depends(get_db))
     return query.all()
 
 
+# ── Update Product (Admin Only) ───────────────────────────────────────────────
+
 @router.put("/{product_id}", response_model=ProductRead)
 async def update_product(
     product_id: int,
@@ -86,6 +93,7 @@ async def update_product(
     description: str = Form(...),
     file: UploadFile | None = File(None),
     remove_image: bool = Form(False),
+    current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     p = db.query(Product).filter(Product.id == product_id).first()
@@ -93,7 +101,6 @@ async def update_product(
         raise HTTPException(status_code=404, detail="product not found")
 
     storage = get_storage_dir()
-    # If remove_image flag set and no new file provided, delete old image and clear
     if remove_image and file is None:
         if p.image:
             old = storage / p.image
@@ -104,7 +111,6 @@ async def update_product(
                     pass
         p.image = ''
 
-    # If new file provided, validate, save and delete old
     elif file is not None:
         contents = await file.read()
         size_limit = 3 * 1024 * 1024
@@ -126,7 +132,6 @@ async def update_product(
         with open(new_path, 'wb') as f:
             f.write(contents)
 
-        # delete old image if exists
         if p.image:
             old = storage / p.image
             if old.exists():
@@ -145,8 +150,14 @@ async def update_product(
     return p
 
 
+# ── Delete Product (Admin Only) ───────────────────────────────────────────────
+
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(
+    product_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="product not found")

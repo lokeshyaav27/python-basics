@@ -17,7 +17,7 @@ from app.services.mcp_comparison_tool import (
     MCP_COMPARISON_TOOL_SPEC,
     execute_mcp_comparison_tool,
 )
-from app.core.security import get_current_user_optional, CurrentUser
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -41,7 +41,9 @@ class MCPExecuteRequest(BaseModel):
 
 # ── 1. List All Registered MCP Tools ─────────────────────────────────────────
 @router.get("/tools")
-def list_all_mcp_tools():
+def list_all_mcp_tools(
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
+):
     """
     Returns full Model Context Protocol (MCP) schemas for all available tools in the platform.
     """
@@ -58,30 +60,20 @@ def list_all_mcp_tools():
 @router.post("/execute")
 def execute_mcp_tool(
     req: MCPExecuteRequest,
-    current_user: Optional[CurrentUser] = Depends(get_current_user_optional),
-    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
-    x_customer_id: Optional[str] = Header(None, alias="X-Customer-Id"),
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db),
 ):
     """
     Unified entry point for calling any MCP tool with automated authorization checks.
     """
-    auth = req.auth_context or {}
-    if current_user:
-        auth["role"] = current_user.role
-        auth["userId"] = current_user.id
-        auth["name"] = current_user.name
-        auth["email"] = current_user.email
-        auth["mobile"] = current_user.mobile
-        auth["identifier"] = current_user.uniqueCustomerId or str(current_user.id or "")
-    else:
-        if x_user_role:
-            auth["role"] = x_user_role
-        if x_user_id:
-            auth["userId"] = x_user_id
-        if x_customer_id:
-            auth["identifier"] = x_customer_id
+    auth = {
+        "role": current_user.role,
+        "userId": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "mobile": current_user.mobile,
+        "identifier": current_user.uniqueCustomerId or str(current_user.id or ""),
+    }
 
     tool = req.tool_name.strip()
 
@@ -101,7 +93,7 @@ def execute_mcp_tool(
         db=db,
         tool_name=tool,
         arguments=req.arguments,
-        auth_user=auth if auth else None,
+        auth_user=auth,
     )
 
 
@@ -116,6 +108,7 @@ class SemanticSearchPayload(BaseModel):
 @router.post("/semantic-search")
 def mcp_post_semantic_search(
     payload: SemanticSearchPayload,
+    current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db),
 ):
     """
