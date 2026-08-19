@@ -10,17 +10,6 @@ export async function verifyCustomerOtp(mobile: string, otp: string) {
   return res.data
 }
 
-export async function addCustomer(payload: {
-  name: string
-  email: string
-  mobile: string
-  productId?: number
-  uniqueCustomerId?: string
-}) {
-  const res = await apiClient.post('/api/auth/customer/add', payload)
-  return res.data
-}
-
 export async function agentLogin(email: string, password: string) {
   const res = await apiClient.post('/api/auth/agent-login', { email, password })
   return res.data

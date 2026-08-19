@@ -130,8 +130,3 @@ export async function submitFullLoanApplication(payload: FullLoanApplicationData
   const res = await apiClient.post('/api/loan-applications/apply', payload)
   return res.data
 }
-
-export async function addLoanApplication(payload: any) {
-  const res = await apiClient.post('/api/auth/customer/add', payload)
-  return res.data
-}
