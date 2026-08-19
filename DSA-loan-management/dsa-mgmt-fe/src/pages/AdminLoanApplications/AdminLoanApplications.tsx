@@ -21,8 +21,9 @@ import {
 } from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 
+import { API_BASE_URL } from '../../constants'
+
 const BLANK_FORM = { name: '', email: '', mobile: '', productId: null as number | null }
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 const Avatar: React.FC<{
   name: string

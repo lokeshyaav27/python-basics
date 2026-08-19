@@ -5,9 +5,7 @@ import { message } from 'antd'
 import { fetchProducts } from '../../services/products'
 import { submitFullLoanApplication } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
-import { ROUTES } from '../../constants/routes'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { ROUTES, API_BASE_URL } from '../../constants'
 
 const ApplyForLoan: React.FC = () => {
   const navigate = useNavigate()

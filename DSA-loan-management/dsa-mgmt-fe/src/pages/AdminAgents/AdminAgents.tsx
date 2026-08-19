@@ -15,8 +15,9 @@ type Agent = {
   photo?: string
 }
 
+import { API_BASE_URL } from '../../constants'
+
 const BLANK_FORM = { name: '', email: '', mobile: '', password: '', isAdmin: false, photo: '' }
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 const Avatar: React.FC<{ photo?: string; name: string }> = ({ photo, name }) => {
   if (photo) {

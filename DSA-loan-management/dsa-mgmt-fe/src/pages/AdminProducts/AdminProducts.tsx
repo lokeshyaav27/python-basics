@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/products'
 import { message, Tooltip } from 'antd'
 import { EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { API_BASE_URL } from '../../constants'
 
 type Product = {
   id: number
@@ -56,8 +57,6 @@ const AdminProducts: React.FC = () => {
 
   const [form, setForm] = useState({ name: '', description: '', image: '' })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
   const validateFileSize = (file: File) => {
     const max = 3 * 1024 * 1024

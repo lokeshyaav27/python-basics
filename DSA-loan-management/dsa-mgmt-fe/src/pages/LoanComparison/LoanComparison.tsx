@@ -21,9 +21,7 @@ import {
   PercentageOutlined,
 } from '@ant-design/icons'
 import { Tooltip, message } from 'antd'
-import { ROUTES } from '../../constants/routes'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { ROUTES, API_BASE_URL } from '../../constants'
 
 const LoanComparison: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()

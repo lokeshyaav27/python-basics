@@ -9,8 +9,7 @@ import {
   CarLoanDetailsData,
   PersonalLoanDetailsData,
 } from '../../services/loanApplications'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { API_BASE_URL } from '../../constants'
 
 const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
   status,

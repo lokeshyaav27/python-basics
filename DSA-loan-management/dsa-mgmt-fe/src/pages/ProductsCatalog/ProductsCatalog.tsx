@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { fetchProducts } from '../../services/products'
-import { ROUTES } from '../../constants/routes'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { ROUTES, API_BASE_URL } from '../../constants'
 
 const ProductsCatalog: React.FC = () => {
   const { t } = useTranslation()

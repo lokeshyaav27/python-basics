@@ -11,9 +11,7 @@ import {
   BarChartOutlined,
 } from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
-import { ROUTES } from '../../constants/routes'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { ROUTES, API_BASE_URL } from '../../constants'
 
 const StatusBadge: React.FC<{ status?: string | null; bankName?: string | null }> = ({
   status,

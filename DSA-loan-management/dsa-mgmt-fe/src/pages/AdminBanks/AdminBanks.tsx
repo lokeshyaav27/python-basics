@@ -32,8 +32,9 @@ type Bank = {
   logo?: string
 }
 
+import { API_BASE_URL } from '../../constants'
+
 const BLANK_FORM = { name: '', isNationalize: false, isPrivate: false, isnbfc: false, logo: '' }
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 const BankLogo: React.FC<{ logo?: string; name: string; size?: 'sm' | 'md' | 'lg' }> = ({
   logo,

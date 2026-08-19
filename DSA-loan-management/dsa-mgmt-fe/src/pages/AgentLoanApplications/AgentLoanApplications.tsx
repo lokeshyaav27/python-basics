@@ -18,9 +18,7 @@ import {
   BarChartOutlined,
 } from '@ant-design/icons'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
-import { ROUTES } from '../../constants/routes'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+import { ROUTES, API_BASE_URL } from '../../constants'
 
 const Avatar: React.FC<{ name: string; size?: 'sm' | 'md' | 'lg' }> = ({ name, size = 'md' }) => {
   const sizeClasses = {
