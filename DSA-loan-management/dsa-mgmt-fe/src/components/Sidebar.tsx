@@ -10,6 +10,7 @@ export default function Sidebar({ role }: { role: Role }) {
     { to: '/admin/banks', label: 'Manage Banks' },
     { to: '/admin/agents', label: 'Manage Agents' },
     { to: '/admin/loan-applications', label: 'Loan Applications' },
+    { to: '/admin/contact-enquiries', label: 'Contact Enquiries' },
   ]
 
   const agentMenu = [

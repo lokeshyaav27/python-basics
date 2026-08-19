@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, List
 
 from app.db.session import SessionLocal
 from app.models.contact_enquiry import ContactEnquiry
+from app.core.security import require_role, CurrentUser
 
 router = APIRouter()
 
@@ -43,6 +44,7 @@ def _serialize(e: ContactEnquiry) -> dict:
     }
 
 
+# Public: Anyone can submit a contact / loan inquiry
 @router.post("")
 def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(get_db)):
     name = payload.name.strip()
@@ -68,14 +70,29 @@ def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(
     return {"status": "ok", "enquiry": _serialize(enquiry)}
 
 
+# Admin Only: List all customer enquiries
 @router.get("")
-def list_contact_enquiries(db: Session = Depends(get_db)):
-    enquiries = db.query(ContactEnquiry).filter(ContactEnquiry.isActive == True).order_by(ContactEnquiry.id.desc()).all()
+def list_contact_enquiries(
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
+    enquiries = (
+        db.query(ContactEnquiry)
+        .filter(ContactEnquiry.isActive == True)
+        .order_by(ContactEnquiry.id.desc())
+        .all()
+    )
     return [_serialize(e) for e in enquiries]
 
 
+# Admin Only: Update enquiry status
 @router.put("/{enquiry_id}/status")
-def update_enquiry_status(enquiry_id: int, payload: ContactEnquiryStatusUpdate, db: Session = Depends(get_db)):
+def update_enquiry_status(
+    enquiry_id: int,
+    payload: ContactEnquiryStatusUpdate,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db),
+):
     enquiry = db.query(ContactEnquiry).filter(ContactEnquiry.id == enquiry_id).first()
     if not enquiry:
         raise HTTPException(status_code=404, detail="Enquiry not found")

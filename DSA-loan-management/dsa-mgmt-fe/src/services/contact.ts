@@ -29,3 +29,11 @@ export async function fetchContactEnquiries(): Promise<ContactEnquiry[]> {
   const res = await apiClient.get('/api/contact')
   return res.data || []
 }
+
+export async function updateContactEnquiryStatus(
+  enquiryId: number,
+  status: string
+): Promise<{ status: string; enquiry: ContactEnquiry }> {
+  const res = await apiClient.put(`/api/contact/${enquiryId}/status`, { status })
+  return res.data
+}

@@ -18,6 +18,7 @@ import ProductsPage from './pages/Admin/Products'
 import BanksPage from './pages/Admin/Banks'
 import AgentsPage from './pages/Admin/Agents'
 import AdminLoanApplicationsPage from './pages/Admin/LoanApplications'
+import ContactEnquiriesPage from './pages/Admin/ContactEnquiries'
 import AgentLoanApplicationsPage from './pages/Agent/LoanApplications'
 import CustomerPortal from './pages/Customer/Portal'
 import CustomerLoanList from './pages/Customer/LoanList'
@@ -151,6 +152,16 @@ export default function App() {
                 <ProtectedRoute role={'admin'}>
                   <ProtectedLayout role={'admin'}>
                     <AdminLoanApplicationsPage />
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/contact-enquiries"
+              element={
+                <ProtectedRoute role={'admin'}>
+                  <ProtectedLayout role={'admin'}>
+                    <ContactEnquiriesPage />
                   </ProtectedLayout>
                 </ProtectedRoute>
               }
