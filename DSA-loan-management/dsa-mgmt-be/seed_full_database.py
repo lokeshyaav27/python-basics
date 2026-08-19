@@ -382,17 +382,6 @@ def seed_database():
         db.commit()
         print(f"Created {len(created_apps)} loan applications (all Pending Review) across {len(customers)} unique customers.")
 
-        # ── 6. Seed Demo Contact Enquiries ────────────────────────────────
-        print("\n--- Seeding Demo Contact Enquiries ---")
-        enquiries = [
-            ContactEnquiry(name="Suresh Raina", email="suresh.r@gmail.com", mobile="9812345678", loanType="Home Loan", message="Need 60L home loan consultation for Gurgaon property.", status="new", isActive=True),
-            ContactEnquiry(name="Anil Kumble", email="anil.k@yahoo.com", mobile="9823456789", loanType="Car Loan", message="Inquiring about corporate car lease vs auto loan.", status="in-progress", isActive=True),
-            ContactEnquiry(name="Deepika Padukone", email="deepika.p@outlook.com", mobile="9834567890", loanType="Personal Loan", message="Emergency personal loan inquiry.", status="new", isActive=True),
-        ]
-        db.add_all(enquiries)
-        db.commit()
-        print(f"Created {len(enquiries)} contact enquiries.")
-
         print("\n=======================================================")
         print("DATABASE SEEDING COMPLETED SUCCESSFULLY!")
         print(f"Summary:")
@@ -401,7 +390,6 @@ def seed_database():
         print(f" - {len(links)} Product-Bank Links")
         print(f" - 8 Agents (2 Admins, 6 Regular Agents)")
         print(f" - {len(created_apps)} Loan Applications (All Pending Review)")
-        print(f" - 3 Contact Enquiries")
         print("=======================================================\n")
 
     except Exception as e:
