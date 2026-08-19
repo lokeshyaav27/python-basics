@@ -12,6 +12,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    ENVIRONMENT: str = Field(default="development")  # 'development', 'staging', or 'production'
     DATABASE_URL: str = Field(default="postgresql://postgres:admin@localhost:5432/dsa-mgmt")
     GROQ_API_KEY: str = Field(default="")
     GROQ_MODEL: str = Field(default="openai/gpt-oss-120b")

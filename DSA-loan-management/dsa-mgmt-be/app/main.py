@@ -1,12 +1,36 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from app.api import routers as api_routers
 from app.db.session import engine
 from app.models.base import Base
+from app.core.config import settings
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-app = FastAPI(title="DSA Loan Management Backend")
+# Disable Swagger, ReDoc, and OpenAPI schema in production environments
+is_production = settings.ENVIRONMENT.lower() in ("production", "prod")
+
+app = FastAPI(
+    title="DSA Loan Management API",
+    description="Backend APIs for DSA Loan Aggregator & MCP AI Underwriting",
+    version="1.0.0",
+    docs_url="/swagger" if not is_production else None,
+    redoc_url="/redoc" if not is_production else None,
+    openapi_url="/openapi.json" if not is_production else None,
+)
+
+# Also serve Swagger UI directly at /docs for convenience in non-production environments
+if not is_production:
+    @app.get("/docs", include_in_schema=False)
+    async def custom_docs_ui():
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+            title=f"{app.title} - Swagger UI",
+            oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+            swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+        )
 
 # Mount static file storage directories
 project_root = Path(__file__).resolve().parents[1]
