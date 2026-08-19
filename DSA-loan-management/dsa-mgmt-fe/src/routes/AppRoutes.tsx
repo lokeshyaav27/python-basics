@@ -3,45 +3,43 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 
 // Public Pages
-import Home from '../pages/Public/Home'
-import AboutUs from '../pages/Public/AboutUs'
-import WhyChooseUs from '../pages/Public/WhyChooseUs'
-import ContactUs from '../pages/Public/ContactUs'
-import Faqs from '../pages/Public/Faqs'
-import PrivacyPolicy from '../pages/Public/PrivacyPolicy'
-import TermsOfUse from '../pages/Public/TermsOfUse'
-import Partners from '../pages/Public/Partners'
-import ProductsCatalog from '../pages/Public/ProductsCatalog'
-import CustomerLogin from '../pages/Public/CustomerLogin'
-import AgentLogin from '../pages/Public/AgentLogin'
-import AdminLogin from '../pages/Public/AdminLogin'
-import ApplyForLoan from '../pages/Public/ApplyForLoan'
+import Home from '../pages/Home'
+import AboutUs from '../pages/AboutUs'
+import WhyChooseUs from '../pages/WhyChooseUs'
+import ContactUs from '../pages/ContactUs'
+import Faqs from '../pages/Faqs'
+import PrivacyPolicy from '../pages/PrivacyPolicy'
+import TermsOfUse from '../pages/TermsOfUse'
+import Partners from '../pages/Partners'
+import ProductsCatalog from '../pages/ProductsCatalog'
+import CustomerLogin from '../pages/CustomerLogin'
+import AgentLogin from '../pages/AgentLogin'
+import AdminLogin from '../pages/AdminLogin'
+import ApplyForLoan from '../pages/ApplyForLoan'
 
 // Admin Pages
-import AdminDashboard from '../pages/Admin/AdminDashboard'
-import ProductsPage from '../pages/Admin/Products'
-import BanksPage from '../pages/Admin/Banks'
-import AgentsPage from '../pages/Admin/Agents'
-import AdminLoanApplicationsPage from '../pages/Admin/LoanApplications'
-import ContactEnquiriesPage from '../pages/Admin/ContactEnquiries'
+import AdminDashboard from '../pages/AdminDashboard'
+import AdminProducts from '../pages/AdminProducts'
+import AdminBanks from '../pages/AdminBanks'
+import AdminAgents from '../pages/AdminAgents'
+import AdminLoanApplications from '../pages/AdminLoanApplications'
+import AdminContactEnquiries from '../pages/AdminContactEnquiries'
 
 // Agent Pages
-import AgentLoanApplicationsPage from '../pages/Agent/LoanApplications'
+import AgentLoanApplications from '../pages/AgentLoanApplications'
 
 // Customer Pages
-import CustomerPortal from '../pages/Customer/Portal'
-import CustomerLoanList from '../pages/Customer/LoanList'
-import LoanDetail from '../pages/Customer/LoanDetail'
+import CustomerPortal from '../pages/CustomerPortal'
+import CustomerLoanList from '../pages/CustomerLoanList'
+import CustomerLoanDetail from '../pages/CustomerLoanDetail'
 
 // Shared & System Pages
-import CheckEligibility from '../pages/Shared/CheckEligibility'
-import LoanComparison from '../pages/Shared/LoanComparison'
-import ChatWithAI from '../pages/Shared/ChatWithAI'
-import NotFound from '../pages/NotFound'
-import Unauthorized from '../pages/Unauthorized'
+import CheckEligibility from '../pages/CheckEligibility'
+import LoanComparison from '../pages/LoanComparison'
+import ChatWithAI from '../pages/ChatWithAI'
 
-// Route Protection
-import ProtectedRoute from '../components/ProtectedRoute'
+// Components
+import { NotFound, Unauthorized, ProtectedRoute } from '../components'
 
 const AppRoutes: React.FC = () => {
   return (
@@ -76,7 +74,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.ADMIN.PRODUCTS}
         element={
           <ProtectedRoute role="admin">
-            <ProductsPage />
+            <AdminProducts />
           </ProtectedRoute>
         }
       />
@@ -84,7 +82,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.ADMIN.BANKS}
         element={
           <ProtectedRoute role="admin">
-            <BanksPage />
+            <AdminBanks />
           </ProtectedRoute>
         }
       />
@@ -92,7 +90,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.ADMIN.AGENTS}
         element={
           <ProtectedRoute role="admin">
-            <AgentsPage />
+            <AdminAgents />
           </ProtectedRoute>
         }
       />
@@ -100,7 +98,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.ADMIN.LOAN_APPLICATIONS}
         element={
           <ProtectedRoute role="admin">
-            <AdminLoanApplicationsPage />
+            <AdminLoanApplications />
           </ProtectedRoute>
         }
       />
@@ -108,7 +106,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.ADMIN.CONTACT_ENQUIRIES}
         element={
           <ProtectedRoute role="admin">
-            <ContactEnquiriesPage />
+            <AdminContactEnquiries />
           </ProtectedRoute>
         }
       />
@@ -118,7 +116,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.AGENT.LOAN_APPLICATIONS}
         element={
           <ProtectedRoute role="agent">
-            <AgentLoanApplicationsPage />
+            <AgentLoanApplications />
           </ProtectedRoute>
         }
       />
@@ -168,7 +166,7 @@ const AppRoutes: React.FC = () => {
         path={ROUTES.CUSTOMER.LOAN_DETAIL}
         element={
           <ProtectedRoute role="customer">
-            <LoanDetail />
+            <CustomerLoanDetail />
           </ProtectedRoute>
         }
       />
