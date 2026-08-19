@@ -23,26 +23,11 @@ export interface AuthState {
   isAuthenticated: boolean
 }
 
-const loadInitialState = (): AuthState => {
-  try {
-    const token = localStorage.getItem('dsa_token')
-    const rawUser = localStorage.getItem('dsa_user')
-    const user = rawUser ? JSON.parse(rawUser) : null
-    return {
-      accessToken: token || null,
-      user: user || null,
-      isAuthenticated: Boolean(token && user),
-    }
-  } catch {
-    return {
-      accessToken: null,
-      user: null,
-      isAuthenticated: false,
-    }
-  }
+const initialState: AuthState = {
+  accessToken: null,
+  user: null,
+  isAuthenticated: false,
 }
-
-const initialState: AuthState = loadInitialState()
 
 export const authSlice = createSlice({
   name: 'auth',
@@ -56,34 +41,15 @@ export const authSlice = createSlice({
       state.accessToken = accessToken
       state.user = user
       state.isAuthenticated = true
-
-      try {
-        localStorage.setItem('dsa_token', accessToken)
-        localStorage.setItem('dsa_user', JSON.stringify(user))
-      } catch (err) {
-        console.error('Failed to save auth state to localStorage', err)
-      }
     },
     logout: (state) => {
       state.accessToken = null
       state.user = null
       state.isAuthenticated = false
-
-      try {
-        localStorage.removeItem('dsa_token')
-        localStorage.removeItem('dsa_user')
-      } catch (err) {
-        console.error('Failed to clear auth state from localStorage', err)
-      }
     },
     updateUser: (state, action: PayloadAction<Partial<UserDetails>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload }
-        try {
-          localStorage.setItem('dsa_user', JSON.stringify(state.user))
-        } catch (err) {
-          console.error('Failed to update auth user in localStorage', err)
-        }
       }
     },
   },
