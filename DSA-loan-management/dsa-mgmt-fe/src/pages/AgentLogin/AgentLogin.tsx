@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { message } from 'antd'
+import { useMutation } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { agentLogin, resetAgentPassword } from '../../services/auth'
 import { ROUTES } from '../../constants'
@@ -12,7 +13,6 @@ import {
 const AgentLogin: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // First-time reset password state
@@ -25,21 +25,15 @@ const AgentLogin: React.FC = () => {
   } | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [resetLoading, setResetLoading] = useState(false)
   const [resetError, setResetError] = useState<string | null>(null)
 
   const auth = useAuth()
   const nav = useNavigate()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    try {
-      const res = await agentLogin(email.trim(), password)
+  const loginMutation = useMutation({
+    mutationFn: () => agentLogin(email.trim(), password),
+    onSuccess: (res) => {
       const user = res?.user
-
       const isFirstLogin =
         user?.temppasswordreset === false || user?.tempPasswordReset === false
 
@@ -51,7 +45,6 @@ const AgentLogin: React.FC = () => {
           token: res?.accessToken || '',
         })
         setShowResetModal(true)
-        setLoading(false)
         return
       }
 
@@ -67,14 +60,37 @@ const AgentLogin: React.FC = () => {
       })
       message.success(`Welcome back, ${name}!`)
       nav(ROUTES.AGENT.LOAN_APPLICATIONS)
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       setError(err?.response?.data?.detail || 'Invalid email or password. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    },
+  })
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: () => {
+      if (!pendingAgent) throw new Error('No pending agent session')
+      return resetAgentPassword(newPassword.trim(), pendingAgent.token)
+    },
+    onSuccess: () => {
+      message.success('Password updated successfully! Please log in with your new password.')
+      setShowResetModal(false)
+      setPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPendingAgent(null)
+    },
+    onError: (err: any) => {
+      setResetError(err?.response?.data?.detail || 'Failed to update password')
+    },
+  })
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    loginMutation.mutate()
   }
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = (e: React.FormEvent) => {
     e.preventDefault()
     setResetError(null)
 
@@ -94,21 +110,7 @@ const AgentLogin: React.FC = () => {
     }
 
     if (!pendingAgent) return
-
-    setResetLoading(true)
-    try {
-      await resetAgentPassword(newPassword.trim(), pendingAgent.token)
-      message.success('Password updated successfully! Please log in with your new password.')
-      setShowResetModal(false)
-      setPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setPendingAgent(null)
-    } catch (err: any) {
-      setResetError(err?.response?.data?.detail || 'Failed to update password')
-    } finally {
-      setResetLoading(false)
-    }
+    resetPasswordMutation.mutate()
   }
 
   return (
@@ -119,7 +121,7 @@ const AgentLogin: React.FC = () => {
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
-          loading={loading}
+          loading={loginMutation.isPending}
           error={error}
           onSubmit={handleLogin}
         />
@@ -132,7 +134,7 @@ const AgentLogin: React.FC = () => {
         setNewPassword={setNewPassword}
         confirmPassword={confirmPassword}
         setConfirmPassword={setConfirmPassword}
-        resetLoading={resetLoading}
+        resetLoading={resetPasswordMutation.isPending}
         resetError={resetError}
         onSubmit={handleResetPassword}
       />

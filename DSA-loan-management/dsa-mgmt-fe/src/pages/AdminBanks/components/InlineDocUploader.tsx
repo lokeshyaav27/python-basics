@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { message } from 'antd'
+import { useMutation } from '@tanstack/react-query'
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons'
 import { uploadBankProductDocument } from '../../../services/banks'
 
@@ -17,33 +18,36 @@ export const InlineDocUploader: React.FC<InlineDocUploaderProps> = ({
   const [showUpload, setShowUpload] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [docTitle, setDocTitle] = useState('')
-  const [isUploading, setIsUploading] = useState(false)
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!uploadFile) {
-      message.error('Please select a file to upload')
-      return
-    }
-
-    setIsUploading(true)
-    try {
-      await uploadBankProductDocument(
+  const uploadMutation = useMutation({
+    mutationFn: () => {
+      if (!uploadFile) throw new Error('Please select a file')
+      return uploadBankProductDocument(
         bankId,
         productId,
         uploadFile,
         docTitle.trim() || uploadFile.name
       )
+    },
+    onSuccess: () => {
       message.success('Document uploaded successfully')
       setUploadFile(null)
       setDocTitle('')
       setShowUpload(false)
       onUploaded()
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       message.error(err?.response?.data?.detail || 'Failed to upload document')
-    } finally {
-      setIsUploading(false)
+    },
+  })
+
+  const handleUpload = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!uploadFile) {
+      message.error('Please select a file to upload')
+      return
     }
+    uploadMutation.mutate()
   }
 
   if (!showUpload) {
@@ -103,10 +107,10 @@ export const InlineDocUploader: React.FC<InlineDocUploaderProps> = ({
         </button>
         <button
           type="submit"
-          disabled={isUploading || !uploadFile}
+          disabled={uploadMutation.isPending || !uploadFile}
           className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          <UploadOutlined /> {isUploading ? 'Uploading…' : 'Upload'}
+          <UploadOutlined /> {uploadMutation.isPending ? 'Uploading…' : 'Upload'}
         </button>
       </div>
     </form>

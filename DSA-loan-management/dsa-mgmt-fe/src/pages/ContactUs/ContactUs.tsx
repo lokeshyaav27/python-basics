@@ -1,26 +1,28 @@
 import React, { useState } from 'react'
 import { message } from 'antd'
 import { useTranslation } from 'react-i18next'
+import { useMutation } from '@tanstack/react-query'
 import { submitContactEnquiry } from '../../services/contact'
 
 const ContactUs: React.FC = () => {
   const { t } = useTranslation()
   const [form, setForm] = useState({ name: '', email: '', mobile: '', loanType: 'Home Loan', message: '' })
   const [submitted, setSubmitted] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    try {
-      await submitContactEnquiry(form)
+  const enquiryMutation = useMutation({
+    mutationFn: submitContactEnquiry,
+    onSuccess: () => {
       message.success(t('contactUs.form.success'))
       setSubmitted(true)
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       message.error(err?.response?.data?.detail || 'Failed to submit enquiry. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    enquiryMutation.mutate(form)
   }
 
   return (
@@ -109,7 +111,9 @@ const ContactUs: React.FC = () => {
                     <option value="Home Loan">Home Loan</option>
                     <option value="Car Loan">Car Loan</option>
                     <option value="Personal Loan">Personal Loan</option>
-                    <option value="General Query">General Query</option>
+                    <option value="Business Loan">Business Loan</option>
+                    <option value="Loan Against Property">Loan Against Property</option>
+                    <option value="Other">Other Enquiry</option>
                   </select>
                 </div>
               </div>
@@ -121,61 +125,66 @@ const ContactUs: React.FC = () => {
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder={t('contactUs.form.messagePlaceholder')}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition resize-none"
+                  className="w-full rounded-xl border border-slate-300 p-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition resize-none"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={enquiryMutation.isPending}
                 className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 disabled:opacity-50 transition active:scale-[0.99]"
               >
-                {isSubmitting ? t('contactUs.form.submitting') : t('contactUs.form.submit')}
+                {enquiryMutation.isPending ? t('common.actions.loading') : t('contactUs.form.submit')}
               </button>
             </form>
           )}
         </div>
 
-        {/* Right Info Box (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm space-y-6">
-            <h3 className="text-xl font-extrabold text-slate-900">{t('contactUs.info.office')}</h3>
-            
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                📍
-              </div>
-              <div>
-                <div className="text-xs font-bold uppercase text-slate-400">Headquarters</div>
-                <p className="mt-1 text-sm font-medium text-slate-800 leading-relaxed">
-                  {t('contactUs.info.address')}
-                </p>
-              </div>
+        {/* Right Info Cards (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-blue-50 text-xl text-blue-600">
+              📍
             </div>
+            <div>
+              <h4 className="text-base font-bold text-slate-900">{t('contactUs.info.officeTitle')}</h4>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                {t('contactUs.info.officeAddress')}
+              </p>
+            </div>
+          </div>
 
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                ☎️
-              </div>
-              <div>
-                <div className="text-xs font-bold uppercase text-slate-400">Helpline</div>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  {t('contactUs.info.phone')}
-                </p>
-              </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-xl text-emerald-600">
+              📞
             </div>
+            <div>
+              <h4 className="text-base font-bold text-slate-900">{t('contactUs.info.phoneTitle')}</h4>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 font-mono">
+                {t('contactUs.info.phoneNumber')}
+              </p>
+              <span className="text-[11px] text-emerald-600 font-semibold">{t('contactUs.info.phoneHours')}</span>
+            </div>
+          </div>
 
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                ✉️
-              </div>
-              <div>
-                <div className="text-xs font-bold uppercase text-slate-400">Email Support</div>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  {t('contactUs.info.email')}
-                </p>
-              </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-purple-50 text-xl text-purple-600">
+              ✉️
             </div>
+            <div>
+              <h4 className="text-base font-bold text-slate-900">{t('contactUs.info.emailTitle')}</h4>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                {t('contactUs.info.emailAddress')}
+              </p>
+              <span className="text-[11px] text-purple-600 font-semibold">{t('contactUs.info.emailHours')}</span>
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-blue-950 p-6 text-white shadow-xl">
+            <h4 className="text-base font-bold">{t('contactUs.partnerCard.title')}</h4>
+            <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+              {t('contactUs.partnerCard.desc')}
+            </p>
           </div>
         </div>
       </div>

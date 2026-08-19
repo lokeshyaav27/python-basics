@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { message } from 'antd'
+import { useMutation } from '@tanstack/react-query'
 import {
   LoanApplication,
   updateLoanApplication,
@@ -14,7 +15,6 @@ export const useApplicationDetailModal = (
   onUpdated?: () => void
 ) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
 
   const [name, setName] = useState(application?.name || '')
   const [email, setEmail] = useState(application?.email || '')
@@ -46,28 +46,33 @@ export const useApplicationDetailModal = (
     }
   }, [application])
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!application) return
-    setIsSaving(true)
-    try {
-      await updateLoanApplication(application.id, {
-        name,
-        email,
-        mobile,
-        clientGeneralDetails: generalDetails,
-        homeLoanDetails: homeDetails,
-        carLoanDetails: carDetails,
-        personalLoanDetails: personalDetails,
-      })
+  const updateMutation = useMutation({
+    mutationFn: (payload: any) => {
+      if (!application) throw new Error('No active application')
+      return updateLoanApplication(application.id, payload)
+    },
+    onSuccess: () => {
       message.success('Application details updated successfully!')
       setIsEditing(false)
       if (onUpdated) onUpdated()
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       message.error(err?.response?.data?.detail || 'Failed to update application details')
-    } finally {
-      setIsSaving(false)
-    }
+    },
+  })
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!application) return
+    updateMutation.mutate({
+      name,
+      email,
+      mobile,
+      clientGeneralDetails: generalDetails,
+      homeLoanDetails: homeDetails,
+      carLoanDetails: carDetails,
+      personalLoanDetails: personalDetails,
+    })
   }
 
   const productName = application?.productName || 'Loan Application'
@@ -83,7 +88,7 @@ export const useApplicationDetailModal = (
   return {
     isEditing,
     setIsEditing,
-    isSaving,
+    isSaving: updateMutation.isPending,
     name,
     setName,
     email,

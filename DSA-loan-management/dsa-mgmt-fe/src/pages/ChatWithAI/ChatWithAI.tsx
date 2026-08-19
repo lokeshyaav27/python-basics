@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   fetchLoanApplications,
   fetchCustomerLoanApplications,
@@ -23,7 +23,6 @@ const ChatWithAI: React.FC = () => {
 
   const isAgentOrAdmin = user?.role === 'agent' || user?.role === 'admin'
   const [inputVal, setInputVal] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
 
   const [messages, setMessages] = useState<DisplayChatMessage[]>([
     {
@@ -48,6 +47,31 @@ const ChatWithAI: React.FC = () => {
         return fetchCustomerLoanApplications(identifier)
       }
       return fetchLoanApplications(user?.role === 'agent' ? user.id : undefined)
+    },
+  })
+
+  const chatMutation = useMutation({
+    mutationFn: (messageText: string) => sendChatMessage(messageText),
+    onSuccess: (res) => {
+      const assistantMsg: DisplayChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        content: res.reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        toolExecutions: res.toolExecutions,
+        referencedDocs: res.referencedDocuments,
+      }
+      setMessages((prev) => [...prev, assistantMsg])
+    },
+    onError: () => {
+      const errorMsg: DisplayChatMessage = {
+        id: `error-${Date.now()}`,
+        sender: 'assistant',
+        content:
+          '⚠️ Sorry, I encountered an error communicating with the underwriting server. Please try again.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }
+      setMessages((prev) => [...prev, errorMsg])
     },
   })
 
@@ -91,10 +115,10 @@ const ChatWithAI: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, isLoading])
+  }, [messages, chatMutation.isPending])
 
-  const handleSendMessage = async () => {
-    if (!inputVal.trim() || isLoading) return
+  const handleSendMessage = () => {
+    if (!inputVal.trim() || chatMutation.isPending) return
 
     const userText = inputVal.trim()
     const userMsg: DisplayChatMessage = {
@@ -106,31 +130,7 @@ const ChatWithAI: React.FC = () => {
 
     setMessages((prev) => [...prev, userMsg])
     setInputVal('')
-    setIsLoading(true)
-
-    try {
-      const res = await sendChatMessage(userText)
-      const assistantMsg: DisplayChatMessage = {
-        id: `assistant-${Date.now()}`,
-        sender: 'assistant',
-        content: res.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        toolExecutions: res.toolExecutions,
-        referencedDocs: res.referencedDocuments,
-      }
-      setMessages((prev) => [...prev, assistantMsg])
-    } catch (err: any) {
-      const errorMsg: DisplayChatMessage = {
-        id: `error-${Date.now()}`,
-        sender: 'assistant',
-        content:
-          '⚠️ Sorry, I encountered an error communicating with the underwriting server. Please try again.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }
-      setMessages((prev) => [...prev, errorMsg])
-    } finally {
-      setIsLoading(false)
-    }
+    chatMutation.mutate(userText)
   }
 
   return (
@@ -160,7 +160,7 @@ const ChatWithAI: React.FC = () => {
         {messages.map((msg) => (
           <ChatMessageBubble key={msg.id} message={msg} />
         ))}
-        {isLoading && (
+        {chatMutation.isPending && (
           <div className="flex items-center gap-3 text-xs text-purple-700 bg-purple-50 border border-purple-200 p-3 rounded-2xl w-fit">
             <span className="animate-spin">⚙️</span>
             <span>AI Assistant is analyzing policy guidelines and credit matrix…</span>
@@ -173,7 +173,7 @@ const ChatWithAI: React.FC = () => {
       <ChatInputBar
         inputVal={inputVal}
         setInputVal={setInputVal}
-        isLoading={isLoading}
+        isLoading={chatMutation.isPending}
         onSendMessage={handleSendMessage}
         mentionItems={mentionItems}
       />

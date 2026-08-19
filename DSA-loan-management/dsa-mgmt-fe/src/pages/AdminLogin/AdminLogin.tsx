@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useMutation } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
 import { adminLogin } from '../../services/auth'
 import { ROUTES } from '../../constants/routes'
@@ -9,17 +10,13 @@ const AdminLogin: React.FC = () => {
   const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const auth = useAuth()
   const nav = useNavigate()
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      const res = await adminLogin(email.trim(), password)
+  const loginMutation = useMutation({
+    mutationFn: () => adminLogin(email.trim(), password),
+    onSuccess: (res) => {
       const user = res?.user || {}
       auth.login(res.accessToken, {
         id: user.id,
@@ -31,11 +28,16 @@ const AdminLogin: React.FC = () => {
         isAdmin: true,
       })
       nav(ROUTES.ADMIN.DASHBOARD)
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       setError(err?.response?.data?.detail || 'Invalid admin credentials. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    },
+  })
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    loginMutation.mutate()
   }
 
   return (
@@ -89,20 +91,26 @@ const AdminLogin: React.FC = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loginMutation.isPending}
               className="mt-2 w-full rounded-xl bg-slate-900 py-3.5 text-sm font-bold text-white shadow-md hover:bg-slate-800 disabled:opacity-50 transition active:scale-[0.99]"
             >
-              {loading ? t('common.actions.loading') : t('auth.admin.loginBtn')}
+              {loginMutation.isPending ? t('common.actions.loading') : t('auth.admin.loginBtn')}
             </button>
           </form>
 
           <div className="mt-6 border-t border-slate-100 pt-4 text-center">
             <p className="text-xs text-slate-500">
-              Go back to{' '}
-              <Link to={ROUTES.HOME} className="font-semibold text-blue-600 hover:underline">
-                {t('common.nav.home')}
-              </Link>
+              DSA Loan Management Portal • Admin Gateway
             </p>
+            <div className="mt-2 flex justify-center gap-4 text-xs font-semibold text-blue-600">
+              <Link to={ROUTES.CUSTOMER_LOGIN} className="hover:underline">
+                Customer Login
+              </Link>
+              <span>•</span>
+              <Link to={ROUTES.AGENT_LOGIN} className="hover:underline">
+                Agent Login
+              </Link>
+            </div>
           </div>
         </div>
       </div>

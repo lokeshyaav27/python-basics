@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { message } from 'antd'
+import { useMutation } from '@tanstack/react-query'
 import { SaveOutlined, CloseOutlined } from '@ant-design/icons'
 import {
   BankProductLink,
@@ -20,7 +21,6 @@ export const ProductLinkRow: React.FC<ProductLinkRowProps> = ({ bankId, item, on
   const [commission, setCommission] = useState(
     item.commission !== null && item.commission !== undefined ? String(item.commission) : ''
   )
-  const [isSaving, setIsSaving] = useState(false)
   const [deletingDocId, setDeletingDocId] = useState<number | null>(null)
 
   useEffect(() => {
@@ -30,42 +30,49 @@ export const ProductLinkRow: React.FC<ProductLinkRowProps> = ({ bankId, item, on
     )
   }, [item])
 
-  const handleSaveLink = async () => {
-    setIsSaving(true)
-    try {
-      const commNum = commission.trim() === '' ? null : parseFloat(commission)
-      if (commission.trim() !== '' && isNaN(commNum!)) {
-        message.error('Please enter a valid numeric commission percentage')
-        setIsSaving(false)
-        return
-      }
-
-      await linkBankProduct(bankId, item.productId, {
+  const saveMutation = useMutation({
+    mutationFn: (commNum: number | null) =>
+      linkBankProduct(bankId, item.productId, {
         is_linked: isLinked,
         commission: commNum,
-      })
-
+      }),
+    onSuccess: () => {
       message.success(`${item.productName} configuration saved`)
       onUpdated()
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       message.error(err?.response?.data?.detail || 'Failed to update product link')
-    } finally {
-      setIsSaving(false)
+    },
+  })
+
+  const deleteDocMutation = useMutation({
+    mutationFn: ({ documentId }: { documentId: number; docName: string }) =>
+      deleteBankProductDocument(bankId, item.productId, documentId),
+    onSuccess: (_, vars) => {
+      message.success(`Document "${vars.docName}" removed`)
+      onUpdated()
+    },
+    onError: (err: any) => {
+      message.error(err?.response?.data?.detail || 'Failed to delete document')
+    },
+    onSettled: () => {
+      setDeletingDocId(null)
+    },
+  })
+
+  const handleSaveLink = () => {
+    const commNum = commission.trim() === '' ? null : parseFloat(commission)
+    if (commission.trim() !== '' && isNaN(commNum!)) {
+      message.error('Please enter a valid numeric commission percentage')
+      return
     }
+    saveMutation.mutate(commNum)
   }
 
-  const handleDeleteDocument = async (documentId: number, docName: string) => {
+  const handleDeleteDocument = (documentId: number, docName: string) => {
     if (!window.confirm(`Delete document "${docName}"?`)) return
     setDeletingDocId(documentId)
-    try {
-      await deleteBankProductDocument(bankId, item.productId, documentId)
-      message.success(`Document "${docName}" removed`)
-      onUpdated()
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Failed to delete document')
-    } finally {
-      setDeletingDocId(null)
-    }
+    deleteDocMutation.mutate({ documentId, docName })
   }
 
   const docs = item.documents || []
@@ -148,7 +155,7 @@ export const ProductLinkRow: React.FC<ProductLinkRowProps> = ({ bankId, item, on
                   <button
                     type="button"
                     onClick={() => handleDeleteDocument(doc.id, doc.name)}
-                    disabled={deletingDocId === doc.id}
+                    disabled={deletingDocId === doc.id || deleteDocMutation.isPending}
                     className="text-slate-400 hover:text-red-600 text-xs p-1 rounded hover:bg-red-50 transition"
                     title="Delete document"
                   >
@@ -175,10 +182,10 @@ export const ProductLinkRow: React.FC<ProductLinkRowProps> = ({ bankId, item, on
       <td className="p-3 text-center align-top pt-4">
         <button
           onClick={handleSaveLink}
-          disabled={isSaving}
+          disabled={saveMutation.isPending}
           className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 disabled:opacity-50 transition"
         >
-          <SaveOutlined /> {isSaving ? 'Saving…' : 'Save'}
+          <SaveOutlined /> {saveMutation.isPending ? 'Saving…' : 'Save'}
         </button>
       </td>
     </tr>
