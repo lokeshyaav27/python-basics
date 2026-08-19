@@ -21,6 +21,7 @@ from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.loan_application import LoanApplication
 from app.models.contact_enquiry import ContactEnquiry
+from app.core.security import hash_password
 
 
 def copy_static_assets():
@@ -233,8 +234,7 @@ def seed_database():
                 name=ag["name"],
                 email=ag["email"],
                 mobile=ag["mobile"],
-                password=ag["password"],
-                tempPassword=ag["password"],
+                password=hash_password(ag["password"]),
                 tempPasswordReset=True,
                 isAdmin=ag["is_admin"],
                 photo=ag["photo"],

@@ -222,7 +222,6 @@ def reset_agent_password(
         raise HTTPException(status_code=404, detail='Agent not found')
 
     agent.password = hash_password(str(new_password).strip())
-    agent.tempPassword = None
     agent.tempPasswordReset = True
     db.add(agent)
     db.commit()

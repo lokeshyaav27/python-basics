@@ -72,7 +72,6 @@ def create_agent(
         email=email,
         mobile=mobile,
         password=hashed_password,
-        tempPassword=None,
         tempPasswordReset=False,
         isAdmin=isAdmin,
         photo=photo_fname,
