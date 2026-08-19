@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
 
 export type ClientGeneralDetailsData = {
   name?: string | null
@@ -87,7 +88,7 @@ export const fetchLoanApplications = async (
   const params: any = {}
   if (agentId !== undefined && agentId !== null) params.agent_id = agentId
   if (mobile !== undefined && mobile !== null) params.mobile = mobile
-  const res = await apiClient.get('/api/loan-applications', { params })
+  const res = await apiClient.get(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.BASE, { params })
   return res.data || []
 }
 
@@ -101,7 +102,7 @@ export const assignLoanApplicationAgent = async (
   applicationId: number,
   agentId: number | null
 ): Promise<LoanApplication> => {
-  const res = await apiClient.put(`/api/loan-applications/${applicationId}/assign-agent`, { agentId })
+  const res = await apiClient.put(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.ASSIGN_AGENT(applicationId), { agentId })
   return res.data
 }
 
@@ -109,12 +110,12 @@ export const updateLoanApplicationStatus = async (
   applicationId: number,
   payload: { status?: string | null; bankId?: number | null; description?: string | null }
 ): Promise<LoanApplication> => {
-  const res = await apiClient.put(`/api/loan-applications/${applicationId}/status`, payload)
+  const res = await apiClient.put(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.STATUS(applicationId), payload)
   return res.data
 }
 
 export const createLoanApplication = async (payload: any): Promise<LoanApplication> => {
-  const res = await apiClient.post('/api/loan-applications', payload)
+  const res = await apiClient.post(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.BASE, payload)
   return res.data
 }
 
@@ -122,16 +123,16 @@ export const updateLoanApplication = async (
   id: number,
   payload: Partial<FullLoanApplicationData>
 ): Promise<LoanApplication> => {
-  const res = await apiClient.put(`/api/loan-applications/${id}`, payload)
+  const res = await apiClient.put(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.BY_ID(id), payload)
   return res.data
 }
 
 export const deleteLoanApplication = async (id: number): Promise<{ status: string }> => {
-  const res = await apiClient.delete(`/api/loan-applications/${id}`)
+  const res = await apiClient.delete(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.BY_ID(id))
   return res.data
 }
 
 export const submitFullLoanApplication = async (payload: FullLoanApplicationData) => {
-  const res = await apiClient.post('/api/loan-applications/apply', payload)
+  const res = await apiClient.post(API_ENDPOINT_NAMES.LOAN_APPLICATIONS.APPLY, payload)
   return res.data
 }

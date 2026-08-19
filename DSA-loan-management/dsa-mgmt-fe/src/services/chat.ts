@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -37,6 +38,6 @@ export const sendChatMessage = async (payload: {
   applicationId?: number
   customerId?: string
 }): Promise<ChatResponse> => {
-  const res = await apiClient.post<ChatResponse>('/api/chat/assistant', payload)
+  const res = await apiClient.post<ChatResponse>(API_ENDPOINT_NAMES.CHAT.ASSISTANT, payload)
   return res.data
 }

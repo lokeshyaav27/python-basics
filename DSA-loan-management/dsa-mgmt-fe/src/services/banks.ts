@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
 
 export type BankDocumentItem = {
   id: number
@@ -17,7 +18,7 @@ export type Bank = {
 }
 
 export const fetchBanks = async (): Promise<Bank[]> => {
-  const res = await apiClient.get('/api/banks')
+  const res = await apiClient.get(API_ENDPOINT_NAMES.BANKS.BASE)
   return res.data || []
 }
 
@@ -34,7 +35,7 @@ export const createBank = async (payload: {
   fd.append('isPrivate', String(!!payload.isPrivate))
   fd.append('isnbfc', String(!!payload.isnbfc))
   if (payload.file) fd.append('file', payload.file)
-  const res = await apiClient.post('/api/banks', fd, {
+  const res = await apiClient.post(API_ENDPOINT_NAMES.BANKS.BASE, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
@@ -58,14 +59,14 @@ export const updateBank = async (
   fd.append('isnbfc', String(!!payload.isnbfc))
   if (payload.file) fd.append('file', payload.file)
   if ((payload as any).remove_logo) fd.append('remove_logo', 'true')
-  const res = await apiClient.put(`/api/banks/${id}`, fd, {
+  const res = await apiClient.put(API_ENDPOINT_NAMES.BANKS.BY_ID(id), fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
 }
 
 export const deleteBank = async (id: number) => {
-  const res = await apiClient.delete(`/api/banks/${id}`)
+  const res = await apiClient.delete(API_ENDPOINT_NAMES.BANKS.BY_ID(id))
   return res.data
 }
 
@@ -81,7 +82,7 @@ export type BankProductLink = {
 }
 
 export const fetchBankProducts = async (bankId: number): Promise<BankProductLink[]> => {
-  const res = await apiClient.get(`/api/banks/${bankId}/products`)
+  const res = await apiClient.get(API_ENDPOINT_NAMES.BANKS.PRODUCTS(bankId))
   return res.data || []
 }
 
@@ -98,7 +99,7 @@ export const linkBankProduct = async (
   if (payload.commission !== undefined && payload.commission !== null) {
     fd.append('commission', String(payload.commission))
   }
-  const res = await apiClient.post(`/api/banks/${bankId}/products/${productId}/link`, fd, {
+  const res = await apiClient.post(API_ENDPOINT_NAMES.BANKS.PRODUCT_LINK(bankId, productId), fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
   return res.data
@@ -116,7 +117,7 @@ export const uploadBankProductDocument = async (
     fd.append('document_name', documentName.trim())
   }
   const res = await apiClient.post(
-    `/api/banks/${bankId}/products/${productId}/documents`,
+    API_ENDPOINT_NAMES.BANKS.PRODUCT_DOCUMENTS(bankId, productId),
     fd,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -131,7 +132,7 @@ export const deleteBankProductDocument = async (
   documentId: number
 ) => {
   const res = await apiClient.delete(
-    `/api/banks/${bankId}/products/${productId}/documents/${documentId}`
+    API_ENDPOINT_NAMES.BANKS.PRODUCT_DOCUMENT_BY_ID(bankId, productId, documentId)
   )
   return res.data
 }

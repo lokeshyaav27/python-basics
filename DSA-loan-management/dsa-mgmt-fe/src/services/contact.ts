@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
 
 export type ContactEnquiryInput = {
   name: string
@@ -23,12 +24,12 @@ export type ContactEnquiry = {
 export const submitContactEnquiry = async (
   payload: ContactEnquiryInput
 ): Promise<{ status: string; enquiry: ContactEnquiry }> => {
-  const res = await apiClient.post('/api/contact', payload)
+  const res = await apiClient.post(API_ENDPOINT_NAMES.CONTACT.BASE, payload)
   return res.data
 }
 
 export const fetchContactEnquiries = async (): Promise<ContactEnquiry[]> => {
-  const res = await apiClient.get('/api/contact')
+  const res = await apiClient.get(API_ENDPOINT_NAMES.CONTACT.BASE)
   return res.data || []
 }
 
@@ -36,6 +37,6 @@ export const updateContactEnquiryStatus = async (
   enquiryId: number,
   status: string
 ): Promise<{ status: string; enquiry: ContactEnquiry }> => {
-  const res = await apiClient.put(`/api/contact/${enquiryId}/status`, { status })
+  const res = await apiClient.put(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), { status })
   return res.data
 }

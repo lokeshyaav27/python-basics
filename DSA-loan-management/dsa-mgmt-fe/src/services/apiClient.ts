@@ -1,8 +1,9 @@
 import axios from 'axios'
 import { store } from '../store'
 import { logout } from '../store/slices/authSlice'
+import { API_BASE_URL } from '../constants/apiEndpoints'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+export { API_BASE_URL }
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

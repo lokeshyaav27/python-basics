@@ -1,4 +1,5 @@
 import apiClient from './apiClient'
+import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
 
 export interface InsuranceItem {
   isProvided: string
@@ -65,7 +66,7 @@ export const fetchBankComparison = async (
   bankIds: number[],
   userRole: string = 'customer'
 ): Promise<BankComparisonResponse> => {
-  const res = await apiClient.get<BankComparisonResponse>('/api/comparison/banks', {
+  const res = await apiClient.get<BankComparisonResponse>(API_ENDPOINT_NAMES.COMPARISON.BANKS, {
     params: {
       applicationId,
       bankIds: bankIds.join(','),
