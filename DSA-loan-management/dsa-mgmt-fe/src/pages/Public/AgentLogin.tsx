@@ -28,17 +28,17 @@ export default function AgentLogin() {
 
     try {
       const res = await agentLogin(email.trim(), password)
-      const agent = res?.agent
+      const user = res?.user
 
       // Check if this is the agent's first time logging in (temppasswordreset === false)
       const isFirstLogin =
-        agent?.temppasswordreset === false || agent?.tempPasswordReset === false
+        user?.temppasswordreset === false || user?.tempPasswordReset === false
 
       if (isFirstLogin) {
         setPendingAgent({
-          id: agent.id,
-          name: agent.name || email,
-          email: agent.email || email,
+          id: user.id,
+          name: user.name || email,
+          email: user.email || email,
         })
         setShowResetModal(true)
         setLoading(false)
@@ -46,16 +46,16 @@ export default function AgentLogin() {
       }
 
       // Normal login flow
-      const name = agent?.name || email
-      const token = res?.accessToken || 'token'
+      const name = user?.name || email
+      const token = res?.accessToken || ''
       auth.login(
         name,
         'agent',
         {
-          id: agent.id,
-          email: agent.email,
-          mobile: agent.mobile,
-          photo: agent.photo,
+          id: user.id,
+          email: user.email,
+          mobile: user.mobile,
+          photo: user.photo,
           isAdmin: false,
         },
         token

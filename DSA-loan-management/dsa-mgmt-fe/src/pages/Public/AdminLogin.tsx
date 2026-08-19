@@ -15,17 +15,17 @@ export default function AdminLogin() {
     setError(null)
     try {
       const res = await adminLogin(email, password)
-      const admin = res?.admin || {}
-      const name = admin?.name || email
-      const token = res?.accessToken || 'token'
+      const user = res?.user || {}
+      const name = user?.name || email
+      const token = res?.accessToken || ''
       auth.login(
         name,
         'admin',
         {
-          id: admin.id,
-          email: admin.email,
-          mobile: admin.mobile,
-          photo: admin.photo,
+          id: user.id,
+          email: user.email,
+          mobile: user.mobile,
+          photo: user.photo,
           isAdmin: true,
         },
         token

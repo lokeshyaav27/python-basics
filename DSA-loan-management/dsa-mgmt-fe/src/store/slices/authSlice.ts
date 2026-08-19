@@ -26,12 +26,12 @@ export interface AuthState {
 const loadInitialState = (): AuthState => {
   try {
     const token = localStorage.getItem('dsa_token')
-    const rawUser = localStorage.getItem('dsa_user') || localStorage.getItem('dsa_auth')
+    const rawUser = localStorage.getItem('dsa_user')
     const user = rawUser ? JSON.parse(rawUser) : null
     return {
       accessToken: token || null,
       user: user || null,
-      isAuthenticated: Boolean(token || user),
+      isAuthenticated: Boolean(token && user),
     }
   } catch {
     return {
@@ -60,7 +60,6 @@ export const authSlice = createSlice({
       try {
         localStorage.setItem('dsa_token', accessToken)
         localStorage.setItem('dsa_user', JSON.stringify(user))
-        localStorage.setItem('dsa_auth', JSON.stringify(user)) // For backward compatibility
       } catch (err) {
         console.error('Failed to save auth state to localStorage', err)
       }
@@ -73,7 +72,6 @@ export const authSlice = createSlice({
       try {
         localStorage.removeItem('dsa_token')
         localStorage.removeItem('dsa_user')
-        localStorage.removeItem('dsa_auth')
       } catch (err) {
         console.error('Failed to clear auth state from localStorage', err)
       }
@@ -83,7 +81,6 @@ export const authSlice = createSlice({
         state.user = { ...state.user, ...action.payload }
         try {
           localStorage.setItem('dsa_user', JSON.stringify(state.user))
-          localStorage.setItem('dsa_auth', JSON.stringify(state.user))
         } catch (err) {
           console.error('Failed to update auth user in localStorage', err)
         }

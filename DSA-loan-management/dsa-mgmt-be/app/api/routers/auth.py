@@ -85,7 +85,6 @@ def verify_customer_otp(payload: Dict, db: Session = Depends(get_db)):
         'status': 'ok',
         'accessToken': access_token,
         'tokenType': 'bearer',
-        'customer': customer_dict,
         'user': customer_dict,
     }
 
@@ -144,7 +143,6 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
             'status': 'ok',
             'accessToken': access_token,
             'tokenType': 'bearer',
-            'customer': cust_data,
             'user': cust_data,
             'created': False
         }
@@ -188,7 +186,6 @@ def add_customer(payload: Dict, db: Session = Depends(get_db)):
         'status': 'ok',
         'accessToken': access_token,
         'tokenType': 'bearer',
-        'customer': cust_data,
         'user': cust_data,
         'created': True
     }
@@ -243,7 +240,6 @@ def agent_login(payload: Dict, db: Session = Depends(get_db)):
         'status': 'ok',
         'accessToken': access_token,
         'tokenType': 'bearer',
-        'agent': agent_dict,
         'user': agent_dict,
     }
 
@@ -297,7 +293,6 @@ def admin_login(payload: Dict, db: Session = Depends(get_db)):
         'status': 'ok',
         'accessToken': access_token,
         'tokenType': 'bearer',
-        'admin': admin_dict,
         'user': admin_dict,
     }
 

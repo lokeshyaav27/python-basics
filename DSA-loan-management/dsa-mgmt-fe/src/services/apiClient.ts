@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`
       }
 
-      const rawUser = localStorage.getItem('dsa_user') || localStorage.getItem('dsa_auth')
+      const rawUser = localStorage.getItem('dsa_user')
       if (rawUser) {
         const user = JSON.parse(rawUser)
         if (user?.role) {
@@ -47,7 +47,6 @@ apiClient.interceptors.response.use(
         console.warn('Session expired or unauthorized request, clearing auth state.')
         localStorage.removeItem('dsa_token')
         localStorage.removeItem('dsa_user')
-        localStorage.removeItem('dsa_auth')
       }
     }
     return Promise.reject(error)

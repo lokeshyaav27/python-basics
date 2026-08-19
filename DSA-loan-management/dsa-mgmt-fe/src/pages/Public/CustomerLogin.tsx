@@ -42,17 +42,17 @@ export default function CustomerLogin() {
     setLoading(true)
     try {
       const res = await verifyCustomerOtp(mobile.trim(), otp.trim())
-      const customer = res?.customer || {}
-      const name = customer.name || mobile.trim()
-      const token = res?.accessToken || 'token'
+      const user = res?.user || {}
+      const name = user.name || mobile.trim()
+      const token = res?.accessToken || ''
       auth.login(
         name,
         'customer',
         {
-          id: customer.id,
-          email: customer.email,
-          mobile: customer.mobile || mobile.trim(),
-          uniqueCustomerId: customer.uniqueCustomerId,
+          id: user.id,
+          email: user.email,
+          mobile: user.mobile || mobile.trim(),
+          uniqueCustomerId: user.uniqueCustomerId,
         },
         token
       )
