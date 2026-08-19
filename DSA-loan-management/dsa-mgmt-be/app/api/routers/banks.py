@@ -40,7 +40,7 @@ def get_document_storage() -> Path:
     return storage
 
 
-@router.post("/", response_model=BankRead)
+@router.post("", response_model=BankRead)
 def create_bank(
     name: str = Form(...),
     isNationalize: bool = Form(False),
@@ -74,7 +74,7 @@ def create_bank(
     return b
 
 
-@router.get("/", response_model=List[BankRead])
+@router.get("", response_model=List[BankRead])
 def list_banks(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Bank)
     if not include_inactive:

@@ -44,7 +44,6 @@ def _serialize(e: ContactEnquiry) -> dict:
 
 
 @router.post("")
-@router.post("/")
 def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(get_db)):
     name = payload.name.strip()
     email = payload.email.strip()
@@ -70,7 +69,6 @@ def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(
 
 
 @router.get("")
-@router.get("/")
 def list_contact_enquiries(db: Session = Depends(get_db)):
     enquiries = db.query(ContactEnquiry).filter(ContactEnquiry.isActive == True).order_by(ContactEnquiry.id.desc()).all()
     return [_serialize(e) for e in enquiries]

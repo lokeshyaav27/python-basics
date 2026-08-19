@@ -131,7 +131,6 @@ def _serialize(app: LoanApplication) -> dict:
 
 
 @router.get("")
-@router.get("/")
 def list_loan_applications(
     agent_id: Optional[int] = None,
     mobile: Optional[str] = None,
@@ -261,7 +260,6 @@ def submit_full_loan_application(payload: FullLoanApplicationPayload, db: Sessio
 
 
 @router.post("")
-@router.post("/")
 def create_loan_application(payload: LoanApplicationCreate, db: Session = Depends(get_db)):
     name = payload.name.strip()
     email = payload.email.strip()

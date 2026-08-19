@@ -29,7 +29,6 @@ def _sanitize_name(name: str) -> str:
 
 
 @router.post("", response_model=ProductRead)
-@router.post("/", response_model=ProductRead)
 async def create_product(
     name: str = Form(...),
     description: str = Form(...),
@@ -66,7 +65,6 @@ async def create_product(
 
 
 @router.get("", response_model=List[ProductRead])
-@router.get("/", response_model=List[ProductRead])
 def list_products(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Product)
     if not include_inactive:

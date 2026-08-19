@@ -30,7 +30,7 @@ def get_photo_storage() -> Path:
 
 # ── List ──────────────────────────────────────────────────────────────────────
 
-@router.get("/")
+@router.get("")
 def list_agents(include_inactive: bool = False, db: Session = Depends(get_db)):
     query = db.query(Agent)
     if not include_inactive:
@@ -41,7 +41,7 @@ def list_agents(include_inactive: bool = False, db: Session = Depends(get_db)):
 
 # ── Create ────────────────────────────────────────────────────────────────────
 
-@router.post("/")
+@router.post("")
 def create_agent(
     name: str = Form(...),
     email: str = Form(...),
