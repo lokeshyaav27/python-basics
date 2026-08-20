@@ -120,6 +120,128 @@ const CheckEligibility: React.FC = () => {
   const cibilScore = eligibility?.cibilScore
   const customerName = eligibility?.customerName || currentAppObj?.name || 'Applicant'
 
+  const renderFormattedExplanation = (text: string) => {
+    if (!text) return null
+
+    const lines = text.split('\n')
+    const elements: React.ReactNode[] = []
+    let tableLines: string[] = []
+    let inTable = false
+
+    const flushTable = (key: number) => {
+      if (tableLines.length === 0) return
+      const rows = tableLines
+        .filter((l) => l.trim().startsWith('|') && !l.includes('---'))
+        .map((l) =>
+          l
+            .split('|')
+            .slice(1, -1)
+            .map((cell) => cell.trim())
+        )
+
+      if (rows.length > 0) {
+        const [headerRow, ...bodyRows] = rows
+        elements.push(
+          <div
+            key={`table-${key}`}
+            className="my-3 overflow-x-auto rounded-2xl border border-blue-200/80 bg-white shadow-2xs"
+          >
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-blue-50/80 border-b border-blue-100 text-blue-900 font-bold">
+                  {headerRow.map((cell, idx) => (
+                    <th key={idx} className="px-3.5 py-2.5">
+                      {cell.replace(/\*\*/g, '')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {bodyRows.map((row, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-slate-50/60 transition">
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx} className="px-3.5 py-2 text-slate-700 font-medium">
+                        {cell.includes('**') ? (
+                          <strong className="text-slate-900 font-bold">
+                            {cell.replace(/\*\*/g, '')}
+                          </strong>
+                        ) : cell.includes('✓') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+                            {cell}
+                          </span>
+                        ) : cell.includes('⚠️') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-amber-700">
+                            {cell}
+                          </span>
+                        ) : cell.includes('✕') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-rose-700">
+                            {cell}
+                          </span>
+                        ) : (
+                          cell
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+      tableLines = []
+    }
+
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('|')) {
+        inTable = true
+        tableLines.push(trimmed)
+      } else {
+        if (inTable) {
+          flushTable(idx)
+          inTable = false
+        }
+        if (trimmed.startsWith('###')) {
+          elements.push(
+            <h5
+              key={idx}
+              className="text-xs font-bold uppercase tracking-wider text-blue-950 mt-3 mb-1"
+            >
+              {trimmed.replace(/^###\s*/, '')}
+            </h5>
+          )
+        } else if (trimmed.startsWith('- **') || trimmed.startsWith('**')) {
+          elements.push(
+            <p key={idx} className="my-1.5 leading-relaxed text-blue-950">
+              {trimmed.split('**').map((part, i) =>
+                i % 2 === 1 ? (
+                  <strong key={i} className="font-bold text-blue-900">
+                    {part}
+                  </strong>
+                ) : (
+                  part
+                )
+              )}
+            </p>
+          )
+        } else if (trimmed.length > 0) {
+          elements.push(
+            <p key={idx} className="my-1 text-slate-700 leading-relaxed">
+              {trimmed}
+            </p>
+          )
+        }
+      }
+    })
+
+    if (inTable) {
+      flushTable(lines.length)
+    }
+
+    return <div className="space-y-1">{elements}</div>
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12 p-4 sm:p-6">
       {/* ── Top Header & Navigation ────────────────────────────────────── */}
@@ -425,31 +547,46 @@ const CheckEligibility: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Informative High-Level Check Disclaimer & Compare CTA ────── */}
-          <div className="rounded-3xl border border-blue-200/80 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-purple-50/70 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-blue-600 text-white text-lg shrink-0 shadow-xs">
-                ℹ️
-              </span>
-              <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-900">
-                  High-Level Algorithmic Underwriting Assessment
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
-                  This evaluation is a high-level eligibility simulation based on standardized underwriting benchmarks, which may differ from the actual sanction policies of individual banks. We encourage you to compare tailored rates, EMIs, and document requirements across our partner banks.
-                </p>
+          {/* ── High-Level Check Advisory & Direct Bank Comparison CTA ────── */}
+          <div className="relative overflow-hidden rounded-3xl border border-indigo-900/10 bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 p-6 sm:p-7 text-white shadow-xl shadow-indigo-950/15">
+            {/* Decorative ambient lighting */}
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
+
+            <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 shadow-lg shadow-amber-400/20 text-xl font-bold">
+                  ⚡
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-400/30 px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Important Policy Advisory
+                    </span>
+                    <span className="text-xs text-slate-400">• High-Level Simulation</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">
+                    High-Level Algorithmic Underwriting Assessment
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
+                    This evaluation is a high-level mathematical simulation based on standardized benchmarks. Actual loan limits, interest rates, and approval criteria <strong className="text-white font-semibold">differ across partner banks</strong> based on proprietary risk models and document verification. We strongly advise comparing real-time offers across our partner banks.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`${getComparisonRoute()}?applicationId=${selectedApplicationId}`)
+                  }
+                  className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 px-6 py-3.5 text-xs font-extrabold shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 hover:scale-105 active:scale-95 transition cursor-pointer"
+                >
+                  <BarChartOutlined className="text-sm" /> Compare with Partner Banks <RightOutlined className="text-[10px]" />
+                </button>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`${getComparisonRoute()}?applicationId=${selectedApplicationId}`)
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-5 py-3 text-xs font-bold shadow-md shadow-indigo-600/20 transition shrink-0 cursor-pointer"
-            >
-              <BarChartOutlined /> Compare with Partner Banks <RightOutlined className="text-[10px]" />
-            </button>
           </div>
 
           {/* ── AI Underwriter Explanation (Groq openai/gpt-oss-120b) ───── */}
@@ -466,8 +603,8 @@ const CheckEligibility: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="prose prose-sm max-w-none text-xs text-blue-900 leading-relaxed font-sans whitespace-pre-line">
-                {eligibility.aiExplanation}
+              <div className="text-xs text-blue-900 leading-relaxed font-sans">
+                {renderFormattedExplanation(eligibility.aiExplanation)}
               </div>
             </div>
           )}
