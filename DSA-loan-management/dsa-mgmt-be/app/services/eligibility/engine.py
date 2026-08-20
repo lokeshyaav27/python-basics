@@ -99,8 +99,18 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
 
     is_complete, missing_fields, prod_type = check_applicant_completeness(app)
 
-    # Basic Applicant Snapshot
+    # Basic Applicant Snapshot with both camelCase and snake_case keys for frontend compatibility
     cgd = app.clientGeneralDetail
+    emp_type = (cgd.employment_type if cgd and cgd.employment_type else None) or ("Salaried" if cgd and cgd.isSalaried is not False else "Self-Employed")
+    monthly_inc = float(cgd.monthly_income) if cgd and cgd.monthly_income else 0.0
+    existing_e = float(cgd.existing_emi) if cgd and cgd.existing_emi else 0.0
+    monthly_ob = float(cgd.monthly_obligation) if cgd and cgd.monthly_obligation else 0.0
+    cibil_val = int(cgd.cibil_score) if cgd and cgd.cibil_score else None
+    req_amt = float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else (
+        float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
+    )
+    pref_tenure = int(cgd.preferred_tenure) if cgd and cgd.preferred_tenure else None
+
     applicant_dict = {
         "name": (cgd.name if cgd and cgd.name else app.name) or "Applicant",
         "email": app.email,
@@ -108,15 +118,21 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
         "age": cgd.age if cgd else None,
         "gender": cgd.gender if cgd else None,
         "location": cgd.location if cgd else None,
-        "employment_type": cgd.employment_type if cgd else None,
-        "monthly_income": float(cgd.monthly_income) if cgd and cgd.monthly_income else 0.0,
-        "existing_emi": float(cgd.existing_emi) if cgd and cgd.existing_emi else 0.0,
-        "monthly_obligation": float(cgd.monthly_obligation) if cgd and cgd.monthly_obligation else 0.0,
-        "cibil_score": int(cgd.cibil_score) if cgd and cgd.cibil_score else None,
-        "loan_amount_required": float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else (
-            float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
-        ),
-        "preferred_tenure": int(cgd.preferred_tenure) if cgd and cgd.preferred_tenure else None,
+        "employmentType": emp_type,
+        "employment_type": emp_type,
+        "monthlyIncome": monthly_inc,
+        "monthly_income": monthly_inc,
+        "existingEmi": existing_e,
+        "existing_emi": existing_e,
+        "monthlyObligation": monthly_ob,
+        "monthly_obligation": monthly_ob,
+        "cibilScore": cibil_val,
+        "cibil_score": cibil_val,
+        "loanAmountRequired": req_amt,
+        "loan_amount_required": req_amt,
+        "preferredTenure": pref_tenure,
+        "preferred_tenure": pref_tenure,
+        "isSalaried": cgd.isSalaried if cgd and cgd.isSalaried is not None else True,
     }
 
     product_display_name = app.product.name if app.product else (
@@ -131,10 +147,13 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
             "productName": product_display_name,
             "productType": prod_type,
             "status": "INCOMPLETE_DETAILS",
+            "overallStatus": "INCOMPLETE_DETAILS",
             "isComplete": False,
             "message": "Applicant profile or loan requirement is incomplete. Please update the missing details to check eligibility.",
+            "summary": "Applicant profile is incomplete. Please fill all required fields.",
             "missingFields": missing_fields,
             "applicantData": applicant_dict,
+            "banks": [],
         }
 
     # Execute product-specific evaluation
@@ -166,6 +185,75 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
             "required_amount": float(pld.required_amount) if pld and pld.required_amount else applicant_dict["loan_amount_required"],
         }
         result = evaluate_personal_loan_eligibility(applicant_dict, personal_dict)
+
+    # 4. Evaluate Partner Banks offering this product
+    from app.models.product_bank_link import ProductBankLink
+
+    banks_evaluated = []
+    if app.productId:
+        links = (
+            db.query(ProductBankLink)
+            .filter(ProductBankLink.productId == app.productId, ProductBankLink.isActive != False)
+            .all()
+        )
+        for link in links:
+            bank = link.bank
+            if not bank or bank.isActive is False:
+                continue
+
+            cibil_num = cibil_val or 0
+            foir_val = float(result.get("foirPct", 0.0))
+            ltv_val = float(result.get("ltvPct", 0.0))
+            max_ltv_val = float(result.get("maxAllowedLtvPct", 80.0))
+            applicant_age = applicant_dict.get("age") or 30
+
+            cibil_passed = cibil_num >= 700
+            foir_passed = foir_val <= 65.0
+            ltv_passed = ltv_val <= max_ltv_val
+            age_passed = applicant_age <= 60
+
+            all_passed = cibil_passed and foir_passed and ltv_passed and age_passed
+            partial_passed = cibil_passed and age_passed and (foir_passed or ltv_passed)
+
+            bank_status = "ELIGIBLE" if all_passed else ("PARTIALLY_ELIGIBLE" if partial_passed else "NOT_ELIGIBLE")
+
+            bank_notes = []
+            if not cibil_passed:
+                bank_notes.append(f"CIBIL score ({cibil_num}) is below bank benchmark (700).")
+            if not foir_passed:
+                bank_notes.append(f"FOIR ({foir_val:.1f}%) exceeds maximum permissible ceiling (65%).")
+            if not ltv_passed:
+                bank_notes.append(f"LTV ({ltv_val:.1f}%) exceeds maximum limit ({max_ltv_val:.0f}%).")
+            if all_passed:
+                bank_notes.append(f"Pre-approved under standard {product_display_name} policy guidelines.")
+
+            banks_evaluated.append({
+                "bankId": bank.id,
+                "bankName": bank.name,
+                "bankLogo": bank.logo,
+                "status": bank_status,
+                "maxLtv": max_ltv_val,
+                "checklist": [
+                    {"criteria": "CIBIL Score Benchmark (>= 700)", "passed": cibil_passed},
+                    {"criteria": "Debt-to-Income / FOIR (<= 65%)", "passed": foir_passed},
+                    {"criteria": f"Loan-to-Value Ratio (<= {max_ltv_val:.0f}%)", "passed": ltv_passed},
+                    {"criteria": "Applicant Age & Maximum Tenure Limit", "passed": age_passed},
+                ],
+                "notes": bank_notes,
+            })
+
+    result["banks"] = banks_evaluated
+
+    # Summary Text & Overall Status
+    rejections = result.get("rejections", [])
+    if len(rejections) > 0:
+        result["summary"] = rejections[0]
+    elif result.get("status") == "ELIGIBLE":
+        result["summary"] = f"Congratulations! {applicant_dict['name']} meets underwriting guidelines for {product_display_name}."
+    else:
+        result["summary"] = "Applicant is eligible under adjusted loan amount/tenure terms."
+
+    result["overallStatus"] = result.get("status")
 
     # Attach Contextual Metadata
     result["applicationId"] = app.id

@@ -3,6 +3,7 @@ import { EditOutlined, BarChartOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { EligibilityResult } from '../../../services/eligibility'
 import { ROUTES } from '../../../constants'
+import { useAuth } from '../../../auth/AuthProvider'
 
 interface ApplicantSummaryCardProps {
   eligibility: EligibilityResult
@@ -14,7 +15,15 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
   onOpenEdit,
 }) => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const data = eligibility.applicantData || {}
+
+  const getComparisonRoute = () => {
+    if (user?.role === 'admin') return ROUTES.ADMIN.LOAN_COMPARISON
+    if (user?.role === 'agent') return ROUTES.AGENT.LOAN_COMPARISON
+    if (user?.role === 'customer') return ROUTES.CUSTOMER.LOAN_COMPARISON
+    return ROUTES.SHARED.LOAN_COMPARISON
+  }
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
@@ -39,7 +48,7 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
           <button
             type="button"
             onClick={() =>
-              navigate(`${ROUTES.SHARED.LOAN_COMPARISON}?applicationId=${eligibility.applicationId}`)
+              navigate(`${getComparisonRoute()}?applicationId=${eligibility.applicationId}`)
             }
             className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition"
           >
@@ -59,26 +68,32 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Employment</span>
-          <span className="font-bold text-slate-800">{data.employmentType || '—'}</span>
+          <span className="font-bold text-slate-800">
+            {data.employmentType || data.employment_type || (data.isSalaried !== false ? 'Salaried' : 'Self-Employed') || '—'}
+          </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Net Monthly Income</span>
           <span className="font-bold text-emerald-600">
-            {data.monthlyIncome ? `₹${data.monthlyIncome.toLocaleString('en-IN')}` : '—'}
+            {data.monthlyIncome || data.monthly_income || eligibility.monthlyIncome
+              ? `₹${Number(data.monthlyIncome || data.monthly_income || eligibility.monthlyIncome).toLocaleString('en-IN')}`
+              : '—'}
           </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">CIBIL Score</span>
-          <span className="font-bold text-blue-700">{data.cibilScore || '—'}</span>
+          <span className="font-bold text-blue-700">
+            {data.cibilScore || data.cibil_score || eligibility.cibilScore || '—'}
+          </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Loan Required</span>
           <span className="font-bold text-slate-800">
-            {data.loanAmountRequired
-              ? `₹${data.loanAmountRequired.toLocaleString('en-IN')}`
+            {data.loanAmountRequired || data.loan_amount_required || eligibility.requestedAmount
+              ? `₹${Number(data.loanAmountRequired || data.loan_amount_required || eligibility.requestedAmount).toLocaleString('en-IN')}`
               : '—'}
           </span>
         </div>
@@ -86,7 +101,11 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Tenure</span>
           <span className="font-bold text-slate-800">
-            {data.preferredTenure ? `${data.preferredTenure} Months` : '—'}
+            {data.preferredTenure || data.preferred_tenure
+              ? `${data.preferredTenure || data.preferred_tenure} Months`
+              : eligibility.tenureYears
+              ? `${eligibility.tenureYears * 12} Months`
+              : '—'}
           </span>
         </div>
       </div>

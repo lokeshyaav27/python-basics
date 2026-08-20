@@ -37,4 +37,5 @@ class EligibilityService:
 
         ai_summary = generate_ai_explanation(raw_result)
         raw_result["aiExplanation"] = ai_summary
+        raw_result["aiInsights"] = ai_summary
         return raw_result
