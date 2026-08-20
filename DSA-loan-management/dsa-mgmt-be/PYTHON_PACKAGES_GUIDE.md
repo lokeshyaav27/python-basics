@@ -200,8 +200,8 @@ ratio = width / height
 ### 🤖 `groq`
 - **What is it?**: The official Python client for Groq Cloud LPU (Language Processing Unit) inference.
 - **Why we use it**:
-  - Powers the Conversational AI Underwriter chatbot (`/api/chat/assistant`) using ultra-low latency LLMs (`llama-3.3-70b-versatile`).
-- **Where in our project**: `app/services/chat_orchestrator.py` and `app/services/ai_underwriter.py`.
+  - Powers the Conversational AI Underwriter chatbot (`/api/chat/assistant`) using ultra-low latency LLMs (`openai/gpt-oss-120b`).
+- **Where in our project**: `app/ai/client.py`, `app/ai/chat_service.py`, and `app/ai/explainer.py`.
 
 ---
 
@@ -209,7 +209,7 @@ ratio = width / height
 - **What is it?**: State-of-the-art framework for generating dense vector embeddings from text.
 - **Why we use it**:
   - Converts chunks of bank loan policy documents into 384-dimensional dense semantic vectors (`all-MiniLM-L6-v2`) for semantic search and RAG.
-- **Where in our project**: `app/services/rag_service.py`.
+- **Where in our project**: `app/rag/embeddings.py` and `app/rag/service.py`.
 
 ---
 
@@ -217,7 +217,7 @@ ratio = width / height
 - **What is it?**: High-performance library for reading, extracting, and parsing PDF documents.
 - **Why we use it**:
   - When an admin uploads a bank loan policy PDF, PyMuPDF extracts the raw text page-by-page so it can be chunked and indexed into the vector database.
-- **Where in our project**: `app/services/rag_service.py`.
+- **Where in our project**: `app/rag/text_extractor.py` and `app/rag/service.py`.
 
 ---
 
@@ -225,7 +225,7 @@ ratio = width / height
 - **What is it?**: PostgreSQL extension and Python ORM integration for vector similarity search.
 - **Why we use it**:
   - Stores high-dimensional document embeddings directly in PostgreSQL and performs exact or approximate nearest-neighbor cosine similarity queries (`<=>`).
-- **Where in our project**: `app/models/document_chunk.py` and `app/services/rag_service.py`.
+- **Where in our project**: `app/models/document_chunk.py` and `app/rag/service.py`.
 
 ---
 

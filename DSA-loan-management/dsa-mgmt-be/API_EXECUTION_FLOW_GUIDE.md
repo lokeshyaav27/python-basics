@@ -214,23 +214,26 @@ Step 2: Controller & Authentication
       └─ Injects current_user context (role, userId, mobile) into req.authContext.
       └─ Calls process_chat_conversation(db=db, request=req)
 
-Step 3: Chat Orchestrator
-   └─ File: app/services/chat_orchestrator.py
-      └─ Function: process_chat_conversation(db, request)
-      ├─ Step A: Intent Classification & System Prompt Setup
+Step 3: Chat Orchestrator & AI Agent
+   └─ File: app/ai/chat_service.py
+      └─ Function: chat_service.process_chat_conversation(db, request)
+      ├─ Step A: Dynamic System Prompt & Role Scoping
+      │  └─ File: app/ai/prompts/system_prompt.py
       │
       ├─ Step B: RAG Policy Retrieval (if policy query)
-      │  └─ File: app/services/rag_service.py
-      │     └─ Generates query embedding via sentence-transformers
+      │  └─ File: app/rag/service.py
+      │     └─ Generates query embedding via sentence-transformers (app/rag/embeddings.py)
       │     └─ Queries document_chunks table in PostgreSQL using pgvector <=> operator
       │     └─ Returns top relevant policy chunks from partner banks
       │
-      ├─ Step C: MCP Tool Execution (if calculation query)
-      │  └─ File: app/services/mcp_dsa_tools.py / app/services/mcp_eligibility_tool.py
+      ├─ Step C: MCP Tool Execution (if calculation/data query)
+      │  └─ File: app/mcp/registry.py & app/mcp/tools/*.py
       │     └─ Computes FOIR, LTV, maximum eligible loan amount, and ROI
+      │     └─ Enforces role-based permissions (app/mcp/auth.py)
       │
       └─ Step D: Groq LLM Inference
-         └─ Calls Groq API (llama-3.3-70b-versatile) with system context + RAG chunks + tool outputs
+         └─ File: app/ai/client.py
+         └─ Calls Groq API (openai/gpt-oss-120b) with system context + RAG chunks + tool outputs
          └─ Generates professional, compliant underwriting explanation
 
 Step 4: Response Returned
@@ -254,5 +257,8 @@ Step 4: Response Returned
 | **ORM Models** | `app/models/*.py` | SQLAlchemy database table definitions |
 | **Pydantic Schemas** | `app/schemas/*.py` | Request/Response validation and serialization models |
 | **Repositories** | `app/repositories/*.py` | Pure database queries and persistence (`db.query`, `db.add`, `db.commit`) |
-| **Services** | `app/services/*.py` | Pure business logic, validation rules, RAG, and AI orchestration |
+| **Services** | `app/services/*.py` | Pure REST business logic and validation rules |
+| **RAG Module** | `app/rag/*.py` | PyMuPDF text extraction, embeddings, and pgvector semantic search |
+| **AI Module** | `app/ai/*.py` & `app/ai/prompts/*.py` | Groq client, prompt engineering, and chat orchestration |
+| **MCP Module** | `app/mcp/*.py` & `app/mcp/tools/*.py` | Tool specifications, RBAC guards, serializers, and execution registry |
 | **Routers (Controllers)** | `app/api/routers/*.py` | Thin HTTP route handlers delegating to Services |
