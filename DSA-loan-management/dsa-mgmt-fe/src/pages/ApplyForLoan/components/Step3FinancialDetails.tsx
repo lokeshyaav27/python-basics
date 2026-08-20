@@ -1,5 +1,6 @@
 import React from 'react'
 import { Step3SecondaryFields } from './Step3SecondaryFields'
+import { CurrencyInput } from '../../../components/CurrencyInput'
 
 interface Step3FinancialDetailsProps {
   financialInfo: {
@@ -112,19 +113,13 @@ export const Step3FinancialDetails: React.FC<Step3FinancialDetailsProps> = ({
         </div>
 
         {/* 5. Monthly Net Income */}
-        <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            5. Monthly Net In-Hand Income (₹) <span className="text-rose-500">*</span>
-          </label>
-          <input
-            required
-            type="number"
-            placeholder="e.g. 85000"
-            value={financialInfo.monthly_income}
-            onChange={(e) => setFinancialInfo({ ...financialInfo, monthly_income: e.target.value })}
-            className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 transition"
-          />
-        </div>
+        <CurrencyInput
+          required
+          label="5. Monthly Net In-Hand Income (₹)"
+          placeholder="e.g. 85,000"
+          value={financialInfo.monthly_income}
+          onChange={(val) => setFinancialInfo({ ...financialInfo, monthly_income: val })}
+        />
 
         {/* 6 - 10. Secondary Financial Parameters */}
         <Step3SecondaryFields

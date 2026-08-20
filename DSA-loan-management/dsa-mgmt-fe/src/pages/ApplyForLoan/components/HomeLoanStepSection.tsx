@@ -1,4 +1,5 @@
 import React from 'react'
+import { CurrencyInput } from '../../../components/CurrencyInput'
 
 interface HomeLoanStepSectionProps {
   homeLoanDetails: any
@@ -17,34 +18,26 @@ export const HomeLoanStepSection: React.FC<HomeLoanStepSectionProps> = ({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
-        <div>
-          <label className="font-bold text-slate-700 block mb-1">
-            Property Market Value (₹) <span className="text-rose-500">*</span>
-          </label>
-          <input
-            required
-            type="number"
-            placeholder="e.g. 5000000"
-            value={homeLoanDetails.property_value}
-            onChange={(e) =>
-              setHomeLoanDetails({ ...homeLoanDetails, property_value: e.target.value })
-            }
-            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none focus:border-blue-600"
-          />
-        </div>
+        <CurrencyInput
+          required
+          label="Property Market Value (₹)"
+          placeholder="e.g. 50,00,000"
+          value={homeLoanDetails.property_value}
+          onChange={(val) =>
+            setHomeLoanDetails({ ...homeLoanDetails, property_value: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs"
+        />
 
-        <div>
-          <label className="font-bold text-slate-700 block mb-1">Down Payment Planned (₹)</label>
-          <input
-            type="number"
-            placeholder="e.g. 1000000"
-            value={homeLoanDetails.down_payment}
-            onChange={(e) =>
-              setHomeLoanDetails({ ...homeLoanDetails, down_payment: e.target.value })
-            }
-            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none focus:border-blue-600"
-          />
-        </div>
+        <CurrencyInput
+          label="Down Payment Planned (₹)"
+          placeholder="e.g. 10,00,000"
+          value={homeLoanDetails.down_payment}
+          onChange={(val) =>
+            setHomeLoanDetails({ ...homeLoanDetails, down_payment: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs"
+        />
 
         <div>
           <label className="font-bold text-slate-700 block mb-1">Property Location / City</label>

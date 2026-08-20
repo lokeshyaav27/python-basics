@@ -1,6 +1,7 @@
 import React from 'react'
 import { ClientGeneralDetailsData } from '../../../services/loanApplications'
 import { CibilBadge, formatCurrency } from './StatusBadges'
+import { CurrencyInput } from '../../CurrencyInput'
 
 interface GeneralFinancialFieldsProps {
   generalDetails: ClientGeneralDetailsData
@@ -19,16 +20,15 @@ export const GeneralFinancialFields: React.FC<GeneralFinancialFieldsProps> = ({
       <div>
         <label className="text-slate-400 block mb-1 font-medium">6. Monthly Net Income</label>
         {isEditing ? (
-          <input
-            type="number"
+          <CurrencyInput
             value={generalDetails.monthly_income ?? ''}
-            onChange={(e) =>
+            onChange={(val) =>
               setGeneralDetails({
                 ...generalDetails,
-                monthly_income: e.target.value ? Number(e.target.value) : undefined,
+                monthly_income: val ? Number(val) : undefined,
               })
             }
-            className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+            inputClassName="!rounded-lg !p-2 !text-xs"
           />
         ) : (
           <span className="font-bold text-emerald-700">{formatCurrency(generalDetails.monthly_income)}</span>
@@ -39,16 +39,15 @@ export const GeneralFinancialFields: React.FC<GeneralFinancialFieldsProps> = ({
       <div>
         <label className="text-slate-400 block mb-1 font-medium">7. Monthly Obligations</label>
         {isEditing ? (
-          <input
-            type="number"
+          <CurrencyInput
             value={generalDetails.monthly_obligation ?? ''}
-            onChange={(e) =>
+            onChange={(val) =>
               setGeneralDetails({
                 ...generalDetails,
-                monthly_obligation: e.target.value ? Number(e.target.value) : undefined,
+                monthly_obligation: val ? Number(val) : undefined,
               })
             }
-            className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+            inputClassName="!rounded-lg !p-2 !text-xs"
           />
         ) : (
           <span className="font-bold text-slate-800">{formatCurrency(generalDetails.monthly_obligation)}</span>
@@ -59,16 +58,15 @@ export const GeneralFinancialFields: React.FC<GeneralFinancialFieldsProps> = ({
       <div>
         <label className="text-slate-400 block mb-1 font-medium">8. Existing EMIs</label>
         {isEditing ? (
-          <input
-            type="number"
+          <CurrencyInput
             value={generalDetails.existing_emi ?? ''}
-            onChange={(e) =>
+            onChange={(val) =>
               setGeneralDetails({
                 ...generalDetails,
-                existing_emi: e.target.value ? Number(e.target.value) : undefined,
+                existing_emi: val ? Number(val) : undefined,
               })
             }
-            className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+            inputClassName="!rounded-lg !p-2 !text-xs"
           />
         ) : (
           <span className="font-bold text-slate-800">{formatCurrency(generalDetails.existing_emi)}</span>
@@ -99,16 +97,15 @@ export const GeneralFinancialFields: React.FC<GeneralFinancialFieldsProps> = ({
       <div>
         <label className="text-slate-400 block mb-1 font-medium">10. Loan Amount Required</label>
         {isEditing ? (
-          <input
-            type="number"
+          <CurrencyInput
             value={generalDetails.loan_amount_required ?? ''}
-            onChange={(e) =>
+            onChange={(val) =>
               setGeneralDetails({
                 ...generalDetails,
-                loan_amount_required: e.target.value ? Number(e.target.value) : undefined,
+                loan_amount_required: val ? Number(val) : undefined,
               })
             }
-            className="w-full rounded-lg border border-slate-300 p-2 text-xs"
+            inputClassName="!rounded-lg !p-2 !text-xs font-bold text-blue-700"
           />
         ) : (
           <span className="font-extrabold text-blue-700">{formatCurrency(generalDetails.loan_amount_required)}</span>

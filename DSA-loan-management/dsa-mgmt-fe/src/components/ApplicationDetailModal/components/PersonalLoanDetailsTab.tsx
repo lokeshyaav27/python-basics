@@ -1,6 +1,7 @@
 import React from 'react'
 import { PersonalLoanDetailsData } from '../../../services/loanApplications'
 import { formatCurrency } from './StatusBadges'
+import { CurrencyInput } from '../../CurrencyInput'
 
 interface PersonalLoanDetailsTabProps {
   personalDetails: PersonalLoanDetailsData
@@ -29,36 +30,36 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
           <label className="text-slate-500 block mb-1 font-medium">1. Loan Purpose</label>
           {isEditing ? (
             <select
-              value={personalDetails.loan_purpose ?? 'Home Improvement'}
+              value={personalDetails.loan_purpose ?? 'Other'}
               onChange={(e) =>
                 setPersonalDetails({ ...personalDetails, loan_purpose: e.target.value })
               }
               className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
             >
-              <option value="Home Improvement">Home Renovation</option>
+              <option value="Home Improvement">Home Improvement</option>
               <option value="Medical Emergency">Medical Emergency</option>
-              <option value="Wedding / Family Event">Wedding / Family Event</option>
+              <option value="Wedding / Family Event">Wedding / Family Function</option>
               <option value="Higher Education">Higher Education</option>
               <option value="Debt Consolidation">Debt Consolidation</option>
-              <option value="Travel / Vacation">Travel / Vacation</option>
+              <option value="Travel / Vacation">Travel & Vacation</option>
               <option value="Business Expansion">Business Expansion</option>
-              <option value="Other">Other</option>
+              <option value="Other">Other Requirement</option>
             </select>
           ) : (
-            <span className="font-bold text-slate-800">{personalDetails.loan_purpose || '—'}</span>
+            <span className="font-bold text-slate-800">{personalDetails.loan_purpose || 'Other'}</span>
           )}
         </div>
 
-        {/* 2. Other Details / Remarks */}
+        {/* 2. Other Remarks */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">2. Purpose Description / Remarks</label>
+          <label className="text-slate-500 block mb-1 font-medium">2. Purpose Notes</label>
           {isEditing ? (
             <input
+              type="text"
               value={personalDetails.other ?? ''}
               onChange={(e) =>
                 setPersonalDetails({ ...personalDetails, other: e.target.value })
               }
-              placeholder="Additional remarks"
               className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
             />
           ) : (
@@ -70,16 +71,15 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">3. Required Amount</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={personalDetails.required_amount ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setPersonalDetails({
                   ...personalDetails,
-                  required_amount: e.target.value ? Number(e.target.value) : undefined,
+                  required_amount: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white font-bold text-emerald-700"
             />
           ) : (
             <span className="font-extrabold text-emerald-700">
@@ -92,16 +92,15 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">4. Existing Obligations / EMIs</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={personalDetails.existing_obligations ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setPersonalDetails({
                   ...personalDetails,
-                  existing_obligations: e.target.value ? Number(e.target.value) : undefined,
+                  existing_obligations: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">

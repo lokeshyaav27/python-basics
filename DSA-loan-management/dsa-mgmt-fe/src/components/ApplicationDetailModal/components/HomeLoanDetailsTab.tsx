@@ -2,6 +2,7 @@ import React from 'react'
 import { HomeLoanDetailsData } from '../../../services/loanApplications'
 import { formatCurrency } from './StatusBadges'
 import { HomeLoanInsuranceFields } from './HomeLoanInsuranceFields'
+import { CurrencyInput } from '../../CurrencyInput'
 
 interface HomeLoanDetailsTabProps {
   homeDetails: HomeLoanDetailsData
@@ -29,16 +30,15 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">1. Property Value</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={homeDetails.property_value ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setHomeDetails({
                   ...homeDetails,
-                  property_value: e.target.value ? Number(e.target.value) : undefined,
+                  property_value: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">{formatCurrency(homeDetails.property_value)}</span>
@@ -49,16 +49,15 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">2. Down Payment</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={homeDetails.down_payment ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setHomeDetails({
                   ...homeDetails,
-                  down_payment: e.target.value ? Number(e.target.value) : undefined,
+                  down_payment: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">{formatCurrency(homeDetails.down_payment)}</span>

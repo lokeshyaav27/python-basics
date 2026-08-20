@@ -1,4 +1,5 @@
 import React from 'react'
+import { CurrencyInput } from '../../../components/CurrencyInput'
 
 interface CarLoanStepSectionProps {
   carLoanDetails: any
@@ -31,34 +32,26 @@ export const CarLoanStepSection: React.FC<CarLoanStepSectionProps> = ({
           </select>
         </div>
 
-        <div>
-          <label className="font-bold text-slate-700 block mb-1">
-            On-Road / Quotation Price (₹) <span className="text-rose-500">*</span>
-          </label>
-          <input
-            required
-            type="number"
-            placeholder="e.g. 1200000"
-            value={carLoanDetails.car_value}
-            onChange={(e) =>
-              setCarLoanDetails({ ...carLoanDetails, car_value: e.target.value })
-            }
-            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none focus:border-indigo-600"
-          />
-        </div>
+        <CurrencyInput
+          required
+          label="On-Road / Quotation Price (₹)"
+          placeholder="e.g. 12,00,000"
+          value={carLoanDetails.car_value}
+          onChange={(val) =>
+            setCarLoanDetails({ ...carLoanDetails, car_value: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs"
+        />
 
-        <div>
-          <label className="font-bold text-slate-700 block mb-1">Down Payment Planned (₹)</label>
-          <input
-            type="number"
-            placeholder="e.g. 200000"
-            value={carLoanDetails.down_payment}
-            onChange={(e) =>
-              setCarLoanDetails({ ...carLoanDetails, down_payment: e.target.value })
-            }
-            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none focus:border-indigo-600"
-          />
-        </div>
+        <CurrencyInput
+          label="Down Payment Planned (₹)"
+          placeholder="e.g. 2,00,000"
+          value={carLoanDetails.down_payment}
+          onChange={(val) =>
+            setCarLoanDetails({ ...carLoanDetails, down_payment: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs"
+        />
 
         <div>
           <label className="font-bold text-slate-700 block mb-1">Vehicle Age (Years)</label>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { CarLoanDetailsData } from '../../../services/loanApplications'
 import { formatCurrency } from './StatusBadges'
+import { CurrencyInput } from '../../CurrencyInput'
 
 interface CarLoanDetailsTabProps {
   carDetails: CarLoanDetailsData
@@ -45,16 +46,15 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">2. Vehicle Value / Quotation</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={carDetails.car_value ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setCarDetails({
                   ...carDetails,
-                  car_value: e.target.value ? Number(e.target.value) : undefined,
+                  car_value: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">{formatCurrency(carDetails.car_value)}</span>
@@ -65,16 +65,15 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
         <div>
           <label className="text-slate-500 block mb-1 font-medium">3. Down Payment</label>
           {isEditing ? (
-            <input
-              type="number"
+            <CurrencyInput
               value={carDetails.down_payment ?? ''}
-              onChange={(e) =>
+              onChange={(val) =>
                 setCarDetails({
                   ...carDetails,
-                  down_payment: e.target.value ? Number(e.target.value) : undefined,
+                  down_payment: val ? Number(val) : undefined,
                 })
               }
-              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">{formatCurrency(carDetails.down_payment)}</span>
@@ -89,13 +88,16 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
               type="number"
               value={carDetails.vehicle_age ?? 0}
               onChange={(e) =>
-                setCarDetails({ ...carDetails, vehicle_age: Number(e.target.value) })
+                setCarDetails({
+                  ...carDetails,
+                  vehicle_age: e.target.value ? Number(e.target.value) : 0,
+                })
               }
               className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
             />
           ) : (
             <span className="font-bold text-slate-800">
-              {carDetails.vehicle_age ? `${carDetails.vehicle_age} Years` : '0 (Brand New)'}
+              {carDetails.vehicle_age ? `${carDetails.vehicle_age} Years` : '0 (New)'}
             </span>
           )}
         </div>
