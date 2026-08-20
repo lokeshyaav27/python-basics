@@ -301,6 +301,5 @@ dsa-mgmt-be/
 | `/api/contact` | Public contact and loan consultation inquiries | Public (Post) / Admin (Manage) |
 | `/api/comparison` | Multi-bank loan comparison with CIBIL-to-ROI and DSA commissions | Admin / Agent / Customer |
 | `/api/eligibility` | Multi-factor underwriting calculator & natural language explanations | Admin / Agent / Customer |
-| `/api/mcp` | Model Context Protocol tools & pgvector semantic search | Admin / Agent / Customer |
 | `/api/chat` | AI Underwriter Conversational Assistant powered by Groq LLM | Admin / Agent / Customer |
-| `/api/files` | File storage and static asset serving | Public |
+| `/static/...` | File storage and static asset serving | Public |
