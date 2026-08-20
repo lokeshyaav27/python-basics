@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.db.session import SessionLocal
-from app.services.mcp_comparison_tool import execute_mcp_comparison_tool
+from app.services.comparison_service import ComparisonService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
@@ -18,41 +18,23 @@ def get_db():
         db.close()
 
 
+def get_comparison_service(db: Session = Depends(get_db)) -> ComparisonService:
+    return ComparisonService(db)
+
+
 @router.get("/banks")
 def compare_banks(
     applicationId: int = Query(..., description="ID of the loan application"),
     bankIds: str = Query(..., description="Comma-separated bank IDs to compare (e.g. '1,2'). Max 2 banks."),
-    userRole: Optional[str] = Query(None, description="Optional user role override (defaults to authenticated token role)"),
+    userRole: Optional[str] = Query(None, description="Optional user role override"),
     current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
-    db: Session = Depends(get_db),
+    comparison_service: ComparisonService = Depends(get_comparison_service),
 ):
-    """
-    Compares up to 2 banks for an application:
-    - Verifies product linking & policy document presence.
-    - Evaluates CIBIL-to-ROI, tenure, loan amount, proposed EMI.
-    - Computes Property & Applicant Insurance, Processing fee, and DSA commissions (agent/admin only).
-    - Uses pgvector RAG for bank policy document rules and Groq for comparative analysis.
-    """
-    try:
-        parsed_bank_ids = [int(bid.strip()) for bid in bankIds.split(",") if bid.strip()]
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid bankIds format. Provide comma-separated integers.")
-
-    if len(parsed_bank_ids) > 2:
-        raise HTTPException(status_code=400, detail="You cannot compare more than 2 banks at once.")
-    if len(parsed_bank_ids) == 0:
-        raise HTTPException(status_code=400, detail="Please select at least 1 bank to compare.")
-
-    # Secure role determination from validated JWT token
-    effective_role = current_user.role
-
-    result = execute_mcp_comparison_tool(
-        db=db,
+    result = comparison_service.compare_banks(
         application_id=applicationId,
-        bank_ids=parsed_bank_ids,
-        user_role=effective_role,
+        bank_ids_str=bankIds,
+        current_user=current_user,
     )
-
     return success_response(
         result=result,
         message="Loan comparison completed successfully",

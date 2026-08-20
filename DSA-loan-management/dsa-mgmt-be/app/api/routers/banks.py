@@ -1,19 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from pathlib import Path
-from io import BytesIO
-from PIL import Image
-import os
-from uuid import uuid4
+from pydantic import BaseModel
 
 from app.db.session import SessionLocal
-from app.models.bank import Bank
-from app.models.product import Product
-from app.models.product_bank_link import ProductBankLink
-from app.models.bank_document import BankDocument
-from app.schemas.bank import BankCreate, BankRead
-from app.services import rag_service
+from app.repositories.bank_repository import BankRepository
+from app.services.bank_service import BankService
+from app.schemas.bank import BankRead
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
@@ -28,21 +21,41 @@ def get_db():
         db.close()
 
 
-def get_logo_storage() -> Path:
-    project_root = Path(__file__).resolve().parents[3]
-    storage = project_root / 'dsa-file-storage' / 'bank-logo-images'
-    storage.mkdir(parents=True, exist_ok=True)
-    return storage
+def get_bank_service(db: Session = Depends(get_db)) -> BankService:
+    repo = BankRepository(db)
+    return BankService(repo)
 
 
-def get_document_storage() -> Path:
-    project_root = Path(__file__).resolve().parents[3]
-    storage = project_root / 'dsa-file-storage' / 'bank-documents'
-    storage.mkdir(parents=True, exist_ok=True)
-    return storage
+class ProductLinkPayload(BaseModel):
+    isLinked: bool
+    commission: Optional[float] = None
 
 
-# ── Create Bank (Admin Only) ──────────────────────────────────────────────────
+# ── Bank CRUD ─────────────────────────────────────────────────────────────────
+
+@router.get("")
+def list_banks(
+    include_inactive: bool = False,
+    bank_service: BankService = Depends(get_bank_service),
+):
+    banks = bank_service.list_banks(include_inactive=include_inactive)
+    return success_response(
+        result=banks,
+        message="Banks fetched successfully",
+    )
+
+
+@router.get("/{bank_id}")
+def get_bank(
+    bank_id: int,
+    bank_service: BankService = Depends(get_bank_service),
+):
+    bank = bank_service.get_bank_by_id(bank_id)
+    return success_response(
+        result=bank,
+        message="Bank fetched successfully",
+    )
+
 
 @router.post("")
 def create_bank(
@@ -52,52 +65,21 @@ def create_bank(
     isnbfc: bool = Form(False),
     file: UploadFile | None = File(None),
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    logo_fname: Optional[str] = None
-    if file is not None:
-        contents = file.file.read()
-        size_limit = 3 * 1024 * 1024
-        if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail='File too large; max 3MB')
-        try:
-            img = Image.open(BytesIO(contents))
-            width, height = img.size
-        except Exception:
-            raise HTTPException(status_code=400, detail='Invalid image file')
-
-        ext = os.path.splitext(file.filename)[1] or '.jpg'
-        logo_fname = f"{uuid4().hex}{ext}"
-        storage = get_logo_storage()
-        with open(storage / logo_fname, 'wb') as f:
-            f.write(contents)
-
-    b = Bank(name=name, isNationalize=isNationalize, isPrivate=isPrivate, isnbfc=isnbfc, logo=logo_fname)
-    db.add(b)
-    db.commit()
-    db.refresh(b)
+    bank = bank_service.create_bank(
+        name=name,
+        is_nationalize=isNationalize,
+        is_private=isPrivate,
+        is_nbfc=isnbfc,
+        file=file,
+    )
     return success_response(
-        result=BankRead.from_orm(b),
+        result=bank,
         message="Bank created successfully",
         status_code=201,
     )
 
-
-# ── List Banks (Public) ───────────────────────────────────────────────────────
-
-@router.get("")
-def list_banks(include_inactive: bool = False, db: Session = Depends(get_db)):
-    query = db.query(Bank)
-    if not include_inactive:
-        query = query.filter(Bank.isActive == True)
-    items = query.all()
-    return success_response(
-        result=[BankRead.from_orm(b) for b in items],
-        message="Banks fetched successfully",
-    )
-
-
-# ── Update Bank (Admin Only) ──────────────────────────────────────────────────
 
 @router.put("/{bank_id}")
 def update_bank(
@@ -109,301 +91,107 @@ def update_bank(
     file: UploadFile | None = File(None),
     remove_logo: bool = Form(False),
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    b = db.query(Bank).filter(Bank.id == bank_id).first()
-    if not b:
-        raise HTTPException(status_code=404, detail='Bank not found')
-
-    storage = get_logo_storage()
-
-    if file is not None:
-        contents = file.file.read()
-        size_limit = 3 * 1024 * 1024
-        if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail='File too large; max 3MB')
-        try:
-            img = Image.open(BytesIO(contents))
-            width, height = img.size
-        except Exception:
-            raise HTTPException(status_code=400, detail='Invalid image file')
-
-        ext = os.path.splitext(file.filename)[1] or '.jpg'
-        logo_fname = f"{uuid4().hex}{ext}"
-        with open(storage / logo_fname, 'wb') as f:
-            f.write(contents)
-
-        if b.logo:
-            old = storage / b.logo
-            if old.exists():
-                try:
-                    old.unlink()
-                except Exception:
-                    pass
-        b.logo = logo_fname
-
-    elif remove_logo and b.logo:
-        old = storage / b.logo
-        if old.exists():
-            try:
-                old.unlink()
-            except Exception:
-                pass
-        b.logo = None
-
-    b.name = name
-    b.isNationalize = isNationalize
-    b.isPrivate = isPrivate
-    b.isnbfc = isnbfc
-    db.add(b)
-    db.commit()
-    db.refresh(b)
+    bank = bank_service.update_bank(
+        bank_id=bank_id,
+        name=name,
+        is_nationalize=isNationalize,
+        is_private=isPrivate,
+        is_nbfc=isnbfc,
+        file=file,
+        remove_logo=remove_logo,
+    )
     return success_response(
-        result=BankRead.from_orm(b),
+        result=bank,
         message="Bank updated successfully",
     )
 
-
-# ── Delete Bank (Admin Only) ──────────────────────────────────────────────────
 
 @router.delete("/{bank_id}")
 def delete_bank(
     bank_id: int,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    b = db.query(Bank).filter(Bank.id == bank_id).first()
-    if not b:
-        raise HTTPException(status_code=404, detail='Bank not found')
-    b.isActive = False
-    db.add(b)
-    db.commit()
+    res = bank_service.delete_bank(bank_id)
     return success_response(
-        result={"deleted_id": bank_id},
-        message="Bank deleted successfully",
+        result=res,
+        message="Bank deactivated successfully",
     )
 
 
-# ── Product Linking Endpoints ─────────────────────────────────────────────────
+# ── Product-Bank Mapping & Documents ──────────────────────────────────────────
 
-# Public: Anyone can view products linked to a bank (e.g. loan wizard, comparisons)
 @router.get("/{bank_id}/products")
-def get_bank_products(bank_id: int, db: Session = Depends(get_db)):
-    bank = db.query(Bank).filter(Bank.id == bank_id).first()
-    if not bank:
-        raise HTTPException(status_code=404, detail="Bank not found")
-
-    products = db.query(Product).filter(Product.isActive == True).all()
-    links = db.query(ProductBankLink).filter(ProductBankLink.bankId == bank_id).all()
-    links_map = {link.productId: link for link in links}
-
-    result = []
-    for p in products:
-        link = links_map.get(p.id)
-        docs = []
-        if link:
-            db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).order_by(BankDocument.id.asc()).all()
-            for d in db_docs:
-                docs.append({
-                    "id": d.id,
-                    "name": d.documentName,
-                    "fileName": d.documentLocation,
-                    "createdAt": d.createdAt.isoformat() if d.createdAt else None,
-                })
-
-        result.append({
-            "productId": p.id,
-            "productName": p.name,
-            "productDescription": p.description,
-            "productImage": p.image,
-            "isLinked": link is not None,
-            "linkId": link.id if link else None,
-            "commission": float(link.commission) if (link and link.commission is not None) else None,
-            "documents": docs,
-        })
+def get_bank_products(
+    bank_id: int,
+    bank_service: BankService = Depends(get_bank_service),
+):
+    products = bank_service.get_bank_products(bank_id)
     return success_response(
-        result=result,
-        message="Bank products fetched successfully",
+        result=products,
+        message="Bank product mappings fetched successfully",
     )
 
 
-# Admin Only: Link or unlink product to bank
-@router.post("/{bank_id}/products/{product_id}/link")
+@router.put("/{bank_id}/products/{product_id}")
 def link_bank_product(
     bank_id: int,
     product_id: int,
-    is_linked: bool = Form(...),
-    commission: Optional[float] = Form(None),
+    payload: ProductLinkPayload,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    bank = db.query(Bank).filter(Bank.id == bank_id).first()
-    if not bank:
-        raise HTTPException(status_code=404, detail="Bank not found")
-
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    link = db.query(ProductBankLink).filter(
-        ProductBankLink.bankId == bank_id,
-        ProductBankLink.productId == product_id,
-    ).first()
-
-    storage = get_document_storage()
-
-    if not is_linked:
-        if link:
-            attached_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
-            for doc in attached_docs:
-                try:
-                    (storage / doc.documentLocation).unlink(missing_ok=True)
-                except Exception:
-                    pass
-                db.delete(doc)
-
-            db.delete(link)
-            db.commit()
-        return success_response(
-            result={"isLinked": False, "linkId": None, "commission": None, "documents": []},
-            message="Product unlinked successfully",
-        )
-
-    if not link:
-        link = ProductBankLink(bankId=bank_id, productId=product_id)
-        db.add(link)
-        db.flush()
-
-    if commission is not None:
-        link.commission = commission
-
-    db.commit()
-    db.refresh(link)
-
-    db_docs = db.query(BankDocument).filter(BankDocument.productBankLinkId == link.id).all()
-    docs = [{"id": d.id, "name": d.documentName, "fileName": d.documentLocation} for d in db_docs]
-
+    result = bank_service.link_product(
+        bank_id=bank_id,
+        product_id=product_id,
+        is_linked=payload.isLinked,
+        commission=payload.commission,
+    )
+    msg = "Product linked successfully" if payload.isLinked else "Product unlinked successfully"
     return success_response(
-        result={
-            "isLinked": True,
-            "linkId": link.id,
-            "commission": float(link.commission) if link.commission is not None else None,
-            "documents": docs,
-        },
-        message="Product linked successfully",
+        result=result,
+        message=msg,
     )
 
 
-# Admin Only: Upload bank product policy document
 @router.post("/{bank_id}/products/{product_id}/documents")
-def upload_bank_product_document(
+def upload_bank_document(
     bank_id: int,
     product_id: int,
     file: UploadFile = File(...),
-    document_name: Optional[str] = Form(None),
+    document_name: str | None = Form(None),
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    bank = db.query(Bank).filter(Bank.id == bank_id).first()
-    if not bank:
-        raise HTTPException(status_code=404, detail="Bank not found")
-
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    link = db.query(ProductBankLink).filter(
-        ProductBankLink.bankId == bank_id,
-        ProductBankLink.productId == product_id,
-    ).first()
-
-    if not link:
-        link = ProductBankLink(bankId=bank_id, productId=product_id)
-        db.add(link)
-        db.flush()
-
-    contents = file.file.read()
-    size_limit = 20 * 1024 * 1024
-    if len(contents) > size_limit:
-        raise HTTPException(status_code=400, detail="Document too large; max 20MB")
-
-    storage = get_document_storage()
-    orig_name = file.filename or "document.pdf"
-    doc_title = document_name.strip() if (document_name and document_name.strip()) else orig_name
-
-    ext = os.path.splitext(orig_name)[1].lower() or ".pdf"
-    fname = f"{uuid4().hex}{ext}"
-    with open(storage / fname, "wb") as f:
-        f.write(contents)
-
-    new_doc = BankDocument(
-        productBankLinkId=link.id,
-        documentName=doc_title,
-        documentLocation=fname,
+    result = bank_service.upload_document(
+        bank_id=bank_id,
+        product_id=product_id,
+        file=file,
+        document_name=document_name,
     )
-    db.add(new_doc)
-    db.commit()
-    db.refresh(new_doc)
-
-    indexed_chunks_count = 0
-    try:
-        indexed_chunks_count = rag_service.index_document(
-            db=db,
-            bank_document_id=new_doc.id,
-            bank_id=bank_id,
-            product_id=product_id,
-            file_path=storage / fname,
-        )
-    except Exception as e:
-        print(f"Warning: RAG indexing failed for {fname}: {e}")
-
     return success_response(
-        result={
-            "id": new_doc.id,
-            "name": new_doc.documentName,
-            "fileName": new_doc.documentLocation,
-            "createdAt": new_doc.createdAt.isoformat() if new_doc.createdAt else None,
-            "indexedChunks": indexed_chunks_count,
-        },
-        message="Document uploaded successfully",
+        result=result,
+        message="Bank policy document uploaded and indexed successfully",
         status_code=201,
     )
 
 
-# Admin Only: Delete bank product document
 @router.delete("/{bank_id}/products/{product_id}/documents/{document_id}")
-def delete_bank_product_document(
+def delete_bank_document(
     bank_id: int,
     product_id: int,
     document_id: int,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    bank_service: BankService = Depends(get_bank_service),
 ):
-    link = db.query(ProductBankLink).filter(
-        ProductBankLink.bankId == bank_id,
-        ProductBankLink.productId == product_id,
-    ).first()
-
-    if not link:
-        raise HTTPException(status_code=404, detail="Product link not found")
-
-    doc = db.query(BankDocument).filter(
-        BankDocument.id == document_id,
-        BankDocument.productBankLinkId == link.id,
-    ).first()
-
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    storage = get_document_storage()
-    try:
-        (storage / doc.documentLocation).unlink(missing_ok=True)
-    except Exception:
-        pass
-
-    db.delete(doc)
-    db.commit()
+    res = bank_service.delete_document(
+        bank_id=bank_id,
+        product_id=product_id,
+        document_id=document_id,
+    )
     return success_response(
-        result={"deleted_id": document_id},
-        message="Document deleted successfully",
+        result=res,
+        message="Bank policy document deleted successfully",
     )

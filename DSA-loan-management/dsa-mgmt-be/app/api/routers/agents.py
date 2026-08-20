@@ -1,15 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from typing import Optional
-from pathlib import Path
-from io import BytesIO
-from PIL import Image
-import os
-from uuid import uuid4
-
+from typing import List, Optional
 from app.db.session import SessionLocal
-from app.models.agent import Agent
-from app.core.security import require_role, hash_password, CurrentUser
+from app.repositories.agent_repository import AgentRepository
+from app.services.agent_service import AgentService
+from app.core.security import require_role, get_current_user, CurrentUser
 from app.core.response import success_response
 
 router = APIRouter()
@@ -23,32 +18,48 @@ def get_db():
         db.close()
 
 
-def get_photo_storage() -> Path:
-    project_root = Path(__file__).resolve().parents[3]
-    storage = project_root / 'dsa-file-storage' / 'agent-photos'
-    storage.mkdir(parents=True, exist_ok=True)
-    return storage
+def get_agent_service(db: Session = Depends(get_db)) -> AgentService:
+    repo = AgentRepository(db)
+    return AgentService(repo)
 
-
-# ── List (Admin Only) ─────────────────────────────────────────────────────────
 
 @router.get("")
 def list_agents(
     include_inactive: bool = False,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    agent_service: AgentService = Depends(get_agent_service),
 ):
-    query = db.query(Agent)
-    if not include_inactive:
-        query = query.filter(Agent.isActive == True)
-    agents = query.all()
+    agents = agent_service.list_agents(include_inactive=include_inactive)
     return success_response(
-        result=[_serialize(a) for a in agents],
+        result=agents,
         message="Agents fetched successfully",
     )
 
 
-# ── Create (Admin Only) ───────────────────────────────────────────────────────
+@router.get("/me")
+def get_current_agent_profile(
+    current_user: CurrentUser = Depends(require_role(["admin", "agent"])),
+    agent_service: AgentService = Depends(get_agent_service),
+):
+    agent = agent_service.get_agent_by_id(current_user.id)
+    return success_response(
+        result=agent,
+        message="Agent profile fetched successfully",
+    )
+
+
+@router.get("/{agent_id}")
+def get_agent(
+    agent_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    agent_service: AgentService = Depends(get_agent_service),
+):
+    agent = agent_service.get_agent_by_id(agent_id)
+    return success_response(
+        result=agent,
+        message="Agent fetched successfully",
+    )
+
 
 @router.post("")
 def create_agent(
@@ -59,38 +70,22 @@ def create_agent(
     isAdmin: bool = Form(False),
     file: UploadFile | None = File(None),
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    agent_service: AgentService = Depends(get_agent_service),
 ):
-    existing = db.query(Agent).filter(Agent.email == email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already in use")
-
-    photo_fname: Optional[str] = None
-    if file is not None:
-        photo_fname = _save_photo(file)
-
-    hashed_password = hash_password(password.strip())
-
-    agent = Agent(
+    agent = agent_service.create_agent(
         name=name,
         email=email,
         mobile=mobile,
-        password=hashed_password,
-        tempPasswordReset=False,
-        isAdmin=isAdmin,
-        photo=photo_fname,
+        password=password,
+        is_admin=isAdmin,
+        file=file,
     )
-    db.add(agent)
-    db.commit()
-    db.refresh(agent)
     return success_response(
-        result=_serialize(agent),
+        result=agent,
         message="Agent created successfully",
         status_code=201,
     )
 
-
-# ── Update (Admin or Self-Agent) ──────────────────────────────────────────────
 
 @router.put("/{agent_id}")
 def update_agent(
@@ -98,106 +93,54 @@ def update_agent(
     name: str = Form(...),
     email: str = Form(...),
     mobile: str = Form(...),
-    isAdmin: bool = Form(False),
+    isAdmin: bool | None = Form(None),
+    isActive: bool | None = Form(None),
+    password: str | None = Form(None),
     file: UploadFile | None = File(None),
     remove_photo: bool = Form(False),
     current_user: CurrentUser = Depends(require_role(["admin", "agent"])),
-    db: Session = Depends(get_db),
+    agent_service: AgentService = Depends(get_agent_service),
 ):
-    # Agent can only update their own profile and cannot escalate privileges
-    if current_user.role == "agent":
-        if current_user.id != agent_id:
-            raise HTTPException(status_code=403, detail="Agents can only update their own profile.")
-        isAdmin = False
-
-    a = db.query(Agent).filter(Agent.id == agent_id).first()
-    if not a:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-    conflict = db.query(Agent).filter(Agent.email == email, Agent.id != agent_id).first()
-    if conflict:
-        raise HTTPException(status_code=400, detail="Email already in use")
-
-    storage = get_photo_storage()
-
-    if file is not None:
-        new_fname = _save_photo(file)
-        if a.photo:
-            _delete_file(storage / a.photo)
-        a.photo = new_fname
-    elif remove_photo and a.photo:
-        _delete_file(storage / a.photo)
-        a.photo = None
-
-    a.name = name
-    a.email = email
-    a.mobile = mobile
-    if current_user.role == "admin":
-        a.isAdmin = isAdmin
-    db.add(a)
-    db.commit()
-    db.refresh(a)
+    agent = agent_service.update_agent(
+        agent_id=agent_id,
+        name=name,
+        email=email,
+        mobile=mobile,
+        is_admin=isAdmin,
+        is_active=isActive,
+        password=password,
+        file=file,
+        remove_photo=remove_photo,
+        current_user=current_user,
+    )
     return success_response(
-        result=_serialize(a),
+        result=agent,
         message="Agent updated successfully",
     )
 
 
-# ── Delete (Admin Only) ───────────────────────────────────────────────────────
+@router.put("/{agent_id}/toggle-status")
+def toggle_agent_status(
+    agent_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    agent_service: AgentService = Depends(get_agent_service),
+):
+    agent = agent_service.toggle_status(agent_id)
+    status_str = "activated" if agent["isActive"] else "deactivated"
+    return success_response(
+        result=agent,
+        message=f"Agent {status_str} successfully",
+    )
+
 
 @router.delete("/{agent_id}")
 def delete_agent(
     agent_id: int,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    agent_service: AgentService = Depends(get_agent_service),
 ):
-    a = db.query(Agent).filter(Agent.id == agent_id).first()
-    if not a:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    a.isActive = False
-    db.add(a)
-    db.commit()
+    res = agent_service.delete_agent(agent_id)
     return success_response(
-        result={"deleted_id": agent_id},
-        message="Agent deleted successfully",
+        result=res,
+        message="Agent deactivated successfully",
     )
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def _save_photo(file: UploadFile) -> str:
-    contents = file.file.read()
-    size_limit = 3 * 1024 * 1024
-    if len(contents) > size_limit:
-        raise HTTPException(status_code=400, detail="File too large; max 3MB")
-    try:
-        Image.open(BytesIO(contents)).verify()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid image file")
-    ext = os.path.splitext(file.filename or "")[1].lower() or ".jpg"
-    fname = f"{uuid4().hex}{ext}"
-    storage = get_photo_storage()
-    with open(storage / fname, "wb") as f:
-        f.write(contents)
-    return fname
-
-
-def _delete_file(path: Path):
-    try:
-        if path.exists():
-            path.unlink()
-    except Exception:
-        pass
-
-
-def _serialize(a: Agent) -> dict:
-    return {
-        "id": a.id,
-        "name": a.name,
-        "email": a.email,
-        "mobile": a.mobile,
-        "tempPasswordReset": a.tempPasswordReset,
-        "isAdmin": a.isAdmin,
-        "photo": a.photo,
-        "isActive": a.isActive,
-    }

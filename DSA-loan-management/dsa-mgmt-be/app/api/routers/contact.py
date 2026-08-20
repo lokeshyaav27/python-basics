@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 from app.db.session import SessionLocal
-from app.models.contact_enquiry import ContactEnquiry
+from app.repositories.contact_repository import ContactRepository
+from app.services.contact_service import ContactService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
@@ -19,6 +20,11 @@ def get_db():
         db.close()
 
 
+def get_contact_service(db: Session = Depends(get_db)) -> ContactService:
+    repo = ContactRepository(db)
+    return ContactService(repo)
+
+
 class ContactEnquiryCreate(BaseModel):
     name: str
     email: str
@@ -31,86 +37,64 @@ class ContactEnquiryStatusUpdate(BaseModel):
     status: str
 
 
-def _serialize(e: ContactEnquiry) -> dict:
-    return {
-        "id": e.id,
-        "name": e.name,
-        "email": e.email,
-        "mobile": e.mobile,
-        "loanType": e.loanType,
-        "message": e.message,
-        "status": e.status,
-        "createdAt": e.createdAt.isoformat() if e.createdAt else None,
-        "isActive": e.isActive,
-    }
-
-
 # Public: Anyone can submit a contact / loan inquiry
 @router.post("")
-def create_contact_enquiry(payload: ContactEnquiryCreate, db: Session = Depends(get_db)):
-    name = payload.name.strip()
-    email = payload.email.strip()
-    mobile = payload.mobile.strip()
-
-    if not name or not email or not mobile:
-        raise HTTPException(status_code=400, detail="Name, email, and mobile are required")
-
-    enquiry = ContactEnquiry(
-        name=name,
-        email=email,
-        mobile=mobile,
-        loanType=payload.loanType.strip() if payload.loanType else None,
-        message=payload.message.strip() if payload.message else None,
-        status="new",
-        isActive=True,
+def create_contact_enquiry(
+    payload: ContactEnquiryCreate,
+    contact_service: ContactService = Depends(get_contact_service),
+):
+    enquiry = contact_service.submit_enquiry(
+        name=payload.name,
+        email=payload.email,
+        mobile=payload.mobile,
+        loan_type=payload.loanType,
+        message=payload.message,
     )
-    db.add(enquiry)
-    db.commit()
-    db.refresh(enquiry)
-
     return success_response(
-        result=_serialize(enquiry),
-        message="Enquiry submitted successfully",
+        result=enquiry,
+        message="Thank you for contacting us! Our team will reach out shortly.",
         status_code=201,
     )
 
 
-# Admin Only: List all customer enquiries
+# Admin Only: List all enquiries
 @router.get("")
 def list_contact_enquiries(
+    include_inactive: bool = False,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    contact_service: ContactService = Depends(get_contact_service),
 ):
-    enquiries = (
-        db.query(ContactEnquiry)
-        .filter(ContactEnquiry.isActive == True)
-        .order_by(ContactEnquiry.id.desc())
-        .all()
-    )
+    enquiries = contact_service.list_enquiries(include_inactive=include_inactive)
     return success_response(
-        result=[_serialize(e) for e in enquiries],
+        result=enquiries,
         message="Contact enquiries fetched successfully",
     )
 
 
-# Admin Only: Update enquiry status
+# Admin Only: Update status of an enquiry (e.g. New -> In Progress -> Resolved)
 @router.put("/{enquiry_id}/status")
-def update_enquiry_status(
+def update_contact_enquiry_status(
     enquiry_id: int,
     payload: ContactEnquiryStatusUpdate,
     current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
+    contact_service: ContactService = Depends(get_contact_service),
 ):
-    enquiry = db.query(ContactEnquiry).filter(ContactEnquiry.id == enquiry_id).first()
-    if not enquiry:
-        raise HTTPException(status_code=404, detail="Enquiry not found")
-
-    enquiry.status = payload.status.strip()
-    db.add(enquiry)
-    db.commit()
-    db.refresh(enquiry)
-
+    enquiry = contact_service.update_enquiry_status(enquiry_id, payload.status)
     return success_response(
-        result=_serialize(enquiry),
-        message=f"Enquiry status updated to {enquiry.status}",
+        result=enquiry,
+        message=f"Enquiry status updated to {payload.status}",
+    )
+
+
+# Admin Only: Soft delete an enquiry
+@router.delete("/{enquiry_id}")
+def delete_contact_enquiry(
+    enquiry_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    contact_service: ContactService = Depends(get_contact_service),
+):
+    res = contact_service.delete_enquiry(enquiry_id)
+    return success_response(
+        result=res,
+        message="Enquiry removed successfully",
     )
