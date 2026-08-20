@@ -62,22 +62,22 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Age / Gender</span>
           <span className="font-bold text-slate-800">
-            {data.age ? `${data.age} Yrs` : '—'} • {data.gender || '—'}
+            {eligibility.age ? `${eligibility.age} Yrs` : '—'} • {eligibility.gender || '—'}
           </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Employment</span>
           <span className="font-bold text-slate-800">
-            {data.employmentType || data.employment_type || (data.isSalaried !== false ? 'Salaried' : 'Self-Employed') || '—'}
+            {eligibility.employmentType || '—'}
           </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Net Monthly Income</span>
           <span className="font-bold text-emerald-600">
-            {data.monthlyIncome || data.monthly_income || eligibility.monthlyIncome
-              ? `₹${Number(data.monthlyIncome || data.monthly_income || eligibility.monthlyIncome).toLocaleString('en-IN')}`
+            {eligibility.monthlyIncome
+              ? `₹${Number(eligibility.monthlyIncome).toLocaleString('en-IN')}`
               : '—'}
           </span>
         </div>
@@ -85,15 +85,15 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">CIBIL Score</span>
           <span className="font-bold text-blue-700">
-            {data.cibilScore || data.cibil_score || eligibility.cibilScore || '—'}
+            {eligibility.cibilScore || '—'}
           </span>
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Loan Required</span>
           <span className="font-bold text-slate-800">
-            {data.loanAmountRequired || data.loan_amount_required || eligibility.requestedAmount
-              ? `₹${Number(data.loanAmountRequired || data.loan_amount_required || eligibility.requestedAmount).toLocaleString('en-IN')}`
+            {eligibility.requestedAmount
+              ? `₹${Number(eligibility.requestedAmount).toLocaleString('en-IN')}`
               : '—'}
           </span>
         </div>
@@ -101,8 +101,8 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
         <div className="rounded-2xl bg-slate-50 p-3">
           <span className="text-slate-400 block text-[10px] uppercase font-bold">Tenure</span>
           <span className="font-bold text-slate-800">
-            {data.preferredTenure || data.preferred_tenure
-              ? `${data.preferredTenure || data.preferred_tenure} Months`
+            {eligibility.preferredTenure
+              ? `${eligibility.preferredTenure} Months`
               : eligibility.tenureYears
               ? `${eligibility.tenureYears * 12} Months`
               : '—'}

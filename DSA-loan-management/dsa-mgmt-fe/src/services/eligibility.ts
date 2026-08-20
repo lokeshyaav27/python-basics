@@ -6,37 +6,35 @@ export interface EligibilityResult {
   applicationId: number
   uniqueCustomerId?: string
   customerName?: string
+  email?: string
+  mobile?: string
+  age?: number
+  gender?: string
+  location?: string
+  employmentType?: string
   productName?: string
   productType?: string
   status: EligibilityStatus
-  isComplete: boolean
-  message?: string
-  missingFields: string[]
+  missingFields?: string[]
 
   requestedAmount?: number
   eligibleAmount?: number
   proposedEmi?: number
+  monthlyIncome?: number
+  cibilScore?: number
   interestRatePct?: number
-  baseInterestRatePct?: number
   femaleRebateApplied?: boolean
   tenureYears?: number
+  preferredTenure?: number
   foirPct?: number
-  maxAllowedFoirPct?: number
   ltvPct?: number
   maxAllowedLtvPct?: number
-  propertyValue?: number
-  carValue?: number
-  monthlyIncome?: number
-  existingEmi?: number
-  monthlyObligation?: number
-  cibilScore?: number
 
-  rejections: string[]
-  positiveFactors: string[]
-  reductionNotes: string[]
+  positiveFactors?: string[]
+  reductionNotes?: string[]
+  rejections?: string[]
 
   aiExplanation?: string
-  applicantData?: Record<string, any>
 }
 
 export const fetchEligibility = async (applicationId: number): Promise<EligibilityResult> => {

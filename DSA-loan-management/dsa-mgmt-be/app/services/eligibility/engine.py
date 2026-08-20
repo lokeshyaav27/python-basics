@@ -144,16 +144,20 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
             "applicationId": app.id,
             "uniqueCustomerId": app.uniqueCustomerId,
             "customerName": applicant_dict["name"],
+            "email": applicant_dict["email"],
+            "mobile": applicant_dict["mobile"],
+            "age": applicant_dict["age"],
+            "gender": applicant_dict["gender"],
+            "location": applicant_dict["location"],
+            "employmentType": applicant_dict["employmentType"],
+            "monthlyIncome": applicant_dict["monthlyIncome"],
+            "cibilScore": applicant_dict["cibilScore"],
+            "requestedAmount": applicant_dict["loanAmountRequired"],
+            "preferredTenure": applicant_dict["preferredTenure"],
             "productName": product_display_name,
             "productType": prod_type,
             "status": "INCOMPLETE_DETAILS",
-            "overallStatus": "INCOMPLETE_DETAILS",
-            "isComplete": False,
-            "message": "Applicant profile or loan requirement is incomplete. Please update the missing details to check eligibility.",
-            "summary": "Applicant profile is incomplete. Please fill all required fields.",
             "missingFields": missing_fields,
-            "applicantData": applicant_dict,
-            "banks": [],
         }
 
     # Execute product-specific evaluation
@@ -182,87 +186,41 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
         pld = app.personalLoanDetail
         personal_dict = {
             "loan_purpose": pld.loan_purpose if pld else "Personal Requirement",
-            "required_amount": float(pld.required_amount) if pld and pld.required_amount else applicant_dict["loan_amount_required"],
+            "required_amount": float(pld.required_amount) if pld and pld.required_amount else applicant_dict["loanAmountRequired"],
         }
         result = evaluate_personal_loan_eligibility(applicant_dict, personal_dict)
 
-    # 4. Evaluate Partner Banks offering this product
-    from app.models.product_bank_link import ProductBankLink
+    # Return concise, flat response with zero duplicate fields
+    return {
+        "applicationId": app.id,
+        "uniqueCustomerId": app.uniqueCustomerId,
+        "customerName": applicant_dict["name"],
+        "email": applicant_dict["email"],
+        "mobile": applicant_dict["mobile"],
+        "age": applicant_dict["age"],
+        "gender": applicant_dict["gender"],
+        "location": applicant_dict["location"],
+        "employmentType": applicant_dict["employmentType"],
+        "productName": product_display_name,
+        "productType": prod_type,
+        "status": result.get("status", "NOT_ELIGIBLE"),
 
-    banks_evaluated = []
-    if app.productId:
-        links = (
-            db.query(ProductBankLink)
-            .filter(ProductBankLink.productId == app.productId, ProductBankLink.isActive != False)
-            .all()
-        )
-        for link in links:
-            bank = link.bank
-            if not bank or bank.isActive is False:
-                continue
+        # Financial & Underwriting Metrics
+        "requestedAmount": result.get("requestedAmount", 0.0),
+        "eligibleAmount": result.get("eligibleAmount", 0.0),
+        "proposedEmi": result.get("proposedEmi", 0.0),
+        "monthlyIncome": result.get("monthlyIncome", 0.0),
+        "cibilScore": result.get("cibilScore"),
+        "interestRatePct": result.get("interestRatePct", 0.0),
+        "femaleRebateApplied": result.get("femaleRebateApplied", False),
+        "tenureYears": result.get("tenureYears", 0),
+        "foirPct": result.get("foirPct", 0.0),
+        "ltvPct": result.get("ltvPct", 0.0),
+        "maxAllowedLtvPct": result.get("maxAllowedLtvPct", 0.0),
 
-            cibil_num = cibil_val or 0
-            foir_val = float(result.get("foirPct", 0.0))
-            ltv_val = float(result.get("ltvPct", 0.0))
-            max_ltv_val = float(result.get("maxAllowedLtvPct", 80.0))
-            applicant_age = applicant_dict.get("age") or 30
-
-            cibil_passed = cibil_num >= 700
-            foir_passed = foir_val <= 65.0
-            ltv_passed = ltv_val <= max_ltv_val
-            age_passed = applicant_age <= 60
-
-            all_passed = cibil_passed and foir_passed and ltv_passed and age_passed
-            partial_passed = cibil_passed and age_passed and (foir_passed or ltv_passed)
-
-            bank_status = "ELIGIBLE" if all_passed else ("PARTIALLY_ELIGIBLE" if partial_passed else "NOT_ELIGIBLE")
-
-            bank_notes = []
-            if not cibil_passed:
-                bank_notes.append(f"CIBIL score ({cibil_num}) is below bank benchmark (700).")
-            if not foir_passed:
-                bank_notes.append(f"FOIR ({foir_val:.1f}%) exceeds maximum permissible ceiling (65%).")
-            if not ltv_passed:
-                bank_notes.append(f"LTV ({ltv_val:.1f}%) exceeds maximum limit ({max_ltv_val:.0f}%).")
-            if all_passed:
-                bank_notes.append(f"Pre-approved under standard {product_display_name} policy guidelines.")
-
-            banks_evaluated.append({
-                "bankId": bank.id,
-                "bankName": bank.name,
-                "bankLogo": bank.logo,
-                "status": bank_status,
-                "maxLtv": max_ltv_val,
-                "checklist": [
-                    {"criteria": "CIBIL Score Benchmark (>= 700)", "passed": cibil_passed},
-                    {"criteria": "Debt-to-Income / FOIR (<= 65%)", "passed": foir_passed},
-                    {"criteria": f"Loan-to-Value Ratio (<= {max_ltv_val:.0f}%)", "passed": ltv_passed},
-                    {"criteria": "Applicant Age & Maximum Tenure Limit", "passed": age_passed},
-                ],
-                "notes": bank_notes,
-            })
-
-    result["banks"] = banks_evaluated
-
-    # Summary Text & Overall Status
-    rejections = result.get("rejections", [])
-    if len(rejections) > 0:
-        result["summary"] = rejections[0]
-    elif result.get("status") == "ELIGIBLE":
-        result["summary"] = f"Congratulations! {applicant_dict['name']} meets underwriting guidelines for {product_display_name}."
-    else:
-        result["summary"] = "Applicant is eligible under adjusted loan amount/tenure terms."
-
-    result["overallStatus"] = result.get("status")
-
-    # Attach Contextual Metadata
-    result["applicationId"] = app.id
-    result["uniqueCustomerId"] = app.uniqueCustomerId
-    result["customerName"] = applicant_dict["name"]
-    result["productName"] = product_display_name
-    result["productType"] = prod_type
-    result["isComplete"] = True
-    result["missingFields"] = []
-    result["applicantData"] = applicant_dict
-
-    return result
+        # Audit Lists
+        "positiveFactors": result.get("positiveFactors", []),
+        "reductionNotes": result.get("reductionNotes", []),
+        "rejections": result.get("rejections", []),
+        "missingFields": [],
+    }

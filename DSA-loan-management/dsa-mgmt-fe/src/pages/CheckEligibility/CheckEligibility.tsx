@@ -92,8 +92,8 @@ const CheckEligibility: React.FC = () => {
       setEditingApplication({
         id: eligibility.applicationId,
         name: eligibility.customerName || '',
-        email: eligibility.applicantData?.email || '',
-        mobile: eligibility.applicantData?.mobile || '',
+        email: eligibility.email || '',
+        mobile: eligibility.mobile || '',
         uniqueCustomerId: eligibility.uniqueCustomerId || '',
       } as any)
     }
@@ -116,21 +116,9 @@ const CheckEligibility: React.FC = () => {
   const isHomeLoan = (eligibility?.productType || eligibility?.productName || '').toLowerCase().includes('home')
   const isCarLoan = (eligibility?.productType || eligibility?.productName || '').toLowerCase().includes('car')
 
-  const grossIncome =
-    eligibility?.monthlyIncome ||
-    eligibility?.applicantData?.monthlyIncome ||
-    eligibility?.applicantData?.monthly_income
-
-  const cibilScore =
-    eligibility?.cibilScore ||
-    eligibility?.applicantData?.cibilScore ||
-    eligibility?.applicantData?.cibil_score
-
-  const customerName =
-    eligibility?.customerName ||
-    eligibility?.applicantData?.name ||
-    currentAppObj?.name ||
-    'Applicant'
+  const grossIncome = eligibility?.monthlyIncome
+  const cibilScore = eligibility?.cibilScore
+  const customerName = eligibility?.customerName || currentAppObj?.name || 'Applicant'
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12 p-4 sm:p-6">
@@ -465,7 +453,7 @@ const CheckEligibility: React.FC = () => {
           </div>
 
           {/* ── AI Underwriter Explanation (Groq openai/gpt-oss-120b) ───── */}
-          {(eligibility.aiExplanation || eligibility.aiInsights) && (
+          {eligibility.aiExplanation && (
             <div className="rounded-3xl border border-blue-200 bg-blue-50/60 p-6 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -479,7 +467,7 @@ const CheckEligibility: React.FC = () => {
                 </div>
               </div>
               <div className="prose prose-sm max-w-none text-xs text-blue-900 leading-relaxed font-sans whitespace-pre-line">
-                {eligibility.aiExplanation || eligibility.aiInsights}
+                {eligibility.aiExplanation}
               </div>
             </div>
           )}
