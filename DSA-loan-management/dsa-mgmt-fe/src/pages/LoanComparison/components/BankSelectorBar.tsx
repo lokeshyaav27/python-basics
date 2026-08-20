@@ -4,7 +4,7 @@ import { LoanApplication } from '../../../services/loanApplications'
 
 interface BankSelectorBarProps {
   applications: LoanApplication[]
-  selectedAppId: number | null
+  selectedApplicationId: number | null
   onSelectApp: (id: number) => void
   allBanks: Bank[]
   bank1Id: number | null
@@ -16,7 +16,7 @@ interface BankSelectorBarProps {
 
 export const BankSelectorBar: React.FC<BankSelectorBarProps> = ({
   applications,
-  selectedAppId,
+  selectedApplicationId,
   onSelectApp,
   allBanks,
   bank1Id,
@@ -34,7 +34,7 @@ export const BankSelectorBar: React.FC<BankSelectorBarProps> = ({
             Select Loan Dossier / Application
           </label>
           <select
-            value={selectedAppId ?? ''}
+            value={selectedApplicationId ?? ''}
             onChange={(e) => onSelectApp(Number(e.target.value))}
             className="w-full rounded-2xl border border-slate-300 p-3 text-xs bg-white outline-none focus:border-blue-500 font-medium"
           >

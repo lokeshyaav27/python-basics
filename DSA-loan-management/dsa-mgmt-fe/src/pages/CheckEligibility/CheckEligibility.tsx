@@ -27,9 +27,9 @@ const CheckEligibility: React.FC = () => {
   const qc = useQueryClient()
   const { user } = useAuth()
 
-  const appIdParam = searchParams.get('appId') || searchParams.get('applicationId')
-  const initialAppId = appIdParam ? parseInt(appIdParam, 10) : null
-  const [selectedAppId, setSelectedAppId] = useState<number | null>(initialAppId)
+  const applicationIdParam = searchParams.get('applicationId')
+  const initialApplicationId = applicationIdParam ? parseInt(applicationIdParam, 10) : null
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(initialApplicationId)
   const [editingApplication, setEditingApplication] = useState<LoanApplication | null>(null)
 
   // Fetch applications list to allow quick switching
@@ -46,18 +46,18 @@ const CheckEligibility: React.FC = () => {
 
   // Set default selected application or sync when query param changes
   React.useEffect(() => {
-    const currentParam = searchParams.get('appId') || searchParams.get('applicationId')
+    const currentParam = searchParams.get('applicationId')
     if (currentParam) {
       const parsed = parseInt(currentParam, 10)
-      if (!isNaN(parsed) && parsed !== selectedAppId) {
-        setSelectedAppId(parsed)
+      if (!isNaN(parsed) && parsed !== selectedApplicationId) {
+        setSelectedApplicationId(parsed)
       }
-    } else if (!selectedAppId && applications.length > 0) {
+    } else if (!selectedApplicationId && applications.length > 0) {
       const firstId = applications[0].id
-      setSelectedAppId(firstId)
-      setSearchParams({ appId: String(firstId) })
+      setSelectedApplicationId(firstId)
+      setSearchParams({ applicationId: String(firstId) })
     }
-  }, [searchParams, applications, selectedAppId, setSearchParams])
+  }, [searchParams, applications, selectedApplicationId, setSearchParams])
 
   // Fetch eligibility evaluation
   const {
@@ -66,18 +66,18 @@ const CheckEligibility: React.FC = () => {
     isError,
     refetch,
   } = useQuery<EligibilityResult>({
-    queryKey: ['loan-eligibility', selectedAppId],
-    queryFn: () => fetchEligibility(selectedAppId!),
-    enabled: !!selectedAppId,
+    queryKey: ['loan-eligibility', selectedApplicationId],
+    queryFn: () => fetchEligibility(selectedApplicationId!),
+    enabled: !!selectedApplicationId,
   })
 
   const handleSelectApp = (id: number) => {
-    setSelectedAppId(id)
-    setSearchParams({ appId: String(id) })
+    setSelectedApplicationId(id)
+    setSearchParams({ applicationId: String(id) })
   }
 
   // Find full application object for modal editing
-  const currentAppObj = applications.find((a) => a.id === selectedAppId) || null
+  const currentAppObj = applications.find((a) => a.id === selectedApplicationId) || null
 
   const handleOpenEdit = () => {
     if (currentAppObj) {
@@ -94,7 +94,7 @@ const CheckEligibility: React.FC = () => {
   }
 
   const handleModalUpdated = () => {
-    qc.invalidateQueries({ queryKey: ['loan-eligibility', selectedAppId] })
+    qc.invalidateQueries({ queryKey: ['loan-eligibility', selectedApplicationId] })
     qc.invalidateQueries({ queryKey: ['eligibility-applications-list'] })
     refetch()
   }
@@ -123,7 +123,7 @@ const CheckEligibility: React.FC = () => {
         <div className="flex items-center gap-3">
           {applications.length > 1 && (
             <select
-              value={selectedAppId ?? ''}
+              value={selectedApplicationId ?? ''}
               onChange={(e) => handleSelectApp(Number(e.target.value))}
               className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500"
             >

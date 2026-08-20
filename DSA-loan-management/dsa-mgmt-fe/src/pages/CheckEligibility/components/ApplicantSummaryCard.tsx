@@ -39,7 +39,7 @@ export const ApplicantSummaryCard: React.FC<ApplicantSummaryCardProps> = ({
           <button
             type="button"
             onClick={() =>
-              navigate(`${ROUTES.SHARED.LOAN_COMPARISON}?appId=${eligibility.applicationId}`)
+              navigate(`${ROUTES.SHARED.LOAN_COMPARISON}?applicationId=${eligibility.applicationId}`)
             }
             className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition"
           >

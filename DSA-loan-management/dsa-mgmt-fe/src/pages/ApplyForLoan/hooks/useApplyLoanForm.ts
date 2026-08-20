@@ -9,7 +9,7 @@ export const useApplyLoanForm = (products: any[], user: any) => {
 
   const [step, setStep] = useState(1)
   const [errorMessage, setErrorMessage] = useState('')
-  const [successModal, setSuccessModal] = useState<{ open: boolean; appId?: number } | null>(null)
+  const [successModal, setSuccessModal] = useState<{ open: boolean; applicationId?: number } | null>(null)
 
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
 
@@ -95,7 +95,7 @@ export const useApplyLoanForm = (products: any[], user: any) => {
     onSuccess: (res) => {
       const createdApp = res?.application || {}
       message.success('Loan application submitted successfully!')
-      setSuccessModal({ open: true, appId: createdApp.id })
+      setSuccessModal({ open: true, applicationId: createdApp.id })
     },
     onError: (err: any) => {
       setErrorMessage(

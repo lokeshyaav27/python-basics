@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 import { ROUTES } from '../../../constants'
 
 interface ApplicationSuccessModalProps {
-  appId?: number
+  applicationId?: number
   isUserLoggedInCustomer: boolean
 }
 
 export const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = ({
-  appId,
+  applicationId,
   isUserLoggedInCustomer,
 }) => {
   return (
@@ -23,7 +23,7 @@ export const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = (
             Application Submitted Successfully
           </span>
           <h3 className="text-2xl font-extrabold text-slate-900">
-            Application #{appId || 'NEW'}
+            Application #{applicationId || 'NEW'}
           </h3>
           <p className="text-xs text-slate-500 mt-2 leading-relaxed">
             Your loan application has been registered. Our underwriting algorithm and assigned DSA officer are matching your profile with partner banks.
@@ -46,9 +46,9 @@ export const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = (
         </div>
 
         <div className="pt-2 flex flex-col gap-2.5">
-          {appId && (
+          {applicationId && (
             <Link
-              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?appId=${appId}`}
+              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?applicationId=${applicationId}`}
               className="w-full rounded-2xl bg-blue-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition"
             >
               Evaluate Instant Eligibility Matrix →

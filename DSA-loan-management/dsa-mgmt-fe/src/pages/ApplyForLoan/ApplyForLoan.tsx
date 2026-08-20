@@ -121,7 +121,7 @@ const ApplyForLoan: React.FC = () => {
       {/* Success Modal Confirmation */}
       {successModal?.open && (
         <ApplicationSuccessModal
-          appId={successModal.appId}
+          applicationId={successModal.applicationId}
           isUserLoggedInCustomer={isUserLoggedInCustomer}
         />
       )}

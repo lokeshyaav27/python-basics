@@ -25,9 +25,9 @@ const LoanComparison: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const appIdParam = searchParams.get('appId') || searchParams.get('applicationId')
-  const initialAppId = appIdParam ? parseInt(appIdParam, 10) : null
-  const [selectedAppId, setSelectedAppId] = useState<number | null>(initialAppId)
+  const applicationIdParam = searchParams.get('applicationId')
+  const initialApplicationId = applicationIdParam ? parseInt(applicationIdParam, 10) : null
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(initialApplicationId)
 
   // Dropdown states for Bank 1 and Bank 2
   const [bank1Id, setBank1Id] = useState<number | null>(null)
@@ -54,18 +54,18 @@ const LoanComparison: React.FC = () => {
 
   // Auto-select first application or sync when query param changes
   useEffect(() => {
-    const currentParam = searchParams.get('appId') || searchParams.get('applicationId')
+    const currentParam = searchParams.get('applicationId')
     if (currentParam) {
       const parsed = parseInt(currentParam, 10)
-      if (!isNaN(parsed) && parsed !== selectedAppId) {
-        setSelectedAppId(parsed)
+      if (!isNaN(parsed) && parsed !== selectedApplicationId) {
+        setSelectedApplicationId(parsed)
       }
-    } else if (!selectedAppId && applications.length > 0) {
+    } else if (!selectedApplicationId && applications.length > 0) {
       const firstId = applications[0].id
-      setSelectedAppId(firstId)
-      setSearchParams({ appId: String(firstId) })
+      setSelectedApplicationId(firstId)
+      setSearchParams({ applicationId: String(firstId) })
     }
-  }, [searchParams, applications, selectedAppId, setSearchParams])
+  }, [searchParams, applications, selectedApplicationId, setSearchParams])
 
   // Set default initial banks when bank list loads
   useEffect(() => {
@@ -90,15 +90,15 @@ const LoanComparison: React.FC = () => {
     isError,
     refetch,
   } = useQuery<BankComparisonResponse>({
-    queryKey: ['bank-comparison', selectedAppId, comparedBankIds, user?.role],
+    queryKey: ['bank-comparison', selectedApplicationId, comparedBankIds, user?.role],
     queryFn: () =>
-      fetchBankComparison(selectedAppId!, comparedBankIds, user?.role || 'customer'),
-    enabled: !!selectedAppId && comparedBankIds.length > 0,
+      fetchBankComparison(selectedApplicationId!, comparedBankIds, user?.role || 'customer'),
+    enabled: !!selectedApplicationId && comparedBankIds.length > 0,
   })
 
   const handleSelectApp = (id: number) => {
-    setSelectedAppId(id)
-    setSearchParams({ appId: String(id) })
+    setSelectedApplicationId(id)
+    setSearchParams({ applicationId: String(id) })
   }
 
   const handleCompare = () => {
@@ -141,7 +141,7 @@ const LoanComparison: React.FC = () => {
       {/* Selectors Bar */}
       <BankSelectorBar
         applications={applications}
-        selectedAppId={selectedAppId}
+        selectedApplicationId={selectedApplicationId}
         onSelectApp={handleSelectApp}
         allBanks={allBanks}
         bank1Id={bank1Id}

@@ -137,7 +137,7 @@ export const AgentApplicationsTable: React.FC<AgentApplicationsTableProps> = ({
                           <Tooltip title="Check Loan Eligibility">
                             <button
                               onClick={() =>
-                                navigate(`${ROUTES.AGENT.CHECK_ELIGIBILITY}?appId=${app.id}`)
+                                navigate(`${ROUTES.AGENT.CHECK_ELIGIBILITY}?applicationId=${app.id}`)
                               }
                               className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition border border-blue-200"
                             >
@@ -147,7 +147,7 @@ export const AgentApplicationsTable: React.FC<AgentApplicationsTableProps> = ({
                           <Tooltip title="Compare Bank Rates Matrix">
                             <button
                               onClick={() =>
-                                navigate(`${ROUTES.AGENT.LOAN_COMPARISON}?appId=${app.id}`)
+                                navigate(`${ROUTES.AGENT.LOAN_COMPARISON}?applicationId=${app.id}`)
                               }
                               className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm shadow-2xs hover:scale-105 active:scale-95 transition border border-indigo-200"
                             >
