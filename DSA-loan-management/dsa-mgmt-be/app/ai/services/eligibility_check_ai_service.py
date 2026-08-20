@@ -71,7 +71,7 @@ def _build_deterministic_explanation(data: Dict[str, Any]) -> str:
 - **Actionable Next Steps:** {next_step}"""
 
 
-def generate_ai_explanation(eligibility_data: Dict[str, Any]) -> str:
+def generate_ai_explanation(eligibility_data: Dict[str, Any], user_role: str = "customer") -> str:
     """
     Generates a natural language summary and underwriting guidance using Groq's
     configured model with fallback to deterministic rule summary.
@@ -88,12 +88,18 @@ def generate_ai_explanation(eligibility_data: Dict[str, Any]) -> str:
     if not client:
         return _build_deterministic_explanation(eligibility_data)
 
-    prompt = build_eligibility_explanation_prompt(eligibility_data)
+    prompt = build_eligibility_explanation_prompt(eligibility_data, user_role=user_role)
+    is_agent = user_role.lower() in ["agent", "admin"]
+    system_role = (
+        "You are a senior DSA credit underwriting and lead optimization specialist."
+        if is_agent
+        else "You are a professional, supportive retail loan credit advisor."
+    )
     try:
         completion = client.chat.completions.create(
             model=ai_config.primary_model,
             messages=[
-                {"role": "system", "content": "You are a professional retail loan credit underwriter in India."},
+                {"role": "system", "content": system_role},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.1,

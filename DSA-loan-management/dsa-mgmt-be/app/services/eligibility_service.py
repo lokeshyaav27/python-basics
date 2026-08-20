@@ -35,6 +35,6 @@ class EligibilityService:
         if raw_result.get("status") == "ERROR":
             raise HTTPException(status_code=404, detail=raw_result.get("message", "Application not found"))
 
-        ai_summary = generate_ai_explanation(raw_result)
+        ai_summary = generate_ai_explanation(raw_result, user_role=current_user.role)
         raw_result["aiExplanation"] = ai_summary
         return raw_result
