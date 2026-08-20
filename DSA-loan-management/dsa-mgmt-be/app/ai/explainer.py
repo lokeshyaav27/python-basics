@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any
 from app.ai.config import ai_config
 from app.ai.client import get_groq_client
-from app.ai.prompts.underwriting_prompt import build_underwriting_prompt
+from app.ai.prompts.eligibility_explanation_prompt import build_eligibility_explanation_prompt
 
 logger = logging.getLogger("ai_explainer")
 
@@ -88,7 +88,7 @@ def generate_ai_explanation(eligibility_data: Dict[str, Any]) -> str:
     if not client:
         return _build_deterministic_explanation(eligibility_data)
 
-    prompt = build_underwriting_prompt(eligibility_data)
+    prompt = build_eligibility_explanation_prompt(eligibility_data)
     try:
         completion = client.chat.completions.create(
             model=ai_config.primary_model,

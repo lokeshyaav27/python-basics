@@ -217,8 +217,8 @@ Step 2: Controller & Authentication
 Step 3: Chat Orchestrator & AI Agent
    └─ File: app/ai/chat_service.py
       └─ Function: chat_service.process_chat_conversation(db, request)
-      ├─ Step A: Dynamic System Prompt & Role Scoping
-      │  └─ File: app/ai/prompts/system_prompt.py
+       ├─ Step A: Dynamic System Prompt & Role Scoping
+       │  └─ File: app/ai/prompts/chat_assistant_prompt.py
       │
       ├─ Step B: RAG Policy Retrieval (if policy query)
       │  └─ File: app/rag/service.py

@@ -1,11 +1,15 @@
 from typing import Optional, Dict, Any
 
 
-def build_system_prompt(
+def build_chat_assistant_prompt(
     auth_context: Optional[Dict[str, Any]],
     linked_app_id: Optional[int] = None,
     linked_cust_id: Optional[str] = None,
 ) -> str:
+    """
+    Constructs the system prompt for the interactive AI Loan Underwriting & Advisory Assistant.
+    Enforces role-based permissions, deterministic financial tool calling, and RAG search.
+    """
     role = (auth_context.get("role") if auth_context else "customer").lower()
     caller_name = auth_context.get("name") if auth_context else "User"
     caller_id = auth_context.get("userId") or auth_context.get("identifier") or "N/A"
@@ -42,3 +46,7 @@ def build_system_prompt(
    - Use Markdown tables, bold headers, bullet points, and highlight key metrics (ROI, EMI, Max Loan Amount, FOIR, LTV).
 """
     return prompt
+
+
+# Backward-compatible alias
+build_system_prompt = build_chat_assistant_prompt

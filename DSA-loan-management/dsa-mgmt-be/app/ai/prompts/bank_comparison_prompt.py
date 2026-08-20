@@ -2,9 +2,9 @@ import json
 from typing import Dict, Any
 
 
-def build_comparison_prompt(comparison_data: Dict[str, Any], user_role: str = "customer") -> str:
+def build_bank_comparison_prompt(comparison_data: Dict[str, Any], user_role: str = "customer") -> str:
     """
-    Builds user prompt for generating multi-bank comparative loan analysis.
+    Builds user prompt for generating multi-bank comparative loan analysis and recommendations.
     """
     return f"""You are a senior banking and loan advisory expert.
 Synthesize the following bank loan comparison data and provide a concise, structured comparative recommendation:
@@ -20,3 +20,7 @@ Guidelines:
 3. If user is AGENT or ADMIN, summarize DSA payout/commission differences.
 4. Keep the synthesis concise, punchy, and formatted with Markdown bullet points.
 """
+
+
+# Backward-compatible alias
+build_comparison_prompt = build_bank_comparison_prompt

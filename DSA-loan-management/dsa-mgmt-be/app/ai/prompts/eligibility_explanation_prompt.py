@@ -2,9 +2,9 @@ import json
 from typing import Dict, Any
 
 
-def build_underwriting_prompt(eligibility_data: Dict[str, Any]) -> str:
+def build_eligibility_explanation_prompt(eligibility_data: Dict[str, Any]) -> str:
     """
-    Builds user prompt for generating natural language loan underwriting explanations
+    Builds the LLM prompt for generating natural language loan underwriting explanations
     with a mandatory tabular format for Key Assessment Metrics tailored by loan type.
     """
     prod_type = str(eligibility_data.get("productType") or eligibility_data.get("productName") or "").lower()
@@ -62,3 +62,6 @@ STRICT RULES:
 3. Keep the tone professional, objective, and clear. Do NOT add greetings or conversational filler.
 """
 
+
+# Backward-compatible alias
+build_underwriting_prompt = build_eligibility_explanation_prompt

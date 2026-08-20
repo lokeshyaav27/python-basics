@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from app.schemas.chat import ChatRequest, ChatResponse, ChatMessage, ToolExecutionAudit
 from app.ai.config import ai_config
 from app.ai.client import get_groq_client
-from app.ai.prompts.system_prompt import build_system_prompt
+from app.ai.prompts.chat_assistant_prompt import build_chat_assistant_prompt
 from app.mcp import get_all_tool_specs, execute_mcp_tool
 
 logger = logging.getLogger("chat_service")
@@ -52,7 +52,7 @@ class ChatService:
         auth = request.authContext.dict() if request.authContext else {}
         user_role = (auth.get("role") or "customer").lower()
 
-        system_instruction = build_system_prompt(
+        system_instruction = build_chat_assistant_prompt(
             auth_context=auth,
             linked_app_id=request.applicationId,
             linked_cust_id=request.customerId,
