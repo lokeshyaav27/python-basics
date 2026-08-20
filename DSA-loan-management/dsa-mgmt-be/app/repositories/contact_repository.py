@@ -45,6 +45,21 @@ class ContactRepository:
         self.db.refresh(enquiry)
         return enquiry
 
+    def update_enquiry(
+        self,
+        enquiry: ContactEnquiry,
+        status: Optional[str] = None,
+        admin_comment: Optional[str] = None,
+    ) -> ContactEnquiry:
+        if status is not None:
+            enquiry.status = status
+        if admin_comment is not None:
+            enquiry.adminComment = admin_comment
+        self.db.add(enquiry)
+        self.db.commit()
+        self.db.refresh(enquiry)
+        return enquiry
+
     def soft_delete(self, enquiry: ContactEnquiry) -> ContactEnquiry:
         enquiry.isActive = False
         self.db.add(enquiry)

@@ -63,12 +63,16 @@ const AdminProducts: React.FC = () => {
             Define available credit products, brochures, and eligibility criteria categories
           </p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-blue-700 transition"
-        >
-          <PlusOutlined /> Add Product
-        </button>
+        <Tooltip title="Currently we support only three product/loan-type: Home, Car and Personal loan">
+          <span className="inline-block cursor-not-allowed">
+            <button
+              disabled
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-5 py-2.5 text-sm font-bold text-slate-400 cursor-not-allowed shadow-none"
+            >
+              <PlusOutlined /> Add Product
+            </button>
+          </span>
+        </Tooltip>
       </div>
 
       {/* Grid */}

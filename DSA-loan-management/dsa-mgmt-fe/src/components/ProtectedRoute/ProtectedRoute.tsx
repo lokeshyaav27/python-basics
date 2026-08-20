@@ -6,6 +6,7 @@ import { ROUTES } from '../../constants/routes'
 import Unauthorized from '../Unauthorized'
 import Sidebar from '../Sidebar'
 import Footer from '../Footer'
+import UserProfileMenu from '../UserProfileMenu'
 import { changeLanguage } from '../../i18n'
 
 interface ProtectedRouteProps {
@@ -56,7 +57,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
+            {/* User Profile Badge & Hover Card */}
+            <UserProfileMenu />
+
             {/* Language Switcher */}
             <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
               <button

@@ -26,7 +26,9 @@ class ContactEnquiryCreate(BaseModel):
 
 
 class ContactEnquiryStatusUpdate(BaseModel):
-    status: str
+    status: Optional[str] = None
+    adminComment: Optional[str] = None
+    admin_comment: Optional[str] = None
 
 
 # Public: Anyone can submit a contact / loan inquiry
@@ -63,18 +65,25 @@ def list_contact_enquiries(
     )
 
 
-# Admin Only: Update status of an enquiry (e.g. New -> In Progress -> Resolved)
+# Admin Only: Update status / admin comment of an enquiry
 @router.put("/{enquiry_id}/status")
+@router.put("/{enquiry_id}")
 def update_contact_enquiry_status(
     enquiry_id: int,
     payload: ContactEnquiryStatusUpdate,
     current_user: CurrentUser = Depends(require_role(["admin"])),
     contact_service: ContactService = Depends(get_contact_service),
 ):
-    enquiry = contact_service.update_enquiry_status(enquiry_id, payload.status)
+    admin_comment = payload.adminComment if payload.adminComment is not None else payload.admin_comment
+    enquiry = contact_service.update_enquiry(
+        enquiry_id=enquiry_id,
+        status=payload.status,
+        admin_comment=admin_comment,
+    )
+    msg = f"Enquiry status updated to {payload.status}" if payload.status else "Enquiry updated successfully"
     return success_response(
         result=enquiry,
-        message=f"Enquiry status updated to {payload.status}",
+        message=msg,
     )
 
 

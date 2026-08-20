@@ -18,6 +18,7 @@ class ContactService:
             "loanType": e.loanType,
             "message": e.message,
             "status": e.status,
+            "adminComment": e.adminComment,
             "createdAt": e.createdAt.isoformat() if e.createdAt else None,
             "isActive": e.isActive,
         }
@@ -56,6 +57,23 @@ class ContactService:
             raise HTTPException(status_code=404, detail="Enquiry not found")
 
         updated = self.contact_repo.update_status(enquiry, status)
+        return self.serialize(updated)
+
+    def update_enquiry(
+        self,
+        enquiry_id: int,
+        status: Optional[str] = None,
+        admin_comment: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        enquiry = self.contact_repo.get_by_id(enquiry_id)
+        if not enquiry:
+            raise HTTPException(status_code=404, detail="Enquiry not found")
+
+        updated = self.contact_repo.update_enquiry(
+            enquiry=enquiry,
+            status=status,
+            admin_comment=admin_comment,
+        )
         return self.serialize(updated)
 
     def delete_enquiry(self, enquiry_id: int) -> dict:

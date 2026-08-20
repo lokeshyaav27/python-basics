@@ -13,5 +13,6 @@ class ContactEnquiry(Base):
     loanType = Column("loan_type", String(64), nullable=True)
     message = Column(Text, nullable=True)
     status = Column(String(32), nullable=False, default="new")
+    adminComment = Column("admin_comment", Text, nullable=True)
     createdAt = Column("created_at", DateTime(timezone=True), server_default=func.now())
     isActive = Column("is_active", Boolean, nullable=False, default=True)

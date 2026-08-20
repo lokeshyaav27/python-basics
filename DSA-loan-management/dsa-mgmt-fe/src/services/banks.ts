@@ -4,8 +4,10 @@ import { ApiResponse } from '../types/api'
 
 export type BankDocumentItem = {
   id: number
-  name: string
-  fileName: string
+  documentName?: string
+  name?: string
+  documentLocation?: string
+  fileName?: string
   createdAt?: string | null
 }
 
@@ -18,8 +20,13 @@ export type Bank = {
   logo?: string
 }
 
-export const fetchBanks = async (): Promise<Bank[]> => {
-  const res = await apiClient.get<ApiResponse<Bank[]>>(API_ENDPOINT_NAMES.BANKS.BASE)
+export const fetchBanks = async (params?: {
+  include_inactive?: boolean
+  product_id?: number
+}): Promise<Bank[]> => {
+  const res = await apiClient.get<ApiResponse<Bank[]>>(API_ENDPOINT_NAMES.BANKS.BASE, {
+    params,
+  })
   return res.data?.result ?? res.data ?? []
 }
 

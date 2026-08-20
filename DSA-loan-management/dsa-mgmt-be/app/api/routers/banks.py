@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -28,9 +28,10 @@ class ProductLinkPayload(BaseModel):
 @router.get("")
 def list_banks(
     include_inactive: bool = False,
+    product_id: Optional[int] = None,
     bank_service: BankService = Depends(get_bank_service),
 ):
-    banks = bank_service.list_banks(include_inactive=include_inactive)
+    banks = bank_service.list_banks(include_inactive=include_inactive, product_id=product_id)
     return success_response(
         result=banks,
         message="Banks fetched successfully",
@@ -127,21 +128,49 @@ def get_bank_products(
     )
 
 
+@router.post("/{bank_id}/products/{product_id}/link")
+@router.post("/{bank_id}/products/{product_id}")
+@router.put("/{bank_id}/products/{product_id}/link")
 @router.put("/{bank_id}/products/{product_id}")
-def link_bank_product(
+async def link_bank_product(
     bank_id: int,
     product_id: int,
-    payload: ProductLinkPayload,
+    request: Request,
     current_user: CurrentUser = Depends(require_role(["admin"])),
     bank_service: BankService = Depends(get_bank_service),
 ):
+    content_type = request.headers.get("content-type", "")
+    is_linked = True
+    commission = None
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            is_linked = bool(body.get("is_linked", body.get("isLinked", True)))
+            raw_comm = body.get("commission")
+            if raw_comm is not None and str(raw_comm).strip() != "":
+                commission = float(raw_comm)
+        except Exception:
+            pass
+    else:
+        form = await request.form()
+        raw_linked = form.get("is_linked") or form.get("isLinked")
+        if raw_linked is not None:
+            is_linked = str(raw_linked).lower() in ["true", "1", "yes"]
+        raw_comm = form.get("commission")
+        if raw_comm is not None and str(raw_comm).strip() != "":
+            try:
+                commission = float(raw_comm)
+            except ValueError:
+                commission = None
+
     result = bank_service.link_product(
         bank_id=bank_id,
         product_id=product_id,
-        is_linked=payload.isLinked,
-        commission=payload.commission,
+        is_linked=is_linked,
+        commission=commission,
     )
-    msg = "Product linked successfully" if payload.isLinked else "Product unlinked successfully"
+    msg = "Product linked successfully" if is_linked else "Product unlinked successfully"
     return success_response(
         result=result,
         message=msg,

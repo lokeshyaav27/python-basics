@@ -31,17 +31,24 @@ const AdminContactEnquiries: React.FC = () => {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      updateContactEnquiryStatus(id, status),
+    mutationFn: ({
+      id,
+      status,
+      adminComment,
+    }: {
+      id: number
+      status: string
+      adminComment?: string
+    }) => updateContactEnquiryStatus(id, status, adminComment),
     onSuccess: (data) => {
-      message.success(`Status updated to "${data?.enquiry?.status || 'updated'}"`)
+      message.success(`Enquiry #${data?.enquiry?.id || ''} updated successfully`)
       queryClient.invalidateQueries({ queryKey: ['admin-contact-enquiries'] })
       if (selectedEnquiry && selectedEnquiry.id === data.enquiry.id) {
         setSelectedEnquiry(data.enquiry)
       }
     },
     onError: (err: any) => {
-      message.error(err?.response?.data?.detail || 'Failed to update enquiry status')
+      message.error(err?.response?.data?.detail || 'Failed to update enquiry')
     },
   })
 
@@ -113,13 +120,19 @@ const AdminContactEnquiries: React.FC = () => {
         enquiries={filteredEnquiries}
         isLoading={isLoading}
         onSelect={(item) => setSelectedEnquiry(item)}
+        onUpdateStatus={(id, status, adminComment) =>
+          updateStatusMutation.mutate({ id, status, adminComment })
+        }
+        isUpdating={updateStatusMutation.isPending}
       />
 
       {/* Detail Modal */}
       <EnquiryDetailModal
         enquiry={selectedEnquiry}
         onClose={() => setSelectedEnquiry(null)}
-        onUpdateStatus={(id, status) => updateStatusMutation.mutate({ id, status })}
+        onUpdateStatus={(id, status, adminComment) =>
+          updateStatusMutation.mutate({ id, status, adminComment })
+        }
         isUpdating={updateStatusMutation.isPending}
       />
     </div>

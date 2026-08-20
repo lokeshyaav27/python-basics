@@ -1,6 +1,7 @@
 import React from 'react'
 import { SaveOutlined } from '@ant-design/icons'
 import { LoanApplication } from '../../services/loanApplications'
+import { useAuth } from '../../auth/AuthProvider'
 import { useApplicationDetailModal } from './hooks/useApplicationDetailModal'
 import {
   ApplicantContactInfo,
@@ -18,6 +19,8 @@ export interface ApplicationDetailModalProps {
   onClose: () => void
   onUpdated?: () => void
   canEdit?: boolean
+  hideCustomerDetails?: boolean
+  hideAgentDetails?: boolean
 }
 
 const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
@@ -25,7 +28,14 @@ const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
   onClose,
   onUpdated,
   canEdit = true,
+  hideCustomerDetails,
+  hideAgentDetails,
 }) => {
+  const { user } = useAuth()
+  const role = (user?.role || '').toLowerCase()
+  const shouldHideCustomer = hideCustomerDetails ?? role === 'customer'
+  const shouldHideAgent = hideAgentDetails ?? role === 'agent'
+
   if (!application) return null
 
   const isFinalized = application.status === 'approved' || application.status === 'rejected'
@@ -57,7 +67,7 @@ const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
   } = useApplicationDetailModal(application, onUpdated)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fadeIn">
       <div className="w-full max-w-4xl rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-200 my-8 flex flex-col max-h-[92vh]">
         {/* Modal Header */}
         <ModalHeader
@@ -78,16 +88,15 @@ const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
           />
 
           <form onSubmit={handleSave} className="space-y-6">
-            <ApplicantContactInfo
-              application={application}
-              isEditing={isEditing}
-              name={name}
-              email={email}
-              mobile={mobile}
-              setName={setName}
-              setEmail={setEmail}
-              setMobile={setMobile}
-            />
+            {/* Customer Details: Hidden for Customers looking at their own dossier */}
+            {!shouldHideCustomer && (
+              <ApplicantContactInfo
+                application={application}
+                name={name}
+                email={email}
+                mobile={mobile}
+              />
+            )}
 
             <GeneralDetailsTab
               generalDetails={generalDetails}
@@ -119,21 +128,24 @@ const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
               />
             )}
 
-            <AssignedAdvisorCard application={application} />
+            {/* Agent / Advisor Details: Hidden for Agents looking at the dossier */}
+            {!shouldHideAgent && (
+              <AssignedAdvisorCard application={application} />
+            )}
 
             {isEditing && (
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/30 hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
                 >
                   <SaveOutlined /> {isSaving ? 'Saving Changes…' : 'Save Changes'}
                 </button>
@@ -148,7 +160,7 @@ const ApplicationDetailModal: React.FC<ApplicationDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+              className="rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
             >
               Close
             </button>

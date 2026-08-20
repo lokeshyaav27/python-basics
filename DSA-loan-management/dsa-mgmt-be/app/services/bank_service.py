@@ -20,8 +20,8 @@ class BankService:
     def __init__(self, bank_repo: BankRepository):
         self.bank_repo = bank_repo
 
-    def list_banks(self, include_inactive: bool = False) -> List[BankRead]:
-        banks = self.bank_repo.list_banks(include_inactive=include_inactive)
+    def list_banks(self, include_inactive: bool = False, product_id: Optional[int] = None) -> List[BankRead]:
+        banks = self.bank_repo.list_banks(include_inactive=include_inactive, product_id=product_id)
         return [BankRead.from_orm(b) for b in banks]
 
     def get_bank_by_id(self, bank_id: int) -> BankRead:
@@ -118,7 +118,9 @@ class BankService:
                     {
                         "id": d.id,
                         "documentName": d.documentName,
+                        "name": d.documentName,
                         "documentLocation": d.documentLocation,
+                        "fileName": d.documentLocation,
                         "createdAt": d.createdAt.isoformat() if d.createdAt else None,
                     }
                     for d in docs
@@ -202,7 +204,9 @@ class BankService:
         return {
             "id": doc.id,
             "documentName": doc.documentName,
+            "name": doc.documentName,
             "documentLocation": doc.documentLocation,
+            "fileName": doc.documentLocation,
             "linkId": link.id,
         }
 

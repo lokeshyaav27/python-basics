@@ -10,11 +10,16 @@ class BankRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_banks(self, include_inactive: bool = False) -> List[Bank]:
+    def list_banks(self, include_inactive: bool = False, product_id: Optional[int] = None) -> List[Bank]:
         query = self.db.query(Bank)
+        if product_id is not None:
+            query = query.join(ProductBankLink, ProductBankLink.bankId == Bank.id).filter(
+                ProductBankLink.productId == product_id,
+                ProductBankLink.isActive != False,
+            )
         if not include_inactive:
             query = query.filter(Bank.isActive != False)
-        return query.all()
+        return query.order_by(Bank.name.asc()).all()
 
     def get_by_id(self, bank_id: int) -> Optional[Bank]:
         return self.db.query(Bank).filter(Bank.id == bank_id).first()

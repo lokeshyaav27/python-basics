@@ -18,6 +18,7 @@ export type ContactEnquiry = {
   loanType?: string | null
   message?: string | null
   status: string
+  adminComment?: string | null
   createdAt?: string | null
   isActive: boolean
 }
@@ -37,9 +38,23 @@ export const fetchContactEnquiries = async (): Promise<ContactEnquiry[]> => {
 
 export const updateContactEnquiryStatus = async (
   enquiryId: number,
-  status: string
+  status: string,
+  adminComment?: string
 ): Promise<{ status: string; enquiry: ContactEnquiry }> => {
-  const res = await apiClient.put<ApiResponse<ContactEnquiry>>(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), { status })
+  const payload: { status?: string; adminComment?: string } = { status }
+  if (adminComment !== undefined) {
+    payload.adminComment = adminComment
+  }
+  const res = await apiClient.put<ApiResponse<ContactEnquiry>>(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), payload)
+  const enquiry = res.data?.result ?? (res.data as any)?.enquiry ?? res.data
+  return { status: 'ok', enquiry }
+}
+
+export const updateContactEnquiry = async (
+  enquiryId: number,
+  payload: { status?: string; adminComment?: string }
+): Promise<{ status: string; enquiry: ContactEnquiry }> => {
+  const res = await apiClient.put<ApiResponse<ContactEnquiry>>(API_ENDPOINT_NAMES.CONTACT.STATUS(enquiryId), payload)
   const enquiry = res.data?.result ?? (res.data as any)?.enquiry ?? res.data
   return { status: 'ok', enquiry }
 }
