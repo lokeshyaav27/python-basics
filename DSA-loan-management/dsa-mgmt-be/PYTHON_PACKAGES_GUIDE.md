@@ -201,7 +201,7 @@ ratio = width / height
 - **What is it?**: The official Python client for Groq Cloud LPU (Language Processing Unit) inference.
 - **Why we use it**:
   - Powers the Conversational AI Underwriter chatbot (`/api/chat/assistant`) using ultra-low latency LLMs (`openai/gpt-oss-120b`).
-- **Where in our project**: `app/ai/client.py`, `app/ai/chat_service.py`, and `app/ai/explainer.py`.
+- **Where in our project**: `app/ai/client.py`, `app/ai/services/chat_ai_service.py`, and `app/ai/services/eligibility_check_ai_service.py`.
 
 ---
 

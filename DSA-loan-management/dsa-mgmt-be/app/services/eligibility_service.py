@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.repositories.loan_application_repository import LoanApplicationRepository
 from app.services.eligibility.engine import evaluate_loan_application
-from app.ai.explainer import generate_ai_explanation
+from app.ai.services.eligibility_check_ai_service import generate_ai_explanation
 from app.core.security import CurrentUser
 
 

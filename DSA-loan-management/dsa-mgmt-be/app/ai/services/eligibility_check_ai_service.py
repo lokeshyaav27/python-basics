@@ -4,7 +4,7 @@ from app.ai.config import ai_config
 from app.ai.client import get_groq_client
 from app.ai.prompts.eligibility_explanation_prompt import build_eligibility_explanation_prompt
 
-logger = logging.getLogger("ai_explainer")
+logger = logging.getLogger("eligibility_check_ai_service")
 
 
 def _build_deterministic_explanation(data: Dict[str, Any]) -> str:

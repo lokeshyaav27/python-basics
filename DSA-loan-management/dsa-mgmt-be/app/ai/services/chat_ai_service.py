@@ -11,7 +11,7 @@ from app.ai.client import get_groq_client
 from app.ai.prompts.chat_assistant_prompt import build_chat_assistant_prompt
 from app.mcp import get_all_tool_specs, execute_mcp_tool
 
-logger = logging.getLogger("chat_service")
+logger = logging.getLogger("chat_ai_service")
 logger.setLevel(logging.INFO)
 
 
