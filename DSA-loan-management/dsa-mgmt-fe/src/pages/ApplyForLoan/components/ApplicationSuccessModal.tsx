@@ -48,7 +48,7 @@ export const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = (
         <div className="pt-2 flex flex-col gap-2.5">
           {appId && (
             <Link
-              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?applicationId=${appId}`}
+              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?appId=${appId}`}
               className="w-full rounded-2xl bg-blue-600 py-3.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-700 transition"
             >
               Evaluate Instant Eligibility Matrix →

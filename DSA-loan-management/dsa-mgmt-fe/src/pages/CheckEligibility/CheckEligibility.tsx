@@ -27,7 +27,7 @@ const CheckEligibility: React.FC = () => {
   const qc = useQueryClient()
   const { user } = useAuth()
 
-  const appIdParam = searchParams.get('appId')
+  const appIdParam = searchParams.get('appId') || searchParams.get('applicationId')
   const initialAppId = appIdParam ? parseInt(appIdParam, 10) : null
   const [selectedAppId, setSelectedAppId] = useState<number | null>(initialAppId)
   const [editingApplication, setEditingApplication] = useState<LoanApplication | null>(null)
@@ -44,14 +44,20 @@ const CheckEligibility: React.FC = () => {
     },
   })
 
-  // Set default selected application if not in query param
+  // Set default selected application or sync when query param changes
   React.useEffect(() => {
-    if (!selectedAppId && applications.length > 0) {
+    const currentParam = searchParams.get('appId') || searchParams.get('applicationId')
+    if (currentParam) {
+      const parsed = parseInt(currentParam, 10)
+      if (!isNaN(parsed) && parsed !== selectedAppId) {
+        setSelectedAppId(parsed)
+      }
+    } else if (!selectedAppId && applications.length > 0) {
       const firstId = applications[0].id
       setSelectedAppId(firstId)
       setSearchParams({ appId: String(firstId) })
     }
-  }, [applications, selectedAppId, setSearchParams])
+  }, [searchParams, applications, selectedAppId, setSearchParams])
 
   // Fetch eligibility evaluation
   const {

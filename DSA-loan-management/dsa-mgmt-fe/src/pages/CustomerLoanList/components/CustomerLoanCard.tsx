@@ -139,7 +139,7 @@ export const CustomerLoanCard: React.FC<CustomerLoanCardProps> = ({ loan, onOpen
         <div className="flex items-center gap-1.5">
           <Tooltip title="View Eligibility Matrix">
             <Link
-              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?applicationId=${loan.id}`}
+              to={`${ROUTES.SHARED.CHECK_ELIGIBILITY}?appId=${loan.id}`}
               className="inline-flex items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200 h-8 w-8 text-xs hover:bg-blue-100 transition shadow-2xs"
             >
               <AuditOutlined />

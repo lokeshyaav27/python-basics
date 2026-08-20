@@ -25,7 +25,7 @@ const LoanComparison: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const appIdParam = searchParams.get('appId')
+  const appIdParam = searchParams.get('appId') || searchParams.get('applicationId')
   const initialAppId = appIdParam ? parseInt(appIdParam, 10) : null
   const [selectedAppId, setSelectedAppId] = useState<number | null>(initialAppId)
 
@@ -52,14 +52,20 @@ const LoanComparison: React.FC = () => {
     queryFn: fetchBanks,
   })
 
-  // Auto-select first application if none selected
+  // Auto-select first application or sync when query param changes
   useEffect(() => {
-    if (!selectedAppId && applications.length > 0) {
+    const currentParam = searchParams.get('appId') || searchParams.get('applicationId')
+    if (currentParam) {
+      const parsed = parseInt(currentParam, 10)
+      if (!isNaN(parsed) && parsed !== selectedAppId) {
+        setSelectedAppId(parsed)
+      }
+    } else if (!selectedAppId && applications.length > 0) {
       const firstId = applications[0].id
       setSelectedAppId(firstId)
       setSearchParams({ appId: String(firstId) })
     }
-  }, [applications, selectedAppId, setSearchParams])
+  }, [searchParams, applications, selectedAppId, setSearchParams])
 
   // Set default initial banks when bank list loads
   useEffect(() => {
