@@ -1,43 +1,14 @@
-import os
-from io import BytesIO
-from pathlib import Path
 from typing import List, Optional, Dict, Any
-from uuid import uuid4
-from PIL import Image
 from fastapi import HTTPException, UploadFile
 from app.models.agent import Agent
 from app.repositories.agent_repository import AgentRepository
 from app.core.security import hash_password, CurrentUser
+from app.core.storage import validate_and_save_image, delete_storage_file
 
 
 class AgentService:
     def __init__(self, agent_repo: AgentRepository):
         self.agent_repo = agent_repo
-
-    @staticmethod
-    def get_photo_storage() -> Path:
-        project_root = Path(__file__).resolve().parents[2]
-        storage = project_root / 'dsa-file-storage' / 'agent-photos'
-        storage.mkdir(parents=True, exist_ok=True)
-        return storage
-
-    def validate_and_save_photo(self, file: UploadFile) -> str:
-        contents = file.file.read()
-        size_limit = 3 * 1024 * 1024
-        if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail="File too large; max 3MB")
-        try:
-            img = Image.open(BytesIO(contents))
-            _ = img.size
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid image file")
-
-        ext = os.path.splitext(file.filename)[1] or ".jpg"
-        photo_fname = f"{uuid4().hex}{ext}"
-        storage = self.get_photo_storage()
-        with open(storage / photo_fname, "wb") as f:
-            f.write(contents)
-        return photo_fname
 
     @staticmethod
     def serialize_agent(agent: Agent) -> Dict[str, Any]:
@@ -77,7 +48,7 @@ class AgentService:
 
         photo_fname: Optional[str] = None
         if file is not None and file.filename:
-            photo_fname = self.validate_and_save_photo(file)
+            photo_fname = validate_and_save_image(file, subfolder="agent-photos")
 
         hashed = hash_password(password.strip())
         agent = self.agent_repo.create(
@@ -118,9 +89,11 @@ class AgentService:
         photo_fname = agent.photo
         update_photo = False
         if file is not None and file.filename:
-            photo_fname = self.validate_and_save_photo(file)
+            photo_fname = validate_and_save_image(file, subfolder="agent-photos")
             update_photo = True
         elif remove_photo:
+            if agent.photo:
+                delete_storage_file(agent.photo, subfolder="agent-photos")
             photo_fname = None
             update_photo = True
 

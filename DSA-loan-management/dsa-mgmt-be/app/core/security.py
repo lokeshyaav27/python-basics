@@ -7,19 +7,11 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from app.core.config import settings
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, get_db
 from app.models.agent import Agent
 from app.models.loan_application import LoanApplication
 
 security = HTTPBearer(auto_error=False)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class CurrentUser(BaseModel):

@@ -2,20 +2,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.services.comparison_service import ComparisonService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_comparison_service(db: Session = Depends(get_db)) -> ComparisonService:

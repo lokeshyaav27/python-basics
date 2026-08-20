@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Dict
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.repositories.agent_repository import AgentRepository
 from app.repositories.loan_application_repository import LoanApplicationRepository
 from app.services.auth_service import AuthService
@@ -9,14 +9,6 @@ from app.core.security import get_current_user, require_role, CurrentUser
 from app.core.response import success_response
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:

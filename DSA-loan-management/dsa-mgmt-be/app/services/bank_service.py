@@ -1,9 +1,5 @@
 import os
-from io import BytesIO
-from pathlib import Path
 from typing import List, Optional, Dict, Any
-from uuid import uuid4
-from PIL import Image
 from fastapi import HTTPException, UploadFile
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
@@ -11,43 +7,17 @@ from app.models.bank_document import BankDocument
 from app.repositories.bank_repository import BankRepository
 from app.schemas.bank import BankRead
 from app.services import rag_service
+from app.core.storage import (
+    get_storage_path,
+    validate_and_save_image,
+    validate_and_save_document,
+    delete_storage_file,
+)
 
 
 class BankService:
     def __init__(self, bank_repo: BankRepository):
         self.bank_repo = bank_repo
-
-    @staticmethod
-    def get_logo_storage() -> Path:
-        project_root = Path(__file__).resolve().parents[2]
-        storage = project_root / 'dsa-file-storage' / 'bank-logo-images'
-        storage.mkdir(parents=True, exist_ok=True)
-        return storage
-
-    @staticmethod
-    def get_document_storage() -> Path:
-        project_root = Path(__file__).resolve().parents[2]
-        storage = project_root / 'dsa-file-storage' / 'bank-documents'
-        storage.mkdir(parents=True, exist_ok=True)
-        return storage
-
-    def validate_and_save_logo(self, file: UploadFile) -> str:
-        contents = file.file.read()
-        size_limit = 3 * 1024 * 1024
-        if len(contents) > size_limit:
-            raise HTTPException(status_code=400, detail='File too large; max 3MB')
-        try:
-            img = Image.open(BytesIO(contents))
-            _ = img.size
-        except Exception:
-            raise HTTPException(status_code=400, detail='Invalid image file')
-
-        ext = os.path.splitext(file.filename)[1] or '.jpg'
-        logo_fname = f"{uuid4().hex}{ext}"
-        storage = self.get_logo_storage()
-        with open(storage / logo_fname, 'wb') as f:
-            f.write(contents)
-        return logo_fname
 
     def list_banks(self, include_inactive: bool = False) -> List[BankRead]:
         banks = self.bank_repo.list_banks(include_inactive=include_inactive)
@@ -69,7 +39,7 @@ class BankService:
     ) -> BankRead:
         logo_fname: Optional[str] = None
         if file is not None and file.filename:
-            logo_fname = self.validate_and_save_logo(file)
+            logo_fname = validate_and_save_image(file, subfolder="bank-logo-images")
 
         bank = self.bank_repo.create(
             name=name,
@@ -97,9 +67,11 @@ class BankService:
         logo_fname = bank.logo
         update_logo = False
         if file is not None and file.filename:
-            logo_fname = self.validate_and_save_logo(file)
+            logo_fname = validate_and_save_image(file, subfolder="bank-logo-images")
             update_logo = True
         elif remove_logo:
+            if bank.logo:
+                delete_storage_file(bank.logo, subfolder="bank-logo-images")
             logo_fname = None
             update_logo = True
 
@@ -208,22 +180,8 @@ class BankService:
         if not link:
             raise HTTPException(status_code=400, detail='Product must be linked to bank before uploading policy docs')
 
-        if not file or not file.filename:
-            raise HTTPException(status_code=400, detail='File is required')
-
-        ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in ['.pdf', '.txt', '.doc', '.docx']:
-            raise HTTPException(status_code=400, detail='Only PDF, TXT, DOC, and DOCX documents are accepted')
-
-        contents = file.file.read()
-        if len(contents) > 25 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail='Document too large; max 25MB')
-
-        doc_fname = f"{uuid4().hex}{ext}"
-        storage = self.get_document_storage()
-        file_path = storage / doc_fname
-        with open(file_path, 'wb') as f:
-            f.write(contents)
+        doc_fname = validate_and_save_document(file, subfolder="bank-documents")
+        file_path = get_storage_path("bank-documents") / doc_fname
 
         doc_title = document_name.strip() if (document_name and document_name.strip()) else file.filename
         doc = self.bank_repo.create_document(link.id, doc_title, doc_fname)
@@ -263,13 +221,7 @@ class BankService:
             pass
 
         # Remove physical file
-        try:
-            storage = self.get_document_storage()
-            p = storage / doc.documentLocation
-            if p.exists():
-                p.unlink()
-        except Exception:
-            pass
+        delete_storage_file(doc.documentLocation, subfolder="bank-documents")
 
         self.bank_repo.delete_document(doc)
         return {"id": document_id, "deleted": True}

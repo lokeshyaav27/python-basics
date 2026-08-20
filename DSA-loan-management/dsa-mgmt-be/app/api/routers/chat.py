@@ -1,21 +1,13 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
-from app.schemas.chat import ChatRequest, ChatResponse, ChatAuthContext
+from app.db.session import get_db
+from app.schemas.chat import ChatRequest, ChatAuthContext
 from app.services.chat_orchestrator import process_chat_conversation
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/assistant")

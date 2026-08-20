@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional
 
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.services.mcp_dsa_tools import (
     MCP_DSA_TOOLS_SPECS,
     execute_dsa_mcp_tool,
@@ -21,14 +21,6 @@ from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class MCPExecuteRequest(BaseModel):
@@ -60,72 +52,89 @@ def list_all_mcp_tools(
     )
 
 
-# ── 2. Unified MCP Tool Execution Endpoint ───────────────────────────────────
+# ── 2. Execute Single MCP Tool ───────────────────────────────────────────────
 @router.post("/execute")
-def execute_mcp_tool(
-    req: MCPExecuteRequest,
+def execute_single_mcp_tool(
+    payload: MCPExecuteRequest,
     current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db),
 ):
     """
-    Unified entry point for calling any MCP tool with automated authorization checks.
+    Executes a named MCP tool deterministically with argument validation and audit logging.
     """
-    auth = {
-        "role": current_user.role,
-        "userId": current_user.id,
-        "name": current_user.name,
-        "email": current_user.email,
-        "mobile": current_user.mobile,
-        "identifier": current_user.uniqueCustomerId or str(current_user.id or ""),
-    }
+    tool_name = payload.tool_name
+    args = payload.arguments or {}
 
-    tool = req.tool_name.strip()
+    auth_ctx = payload.auth_context or {}
+    auth_ctx["role"] = current_user.role
+    auth_ctx["userId"] = current_user.id
+    auth_ctx["name"] = current_user.name
+    auth_ctx["identifier"] = current_user.uniqueCustomerId or str(current_user.id or "")
 
-    # Route specialized tools
-    if tool == "check_loan_eligibility":
-        app_id = int(req.arguments.get("application_id") or req.arguments.get("applicationId"))
-        res = execute_mcp_eligibility_tool(db=db, application_id=app_id)
-        return success_response(result=res, message="Eligibility evaluation completed")
+    if tool_name == "evaluate_loan_eligibility":
+        app_id = args.get("application_id")
+        if not app_id:
+            raise HTTPException(status_code=400, detail="application_id is required for eligibility tool")
+        res = execute_mcp_eligibility_tool(db=db, application_id=int(app_id))
+        return success_response(
+            result=res,
+            message="Eligibility MCP tool executed successfully",
+        )
 
-    elif tool == "compare_banks":
-        app_id = int(req.arguments.get("application_id") or req.arguments.get("applicationId"))
-        bank_ids = req.arguments.get("bank_ids") or req.arguments.get("bankIds") or []
-        user_role = auth.get("role", "customer")
-        res = execute_mcp_comparison_tool(db=db, application_id=app_id, bank_ids=bank_ids, user_role=user_role)
-        return success_response(result=res, message="Bank comparison completed")
+    elif tool_name == "compare_bank_offers":
+        app_id = args.get("application_id")
+        b_ids = args.get("bank_ids") or []
+        if not app_id:
+            raise HTTPException(status_code=400, detail="application_id is required for comparison tool")
+        res = execute_mcp_comparison_tool(
+            db=db,
+            application_id=int(app_id),
+            bank_ids=b_ids,
+            user_role=current_user.role,
+        )
+        return success_response(
+            result=res,
+            message="Comparison MCP tool executed successfully",
+        )
 
-    # Route DSA Core Tools
-    res = execute_dsa_mcp_tool(
-        db=db,
-        tool_name=tool,
-        arguments=req.arguments,
-        auth_user=auth,
-    )
-    return success_response(result=res, message=f"Tool {tool} executed successfully")
+    else:
+        res = execute_dsa_mcp_tool(
+            db=db,
+            tool_name=tool_name,
+            arguments=args,
+            auth_context=auth_ctx,
+        )
+        return success_response(
+            result=res,
+            message=f"MCP tool '{tool_name}' executed successfully",
+        )
 
 
-# ── 3. Semantic Search Endpoint ───────────────────────────────────────────────
-class SemanticSearchPayload(BaseModel):
-    query: str = Field(..., min_length=2, description="Natural language search query or question")
-    bankId: Optional[int] = Field(None, description="Optional bank filter")
-    productId: Optional[int] = Field(None, description="Optional product filter")
-    topK: int = Field(5, ge=1, le=20, description="Number of relevant chunks")
-
-
-@router.post("/semantic-search")
-def mcp_post_semantic_search(
-    payload: SemanticSearchPayload,
+# ── 3. RAG Semantic Search Direct Endpoint ───────────────────────────────────
+@router.get("/search-policy-docs")
+def search_policy_docs_endpoint(
+    query: str = Query(..., description="Semantic search query across bank policy documents"),
+    bankId: Optional[int] = Query(None, description="Optional bank ID filter"),
+    productId: Optional[int] = Query(None, description="Optional product ID filter"),
+    topK: int = Query(4, ge=1, le=10, description="Number of top chunks to return"),
     current_user: CurrentUser = Depends(require_role(["admin", "agent", "customer"])),
     db: Session = Depends(get_db),
 ):
     """
-    Semantic vector search over bank policy documents via pgvector, returning both structured matches and formatted LLM knowledge context.
+    Executes semantic vector similarity search via pgvector on uploaded bank policy documents.
     """
-    res = search_bank_documents(
+    results = search_bank_documents(
         db=db,
-        query=payload.query,
-        bank_id=payload.bankId,
-        product_id=payload.productId,
-        top_k=payload.topK,
+        query=query,
+        bank_id=bankId,
+        product_id=productId,
+        top_k=topK,
     )
-    return success_response(result=res, message="Semantic vector search completed")
+    return success_response(
+        result={
+            "query": query,
+            "totalMatches": len(results),
+            "matches": results,
+        },
+        message="Policy document semantic search completed successfully",
+    )
