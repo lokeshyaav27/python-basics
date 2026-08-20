@@ -6,7 +6,7 @@ from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
 from app.repositories.bank_repository import BankRepository
 from app.schemas.bank import BankRead
-from app.services import rag_service
+from app.rag import rag_service
 from app.core.storage import (
     get_storage_path,
     validate_and_save_image,

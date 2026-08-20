@@ -16,7 +16,7 @@ from app.models.product import Product
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
-from app.services import rag_service
+from app.rag import rag_service
 
 
 def copy_bank_documents_static_assets():

@@ -17,7 +17,7 @@ from app.models.bank import Bank
 from app.models.agent import Agent
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
-from app.services import rag_service
+from app.rag import rag_service
 
 
 # ── Helper: Serialize Loan Application with related tables ───────────────────

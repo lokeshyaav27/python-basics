@@ -10,7 +10,7 @@ from app.models.product import Product
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
 from app.models.loan_application import LoanApplication
-from app.services import rag_service
+from app.rag import rag_service
 from app.services.eligibility.common import (
     calculate_monthly_emi,
     calculate_max_loan_from_emi,
