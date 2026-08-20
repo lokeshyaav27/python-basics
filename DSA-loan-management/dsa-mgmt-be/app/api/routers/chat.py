@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.chat import ChatRequest, ChatAuthContext
-from app.services.chat_orchestrator import process_chat_conversation
+from app.ai import chat_service
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response
 
@@ -29,7 +29,7 @@ def chat_with_loan_assistant(
     auth.identifier = current_user.uniqueCustomerId or str(current_user.id or "")
 
     req.authContext = auth
-    result = process_chat_conversation(db=db, request=req)
+    result = chat_service.process_chat_conversation(db=db, request=req)
     return success_response(
         result=result,
         message="Assistant response generated successfully",

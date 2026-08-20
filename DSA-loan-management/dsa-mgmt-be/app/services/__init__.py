@@ -6,8 +6,6 @@ from app.services.loan_application_service import LoanApplicationService
 from app.services.contact_service import ContactService
 from app.services.eligibility_service import EligibilityService
 from app.services.comparison_service import ComparisonService
-from app.services.chat_orchestrator import process_chat_conversation
-from app.services import rag_service
 
 __all__ = [
     "ProductService",
@@ -18,6 +16,4 @@ __all__ = [
     "ContactService",
     "EligibilityService",
     "ComparisonService",
-    "process_chat_conversation",
-    "rag_service",
 ]

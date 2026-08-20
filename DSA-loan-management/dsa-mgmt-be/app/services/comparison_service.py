@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.services.mcp_comparison_tool import execute_mcp_comparison_tool
+from app.mcp import compare_banks
 from app.core.security import CurrentUser
 
 
@@ -27,7 +27,7 @@ class ComparisonService:
 
         effective_role = current_user.role
 
-        return execute_mcp_comparison_tool(
+        return compare_banks(
             db=self.db,
             application_id=application_id,
             bank_ids=parsed_bank_ids,

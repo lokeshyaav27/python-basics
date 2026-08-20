@@ -1,13 +1,8 @@
-"""
-Backward compatibility adapter for mcp_dsa_tools.
-All MCP tools, authorization checks, and serializers are now located in the `app.mcp` package.
-"""
-from app.mcp import (
-    ALL_MCP_SPECS as MCP_DSA_TOOLS_SPECS,
-    check_auth_permission,
-    serialize_loan_application,
-    execute_mcp_tool as execute_dsa_mcp_tool,
-    search_bank_documents,
+from app.mcp.auth import check_auth_permission
+from app.mcp.serializer import serialize_loan_application
+from app.mcp.registry import get_all_tool_specs, execute_mcp_tool
+from app.mcp.tools import (
+    ALL_MCP_SPECS,
     get_customer_details_by_id,
     get_loan_details_by_customer_id,
     get_loan_by_id,
@@ -18,14 +13,17 @@ from app.mcp import (
     get_commission_structure_by_bank_id,
     get_all_products,
     get_agent_list,
+    check_loan_eligibility,
+    compare_banks,
+    search_bank_documents,
 )
 
 __all__ = [
-    "MCP_DSA_TOOLS_SPECS",
     "check_auth_permission",
     "serialize_loan_application",
-    "execute_dsa_mcp_tool",
-    "search_bank_documents",
+    "get_all_tool_specs",
+    "execute_mcp_tool",
+    "ALL_MCP_SPECS",
     "get_customer_details_by_id",
     "get_loan_details_by_customer_id",
     "get_loan_by_id",
@@ -36,4 +34,7 @@ __all__ = [
     "get_commission_structure_by_bank_id",
     "get_all_products",
     "get_agent_list",
+    "check_loan_eligibility",
+    "compare_banks",
+    "search_bank_documents",
 ]
