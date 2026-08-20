@@ -2,8 +2,8 @@ from typing import Dict, Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.repositories.loan_application_repository import LoanApplicationRepository
-from app.mcp import check_loan_eligibility
-from app.ai import generate_ai_explanation
+from app.services.eligibility.engine import evaluate_loan_application
+from app.ai.explainer import generate_ai_explanation
 from app.core.security import CurrentUser
 
 
@@ -30,7 +30,7 @@ class EligibilityService:
                     detail="Forbidden: You can only evaluate eligibility for your own loan application.",
                 )
 
-        raw_result = check_loan_eligibility(db=self.loan_app_repo.db, application_id=application_id)
+        raw_result = evaluate_loan_application(db=self.loan_app_repo.db, application_id=application_id)
 
         if raw_result.get("status") == "ERROR":
             raise HTTPException(status_code=404, detail=raw_result.get("message", "Application not found"))

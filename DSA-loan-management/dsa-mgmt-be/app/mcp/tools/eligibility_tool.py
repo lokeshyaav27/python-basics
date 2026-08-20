@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
-from app.services.eligibility import evaluate_loan_application
+from app.services.eligibility.engine import evaluate_loan_application
 
 
 ELIGIBILITY_TOOL_SPEC = {

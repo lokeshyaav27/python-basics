@@ -65,13 +65,13 @@ if not is_production:
 
 # Mount static file storage directories
 project_root = Path(__file__).resolve().parents[1]
-storage_base = project_root / 'dsa-file-storage'
+storage_base = project_root / settings.STORAGE_BASE_DIR
 
 for subfolder, endpoint in [
-    ('product-images', '/static/product-images'),
-    ('bank-logo-images', '/static/bank-logo-images'),
-    ('agent-photos', '/static/agent-photos'),
-    ('bank-documents', '/static/bank-documents'),
+    (settings.STORAGE_PRODUCT_IMAGES_DIR, f'/static/{settings.STORAGE_PRODUCT_IMAGES_DIR}'),
+    (settings.STORAGE_BANK_LOGOS_DIR, f'/static/{settings.STORAGE_BANK_LOGOS_DIR}'),
+    (settings.STORAGE_AGENT_PHOTOS_DIR, f'/static/{settings.STORAGE_AGENT_PHOTOS_DIR}'),
+    (settings.STORAGE_BANK_DOCS_DIR, f'/static/{settings.STORAGE_BANK_DOCS_DIR}'),
 ]:
     target_dir = storage_base / subfolder
     target_dir.mkdir(parents=True, exist_ok=True)

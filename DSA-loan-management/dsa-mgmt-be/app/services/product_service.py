@@ -3,6 +3,7 @@ from fastapi import HTTPException, UploadFile
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductRead
+from app.core.config import settings
 from app.core.storage import validate_and_save_image, delete_storage_file
 
 
@@ -23,7 +24,11 @@ class ProductService:
     def create_product(self, name: str, description: str, file: UploadFile) -> ProductRead:
         if not file or not file.filename:
             raise HTTPException(status_code=400, detail='Image file is required')
-        fname = validate_and_save_image(file, subfolder="product-images", target_ratio=2/3)
+        fname = validate_and_save_image(
+            file,
+            subfolder=settings.STORAGE_PRODUCT_IMAGES_DIR,
+            target_ratio=2/3,
+        )
         product = self.product_repo.create(name=name, description=description, image_filename=fname)
         return ProductRead.from_orm(product)
 
@@ -42,11 +47,15 @@ class ProductService:
         image_fname = product.image
         update_image = False
         if file is not None and file.filename:
-            image_fname = validate_and_save_image(file, subfolder="product-images", target_ratio=2/3)
+            image_fname = validate_and_save_image(
+                file,
+                subfolder=settings.STORAGE_PRODUCT_IMAGES_DIR,
+                target_ratio=2/3,
+            )
             update_image = True
         elif remove_image:
             if product.image:
-                delete_storage_file(product.image, subfolder="product-images")
+                delete_storage_file(product.image, subfolder=settings.STORAGE_PRODUCT_IMAGES_DIR)
             image_fname = None
             update_image = True
 

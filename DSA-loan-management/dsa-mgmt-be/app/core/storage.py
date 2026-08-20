@@ -5,14 +5,19 @@ from typing import Optional, Tuple
 from uuid import uuid4
 from PIL import Image
 from fastapi import HTTPException, UploadFile
+from app.core.config import settings
 
 
-def get_storage_path(subfolder: str) -> Path:
+def get_storage_path(subfolder: Optional[str] = None) -> Path:
     """
-    Returns the absolute path to a subfolder inside dsa-file-storage and ensures it exists.
+    Returns the absolute path to a subfolder inside the configured storage base directory and ensures it exists.
     """
     project_root = Path(__file__).resolve().parents[2]
-    storage = project_root / 'dsa-file-storage' / subfolder
+    base_dir = project_root / settings.STORAGE_BASE_DIR
+    if subfolder:
+        storage = base_dir / subfolder
+    else:
+        storage = base_dir
     storage.mkdir(parents=True, exist_ok=True)
     return storage
 

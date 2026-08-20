@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, UploadFile
 from app.models.agent import Agent
 from app.repositories.agent_repository import AgentRepository
+from app.core.config import settings
 from app.core.security import hash_password, CurrentUser
 from app.core.storage import validate_and_save_image, delete_storage_file
 
@@ -48,7 +49,7 @@ class AgentService:
 
         photo_fname: Optional[str] = None
         if file is not None and file.filename:
-            photo_fname = validate_and_save_image(file, subfolder="agent-photos")
+            photo_fname = validate_and_save_image(file, subfolder=settings.STORAGE_AGENT_PHOTOS_DIR)
 
         hashed = hash_password(password.strip())
         agent = self.agent_repo.create(
@@ -89,11 +90,11 @@ class AgentService:
         photo_fname = agent.photo
         update_photo = False
         if file is not None and file.filename:
-            photo_fname = validate_and_save_image(file, subfolder="agent-photos")
+            photo_fname = validate_and_save_image(file, subfolder=settings.STORAGE_AGENT_PHOTOS_DIR)
             update_photo = True
         elif remove_photo:
             if agent.photo:
-                delete_storage_file(agent.photo, subfolder="agent-photos")
+                delete_storage_file(agent.photo, subfolder=settings.STORAGE_AGENT_PHOTOS_DIR)
             photo_fname = None
             update_photo = True
 

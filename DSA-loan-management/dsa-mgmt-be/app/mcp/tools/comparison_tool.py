@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
-from app.services.comparison import compare_banks_for_application
+from app.services.comparison.engine import compare_banks_for_application
 
 
 COMPARISON_TOOL_SPEC = {

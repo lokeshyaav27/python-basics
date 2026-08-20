@@ -7,6 +7,7 @@ from app.models.bank_document import BankDocument
 from app.repositories.bank_repository import BankRepository
 from app.schemas.bank import BankRead
 from app.rag import rag_service
+from app.core.config import settings
 from app.core.storage import (
     get_storage_path,
     validate_and_save_image,
@@ -39,7 +40,7 @@ class BankService:
     ) -> BankRead:
         logo_fname: Optional[str] = None
         if file is not None and file.filename:
-            logo_fname = validate_and_save_image(file, subfolder="bank-logo-images")
+            logo_fname = validate_and_save_image(file, subfolder=settings.STORAGE_BANK_LOGOS_DIR)
 
         bank = self.bank_repo.create(
             name=name,
@@ -67,11 +68,11 @@ class BankService:
         logo_fname = bank.logo
         update_logo = False
         if file is not None and file.filename:
-            logo_fname = validate_and_save_image(file, subfolder="bank-logo-images")
+            logo_fname = validate_and_save_image(file, subfolder=settings.STORAGE_BANK_LOGOS_DIR)
             update_logo = True
         elif remove_logo:
             if bank.logo:
-                delete_storage_file(bank.logo, subfolder="bank-logo-images")
+                delete_storage_file(bank.logo, subfolder=settings.STORAGE_BANK_LOGOS_DIR)
             logo_fname = None
             update_logo = True
 
@@ -180,8 +181,8 @@ class BankService:
         if not link:
             raise HTTPException(status_code=400, detail='Product must be linked to bank before uploading policy docs')
 
-        doc_fname = validate_and_save_document(file, subfolder="bank-documents")
-        file_path = get_storage_path("bank-documents") / doc_fname
+        doc_fname = validate_and_save_document(file, subfolder=settings.STORAGE_BANK_DOCS_DIR)
+        file_path = get_storage_path(settings.STORAGE_BANK_DOCS_DIR) / doc_fname
 
         doc_title = document_name.strip() if (document_name and document_name.strip()) else file.filename
         doc = self.bank_repo.create_document(link.id, doc_title, doc_fname)
@@ -221,7 +222,7 @@ class BankService:
             pass
 
         # Remove physical file
-        delete_storage_file(doc.documentLocation, subfolder="bank-documents")
+        delete_storage_file(doc.documentLocation, subfolder=settings.STORAGE_BANK_DOCS_DIR)
 
         self.bank_repo.delete_document(doc)
         return {"id": document_id, "deleted": True}

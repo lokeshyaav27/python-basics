@@ -14,8 +14,26 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = Field(default="development")  # 'development', 'staging', or 'production'
     DATABASE_URL: str = Field(default="postgresql://postgres:admin@localhost:5432/dsa-mgmt")
+
+    # Storage Directories
+    STORAGE_BASE_DIR: str = Field(default="dsa-file-storage")
+    STORAGE_PRODUCT_IMAGES_DIR: str = Field(default="product-images")
+    STORAGE_BANK_LOGOS_DIR: str = Field(default="bank-logo-images")
+    STORAGE_AGENT_PHOTOS_DIR: str = Field(default="agent-photos")
+    STORAGE_BANK_DOCS_DIR: str = Field(default="bank-documents")
+
+    # AI & Groq Configuration
     GROQ_API_KEY: str = Field(default="")
     GROQ_MODEL: str = Field(default="openai/gpt-oss-120b")
+
+    # RAG Vector Search Configuration
+    RAG_EMBEDDING_MODEL: str = Field(default="all-MiniLM-L6-v2")
+    RAG_CHUNK_SIZE: int = Field(default=1000)
+    RAG_CHUNK_OVERLAP: int = Field(default=150)
+    RAG_DEFAULT_TOP_K: int = Field(default=4)
+    RAG_SIMILARITY_THRESHOLD: float = Field(default=0.35)
+
+    # JWT Authentication
     JWT_SECRET_KEY: str = Field(default="dsa-loan-mgmt-jwt-secret-key-2026-secure-auth")
     JWT_ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24 * 7)  # 7 days
