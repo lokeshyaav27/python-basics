@@ -1,6 +1,6 @@
 import apiClient from './apiClient'
 import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
-import { ApiResponse } from '../types/api'
+import { ApiResponse, EligibilityStatus } from '../types'
 
 export interface EligibilityResult {
   applicationId: number
@@ -8,7 +8,7 @@ export interface EligibilityResult {
   customerName?: string
   productName?: string
   productType?: string
-  status: 'ELIGIBLE' | 'PARTIALLY_ELIGIBLE' | 'NOT_ELIGIBLE' | 'INCOMPLETE_DETAILS' | 'ERROR'
+  status: EligibilityStatus
   isComplete: boolean
   message?: string
   missingFields: string[]

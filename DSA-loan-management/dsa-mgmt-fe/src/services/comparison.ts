@@ -1,6 +1,6 @@
 import apiClient from './apiClient'
 import { API_ENDPOINT_NAMES } from '../constants/apiEndpoints'
-import { ApiResponse } from '../types/api'
+import { ApiResponse, EligibilityStatus } from '../types'
 
 export interface InsuranceItem {
   isProvided: string
@@ -21,7 +21,7 @@ export interface BankComparisonItem {
   hasPolicyDocs: boolean
   policyStatusNote?: string
   
-  status: 'ELIGIBLE' | 'PARTIALLY_ELIGIBLE' | 'NOT_ELIGIBLE' | 'N/A'
+  status: EligibilityStatus | 'N/A'
   reasonForRejection: string[]
   
   roi?: number

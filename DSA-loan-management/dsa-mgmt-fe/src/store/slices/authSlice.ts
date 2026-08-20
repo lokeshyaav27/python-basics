@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { UserRole, LoanApplicationStatus } from '../../types/enums'
 
-export type Role = 'admin' | 'agent' | 'customer'
+export type Role = UserRole | 'admin' | 'agent' | 'customer'
 
 export interface UserDetails {
   id?: number
@@ -9,12 +10,12 @@ export interface UserDetails {
   mobile?: string
   uniqueCustomerId?: string
   photo?: string
-  role: Role
+  role: UserRole | string
   isAdmin?: boolean
   isActive?: boolean
   tempPasswordReset?: boolean
   productId?: number
-  status?: string
+  status?: LoanApplicationStatus | string
 }
 
 export interface AuthState {

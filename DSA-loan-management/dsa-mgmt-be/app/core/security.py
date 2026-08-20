@@ -14,9 +14,12 @@ from app.models.loan_application import LoanApplication
 security = HTTPBearer(auto_error=False)
 
 
+from app.core.enums import UserRole
+
+
 class CurrentUser(BaseModel):
     id: Optional[int] = None
-    role: str  # 'admin', 'agent', 'customer'
+    role: UserRole | str  # 'admin', 'agent', 'customer'
     name: str
     email: Optional[str] = None
     mobile: Optional[str] = None
