@@ -280,8 +280,7 @@ dsa-mgmt-be/
 │   ├── seed_3_agents.py              # 3. DSA agents seeder
 │   ├── seed_4_product_bank_mapping.py# 4. Product-bank links & RAG vector indexer
 │   └── seed_5_loan_applications.py   # 5. Customer loan applications seeder
-├── sql/
-│   └── init_db.sql           # Direct raw SQL schema definitions
+├── alembic/                  # Database migration scripts and versions
 ├── seed_full_database.py     # Master database seeding orchestrator
 ├── requirements.txt          # Python dependencies
 ├── .env.example              # Sample environment variables template
