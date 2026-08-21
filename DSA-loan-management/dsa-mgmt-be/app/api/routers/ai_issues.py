@@ -1,6 +1,5 @@
 import logging
-from typing import Optional, List, Dict, Any
-from datetime import datetime
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
@@ -11,7 +10,6 @@ from app.schemas.ai_issue import (
     ReportIssueRequest,
     ReportIssueResponse,
     AIIssueReportItem,
-    UpdateIssueStatusRequest,
 )
 from app.ai.services.ai_issue_service import ai_issue_service
 from app.core.security import require_role, CurrentUser
@@ -34,52 +32,39 @@ def report_ai_issue(
     Analyzes the issue using the AI Issue Diagnostic Service and persists the full audit record.
     """
     logger.info(
-        f"Reporting AI Issue from user '{current_user.name}' ({current_user.role}) | Category='{req.issueCategory}'"
+        f"Reporting AI Issue from user '{current_user.name}' ({current_user.role})"
     )
 
     # 1. Run AI Root-Cause Diagnostic & Suggestion Service
-    root_cause, suggestion, severity = ai_issue_service.analyze_reported_issue(
+    root_cause, suggestion = ai_issue_service.analyze_reported_issue(
         user_query=req.userQuery,
         ai_response=req.aiResponse,
-        issue_category=req.issueCategory,
         user_remarks=req.userRemarks,
         chat_history=req.chatHistory,
-        user_role=current_user.role,
     )
 
     # 2. Persist in Database
     report = AIIssueReport(
         userId=current_user.id,
         userName=current_user.name,
-        userRole=current_user.role,
-        userEmail=current_user.email,
-        userMobile=current_user.mobile,
-        applicationId=req.applicationId,
-        customerId=req.customerId,
-        agentId=req.agentId,
         userQuery=req.userQuery,
         aiResponse=req.aiResponse,
-        issueCategory=req.issueCategory,
         userRemarks=req.userRemarks,
         chatHistory=req.chatHistory,
         referencedDocs=req.referencedDocs,
         aiRootCause=root_cause,
         aiSuggestion=suggestion,
-        aiSeverity=severity,
-        status="OPEN",
     )
 
     db.add(report)
     db.commit()
     db.refresh(report)
 
-    logger.info(f"AI Issue Report #{report.id} created successfully with severity='{severity}'")
+    logger.info(f"AI Issue Report #{report.id} created successfully")
 
     response_payload = ReportIssueResponse(
         reportId=report.id,
-        status="OPEN",
-        message="Your issue report has been recorded. Our underwriting tech & credit team has been notified.",
-        severity=severity,
+        message="Your issue report has been recorded. Our team has been notified.",
         rootCauseSummary=root_cause,
     )
 
@@ -91,26 +76,14 @@ def report_ai_issue(
 
 @router.get("")
 def list_ai_issues(
-    status: Optional[str] = Query(None, description="Filter by status: OPEN, UNDER_REVIEW, RESOLVED, IGNORED"),
-    severity: Optional[str] = Query(None, description="Filter by severity: LOW, MEDIUM, HIGH, CRITICAL"),
-    category: Optional[str] = Query(None, description="Filter by category"),
     search: Optional[str] = Query(None, description="Search term in userQuery, aiResponse, or userName"),
     current_user: CurrentUser = Depends(require_role(["admin"])),
     db: Session = Depends(get_db),
 ):
     """
-    Lists all reported AI chat issues for administrative quality auditing (Admin only).
+    Lists all reported AI chat issues for administrative review (Admin only).
     """
-    query = db.query(AIIssueReport).filter(AIIssueReport.isActive != False)
-
-    if status and status.upper() != "ALL":
-        query = query.filter(AIIssueReport.status == status.upper())
-
-    if severity and severity.upper() != "ALL":
-        query = query.filter(AIIssueReport.aiSeverity == severity.upper())
-
-    if category and category.upper() != "ALL":
-        query = query.filter(AIIssueReport.issueCategory == category)
+    query = db.query(AIIssueReport)
 
     if search:
         s_term = f"%{search.strip()}%"
@@ -124,17 +97,7 @@ def list_ai_issues(
             )
         )
 
-    reports = query.order_by(desc(AIIssueReport.createdAt)).all()
-
-    # Calculate overview stats
-    all_active = db.query(AIIssueReport).filter(AIIssueReport.isActive != False).all()
-    stats = {
-        "total": len(all_active),
-        "open": sum(1 for r in all_active if r.status == "OPEN"),
-        "underReview": sum(1 for r in all_active if r.status == "UNDER_REVIEW"),
-        "resolved": sum(1 for r in all_active if r.status == "RESOLVED"),
-        "highOrCritical": sum(1 for r in all_active if r.aiSeverity in ["HIGH", "CRITICAL"]),
-    }
+    reports = query.order_by(desc(AIIssueReport.id)).all()
 
     serialized_items = [
         AIIssueReportItem.from_orm(r).dict() for r in reports
@@ -142,7 +105,7 @@ def list_ai_issues(
 
     return success_response(
         result={
-            "stats": stats,
+            "total": len(serialized_items),
             "issues": serialized_items,
         },
         message="AI issues retrieved successfully",
@@ -158,53 +121,11 @@ def get_ai_issue_detail(
     """
     Retrieves specific reported issue details by ID (Admin only).
     """
-    report = db.query(AIIssueReport).filter(AIIssueReport.id == issue_id, AIIssueReport.isActive != False).first()
+    report = db.query(AIIssueReport).filter(AIIssueReport.id == issue_id).first()
     if not report:
         raise HTTPException(status_code=404, detail=f"AI Issue Report #{issue_id} not found.")
 
     return success_response(
         result=AIIssueReportItem.from_orm(report).dict(),
         message="AI issue detail retrieved successfully",
-    )
-
-
-@router.put("/{issue_id}/status")
-def update_ai_issue_status(
-    issue_id: int,
-    req: UpdateIssueStatusRequest,
-    current_user: CurrentUser = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db),
-):
-    """
-    Updates the lifecycle status and admin notes for a reported AI issue (Admin only).
-    """
-    report = db.query(AIIssueReport).filter(AIIssueReport.id == issue_id, AIIssueReport.isActive != False).first()
-    if not report:
-        raise HTTPException(status_code=404, detail=f"AI Issue Report #{issue_id} not found.")
-
-    new_status = req.status.upper().strip()
-    valid_statuses = ["OPEN", "UNDER_REVIEW", "RESOLVED", "IGNORED"]
-    if new_status not in valid_statuses:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status '{new_status}'. Allowed values: {valid_statuses}",
-        )
-
-    report.status = new_status
-    if req.adminNotes is not None:
-        report.adminNotes = req.adminNotes
-
-    if new_status == "RESOLVED":
-        report.resolvedAt = datetime.utcnow()
-    elif report.status != "RESOLVED":
-        report.resolvedAt = None
-
-    db.commit()
-    db.refresh(report)
-
-    logger.info(f"AI Issue #{issue_id} status updated to '{new_status}' by admin '{current_user.name}'")
-
-    return success_response(
-        result=AIIssueReportItem.from_orm(report).dict(),
-        message=f"Issue report #{issue_id} status updated to {new_status}",
     )

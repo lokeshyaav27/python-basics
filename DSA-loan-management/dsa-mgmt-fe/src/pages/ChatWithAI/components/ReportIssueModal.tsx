@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { Modal, Select, Input, Alert } from 'antd'
-import { FlagOutlined, RobotOutlined, WarningOutlined } from '@ant-design/icons'
+import { Modal, Input, Alert } from 'antd'
+import { FlagOutlined, RobotOutlined } from '@ant-design/icons'
 import { DisplayChatMessage } from './ChatMessageBubble'
 
 interface ReportIssueModalProps {
@@ -9,21 +9,11 @@ interface ReportIssueModalProps {
   targetMessage: DisplayChatMessage | null
   userPromptText?: string
   onSubmitReport: (payload: {
-    issueCategory: string
     userRemarks: string
     reportedAssistantMsg: DisplayChatMessage
   }) => Promise<void>
   isSubmitting: boolean
 }
-
-const ISSUE_CATEGORIES = [
-  { value: 'INACCURATE_CALCULATION', label: '🧮 Inaccurate Calculation (EMI, FOIR, LTV, Eligibility)' },
-  { value: 'POLICY_MISMATCH', label: '🏦 Bank Policy / Age / Salary Criteria Mismatch' },
-  { value: 'INSUFFICIENT_ANSWER', label: '⚠️ Incomplete, Vague, or Insufficient Explanation' },
-  { value: 'HALLUCINATION', label: '🚫 Hallucinated or Non-Existent Guidelines' },
-  { value: 'OUTDATED_RATES', label: '📉 Outdated Interest Rates or Processing Fees' },
-  { value: 'OTHER', label: '📝 Other Underwriting / Quality Concern' },
-]
 
 export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   open,
@@ -33,13 +23,11 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   onSubmitReport,
   isSubmitting,
 }) => {
-  const [category, setCategory] = useState<string>('INACCURATE_CALCULATION')
   const [remarks, setRemarks] = useState<string>('')
 
   const handleConfirm = async () => {
     if (!targetMessage) return
     await onSubmitReport({
-      issueCategory: category,
       userRemarks: remarks.trim(),
       reportedAssistantMsg: targetMessage,
     })
@@ -104,30 +92,16 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
           </div>
         </div>
 
-        {/* Issue Category */}
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1.5">
-            Issue Category <span className="text-rose-500">*</span>
-          </label>
-          <Select
-            value={category}
-            onChange={(val) => setCategory(val)}
-            options={ISSUE_CATEGORIES}
-            className="w-full"
-            size="large"
-          />
-        </div>
-
         {/* Remarks */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1.5">
-            Additional Remarks / What went wrong? <span className="text-slate-400 font-normal">(Optional)</span>
+            What went wrong / what was expected? <span className="text-slate-400 font-normal">(Optional)</span>
           </label>
           <Input.TextArea
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
             placeholder="e.g. Expected HDFC max tenure 30 yrs with 8.4% ROI, but assistant computed 20 yrs with 9.2%..."
-            rows={3}
+            rows={4}
             className="rounded-xl"
             maxLength={1000}
             showCount

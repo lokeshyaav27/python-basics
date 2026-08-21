@@ -72,22 +72,19 @@ class AIIssueSuggestionService:
         self,
         user_query: str,
         ai_response: str,
-        issue_category: str,
         user_remarks: Optional[str] = None,
         chat_history: Optional[List[Dict[str, str]]] = None,
-        user_role: str = "customer",
-    ) -> Tuple[str, str, str]:
+    ) -> Tuple[str, str]:
         """
         Executes AI diagnostic analysis.
-        Returns (root_cause: str, suggestion: str, severity: str).
+        Returns (root_cause: str, suggestion: str).
         """
         client = get_groq_client()
         if client is None:
             logger.warning("Groq client unavailable; using default issue diagnostic.")
             return (
-                f"Issue flagged under '{issue_category}'. AI diagnostic service is currently offline.",
-                "Review the flagged query and assistant response logs manually in Admin Audit Console.",
-                "MEDIUM",
+                "AI diagnostic service is currently offline.",
+                "Review the flagged query and assistant response logs manually.",
             )
 
         app_docs = load_application_documentation()
@@ -95,10 +92,8 @@ class AIIssueSuggestionService:
         prompt = build_ai_issue_analysis_prompt(
             user_query=user_query,
             ai_response=ai_response,
-            issue_category=issue_category,
             user_remarks=user_remarks,
             chat_history=chat_history,
-            user_role=user_role,
             app_documentation=app_docs[:14000],  # Limit token footprint
         )
 
@@ -129,22 +124,17 @@ class AIIssueSuggestionService:
 
                 root_cause = data.get("root_cause") or "Reported discrepancy in assistant response."
                 suggestion = data.get("suggestion") or "Audit credit policy and RAG citations."
-                severity = str(data.get("severity") or "MEDIUM").upper()
 
-                if severity not in ["LOW", "MEDIUM", "HIGH", "CRITICAL"]:
-                    severity = "MEDIUM"
-
-                logger.info(f"Issue diagnostic complete: Severity='{severity}', RootCause='{root_cause[:60]}...'")
-                return root_cause, suggestion, severity
+                logger.info(f"Issue diagnostic complete: RootCause='{root_cause[:60]}...'")
+                return root_cause, suggestion
 
             except Exception as e:
                 logger.warning(f"Diagnostic model '{model_name}' failed: {e}. Trying fallback...")
 
         # Fallback diagnostic if all models fail
         return (
-            f"User reported {issue_category}: {user_remarks or 'Response flagged for review.'}",
+            f"User reported concern: {user_remarks or 'Response flagged for review.'}",
             "Perform manual audit of underwriting output and check partner bank policy rules.",
-            "MEDIUM",
         )
 
 

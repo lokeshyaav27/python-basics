@@ -215,7 +215,6 @@ const ChatWithAI: React.FC = () => {
   }
 
   const handleReportSubmit = async (payload: {
-    issueCategory: string
     userRemarks: string
     reportedAssistantMsg: DisplayChatMessage
   }) => {
@@ -225,30 +224,12 @@ const ChatWithAI: React.FC = () => {
       content: m.content,
     }))
 
-    // Extract any @app: or @user: or @agent: mentions in prompt
-    let linkedAppId: number | undefined
-    let linkedCustId: string | undefined
-    let linkedAgentId: number | undefined
-
-    const appMatch = userPromptText.match(/@app:(\d+)/i)
-    if (appMatch) linkedAppId = parseInt(appMatch[1], 10)
-
-    const userMatch = userPromptText.match(/@user:([a-zA-Z0-9_-]+)/i)
-    if (userMatch) linkedCustId = userMatch[1]
-
-    const agentMatch = userPromptText.match(/@agent:(\d+)/i)
-    if (agentMatch) linkedAgentId = parseInt(agentMatch[1], 10)
-
     await reportIssueMutation.mutateAsync({
       userQuery: userPromptText || 'User prompt from conversation',
       aiResponse: payload.reportedAssistantMsg.content,
-      issueCategory: payload.issueCategory,
       userRemarks: payload.userRemarks,
       chatHistory: historyPayload,
       referencedDocs: payload.reportedAssistantMsg.referencedDocs || [],
-      applicationId: linkedAppId,
-      customerId: linkedCustId,
-      agentId: linkedAgentId,
     })
   }
 
