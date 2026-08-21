@@ -36,7 +36,7 @@ LOAN_TOOLS_SPECS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "customer_identifier": {"type": "string", "description": "Optional mobile, customer ID, or name filter."}
+                "customer_identifier": {"type": ["string", "null"], "description": "Optional mobile, customer ID, or name filter. Pass null if querying all loans."}
             }
         }
     }

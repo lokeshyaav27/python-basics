@@ -5,14 +5,14 @@ from app.rag import rag_service
 
 SEARCH_TOOL_SPEC = {
     "name": "search_bank_documents",
-    "description": "Performs semantic vector search across partner bank loan policy and guideline documents using pgvector.",
+    "description": "Performs semantic vector search across partner bank loan policy and guideline documents using pgvector. Directly include the bank name and topic in the query string (e.g. 'HDFC home loan age limit', 'ICICI minimum income'). Do not call get_bank_list first.",
     "parameters": {
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "Search query about loan terms, minimum salary, LTV, age limit, or policy rules."},
-            "bank_id": {"type": "integer", "description": "Optional bank ID to filter by."},
-            "product_id": {"type": "integer", "description": "Optional product ID to filter by."},
-            "top_k": {"type": "integer", "description": "Number of top matching chunks to retrieve (default 4)."}
+            "query": {"type": "string", "description": "Search query including bank name or policy topic (e.g. 'HDFC home loan age limit', 'SBI minimum salary')."},
+            "bank_id": {"type": ["integer", "null"], "description": "Optional numeric bank ID if already known. Pass null if searching by query text."},
+            "product_id": {"type": ["integer", "null"], "description": "Optional product ID if already known. Pass null otherwise."},
+            "top_k": {"type": ["integer", "null"], "description": "Number of top matching chunks to retrieve (default 4)."}
         },
         "required": ["query"]
     }
