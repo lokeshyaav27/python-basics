@@ -16,6 +16,7 @@ import {
   RobotOutlined,
   UserOutlined,
   FileTextOutlined,
+  MessageOutlined,
 } from '@ant-design/icons'
 
 const AdminAIIssues: React.FC = () => {
@@ -36,6 +37,128 @@ const AdminAIIssues: React.FC = () => {
 
   const issuesList = data?.issues || []
   const totalCount = data?.total || issuesList.length
+
+  const renderFormattedContent = (text: string) => {
+    if (!text) return null
+
+    const lines = text.split('\n')
+    const elements: React.ReactNode[] = []
+    let tableLines: string[] = []
+    let inTable = false
+
+    const flushTable = (key: number) => {
+      if (tableLines.length === 0) return
+      const rows = tableLines
+        .filter((l) => l.trim().startsWith('|') && !l.includes('---'))
+        .map((l) =>
+          l
+            .split('|')
+            .slice(1, -1)
+            .map((cell) => cell.trim())
+        )
+
+      if (rows.length > 0) {
+        const [headerRow, ...bodyRows] = rows
+        elements.push(
+          <div
+            key={`table-${key}`}
+            className="my-3 overflow-x-auto rounded-2xl border border-purple-200/80 bg-white shadow-2xs"
+          >
+            <table className="w-full text-xs text-left border-collapse">
+              <thead>
+                <tr className="bg-purple-50/90 border-b border-purple-100 text-purple-950 font-bold">
+                  {headerRow.map((cell, idx) => (
+                    <th key={idx} className="px-3.5 py-2.5">
+                      {cell.replace(/\*\*/g, '')}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {bodyRows.map((row, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-purple-50/30 transition">
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx} className="px-3.5 py-2 text-slate-700 font-medium">
+                        {cell.includes('**') ? (
+                          <strong className="text-slate-900 font-bold">
+                            {cell.replace(/\*\*/g, '')}
+                          </strong>
+                        ) : cell.includes('✓') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+                            {cell}
+                          </span>
+                        ) : cell.includes('⚠️') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-amber-700">
+                            {cell}
+                          </span>
+                        ) : cell.includes('✕') ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-rose-700">
+                            {cell}
+                          </span>
+                        ) : (
+                          cell
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+      tableLines = []
+    }
+
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('|')) {
+        inTable = true
+        tableLines.push(trimmed)
+      } else {
+        if (inTable) {
+          flushTable(idx)
+          inTable = false
+        }
+        if (trimmed.startsWith('###')) {
+          elements.push(
+            <h5
+              key={idx}
+              className="text-xs font-bold uppercase tracking-wider text-purple-950 mt-3.5 mb-1"
+            >
+              {trimmed.replace(/^###\s*/, '')}
+            </h5>
+          )
+        } else if (trimmed.startsWith('- **') || trimmed.startsWith('**')) {
+          elements.push(
+            <p key={idx} className="my-1 leading-relaxed text-slate-800">
+              {trimmed.split('**').map((part, i) =>
+                i % 2 === 1 ? (
+                  <strong key={i} className="font-bold text-purple-950">
+                    {part}
+                  </strong>
+                ) : (
+                  part
+                )
+              )}
+            </p>
+          )
+        } else if (trimmed.length > 0) {
+          elements.push(
+            <p key={idx} className="my-1 text-slate-700 leading-relaxed">
+              {trimmed}
+            </p>
+          )
+        }
+      }
+    })
+
+    if (inTable) {
+      flushTable(lines.length)
+    }
+
+    return <div className="space-y-1">{elements}</div>
+  }
 
   const columns = [
     {
@@ -152,7 +275,7 @@ const AdminAIIssues: React.FC = () => {
       <Drawer
         open={!!selectedIssue}
         onClose={() => setSelectedIssue(null)}
-        width={700}
+        width={740}
         title={
           <div className="flex items-center justify-between pr-4">
             <span className="font-bold text-slate-800 flex items-center gap-2 text-base">
@@ -225,12 +348,12 @@ const AdminAIIssues: React.FC = () => {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 space-y-1">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1 border-b border-slate-100 pb-2">
                   <RobotOutlined /> Flagged AI Response
                 </div>
-                <div className="text-xs text-slate-800 whitespace-pre-wrap font-mono text-[11px] bg-slate-50 p-3 rounded-xl max-h-60 overflow-y-auto">
-                  {selectedIssue.aiResponse}
+                <div className="text-xs text-slate-800 leading-relaxed max-h-96 overflow-y-auto pr-1">
+                  {renderFormattedContent(selectedIssue.aiResponse)}
                 </div>
               </div>
 
@@ -247,6 +370,56 @@ const AdminAIIssues: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Section 4: Full Chat History Transcript */}
+            {selectedIssue.chatHistory && selectedIssue.chatHistory.length > 0 && (
+              <div className="space-y-3">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <MessageOutlined /> 4. Full Conversation History Transcript ({selectedIssue.chatHistory.length} messages)
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 space-y-3 max-h-96 overflow-y-auto">
+                  {selectedIssue.chatHistory.map((item, idx) => {
+                    const isUser = item.role === 'user'
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
+                      >
+                        {!isUser && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-600 text-white text-[10px] shrink-0 mt-0.5">
+                            <RobotOutlined />
+                          </div>
+                        )}
+                        <div
+                          className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed shadow-2xs ${
+                            isUser
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white border border-slate-200 text-slate-800'
+                          }`}
+                        >
+                          <div className="text-[10px] font-bold uppercase mb-1 opacity-75">
+                            {isUser ? 'User' : 'Assistant'}
+                          </div>
+                          <div className="text-xs">
+                            {isUser ? (
+                              <div className="whitespace-pre-wrap">{item.content}</div>
+                            ) : (
+                              renderFormattedContent(item.content)
+                            )}
+                          </div>
+                        </div>
+                        {isUser && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-700 text-white text-[10px] shrink-0 mt-0.5">
+                            <UserOutlined />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Drawer>

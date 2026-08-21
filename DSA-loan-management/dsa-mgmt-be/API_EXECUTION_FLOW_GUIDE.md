@@ -233,7 +233,7 @@ Step 3: Chat Orchestrator & AI Agent
       │
       └─ Step D: Groq LLM Inference
          └─ File: app/ai/client.py
-         └─ Calls Groq API (openai/gpt-oss-120b) with system context + RAG chunks + tool outputs
+         └─ Calls Groq API (models configured in .env) with system context + RAG chunks + tool outputs
          └─ Generates professional, compliant underwriting explanation
 
 Step 4: Response Returned

@@ -67,17 +67,10 @@ class ChatService:
         tool_choice: Optional[str] = None,
     ) -> Tuple[Optional[Any], Optional[str], Optional[Exception]]:
         """
-        Executes a call to Groq LLM with primary and fallback models.
+        Executes a call to Groq LLM with models configured in environment variables.
         Returns (response_object, model_used, error).
         """
-        candidate_models = [self.config.primary_model] + self.config.fallback_models
-        seen_models = set()
-        models_to_try = []
-        for m in candidate_models:
-            if m and m not in seen_models:
-                seen_models.add(m)
-                models_to_try.append(m)
-
+        models_to_try = self.config.candidate_models
         last_error = None
 
         for model_name in models_to_try:
@@ -100,7 +93,7 @@ class ChatService:
 
             except Exception as e:
                 last_error = e
-                logger.warning(f"Model '{model_name}' failed: {e}. Trying next candidate model...")
+                logger.warning(f"Model '{model_name}' failed: {e}. Trying fallback model from env...")
 
         return None, None, last_error
 

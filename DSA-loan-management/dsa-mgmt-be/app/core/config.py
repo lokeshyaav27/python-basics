@@ -22,9 +22,10 @@ class Settings(BaseSettings):
     STORAGE_AGENT_PHOTOS_DIR: str = Field(default="agent-photos")
     STORAGE_BANK_DOCS_DIR: str = Field(default="bank-documents")
 
-    # AI & Groq Configuration
+    # AI & Groq Configuration (Configured purely via .env)
     GROQ_API_KEY: str = Field(default="")
-    GROQ_MODEL: str = Field(default="openai/gpt-oss-120b")
+    GROQ_MODEL: str = Field(default="")
+    GROQ_FALLBACK_MODEL: str = Field(default="")
 
     # RAG Vector Search Configuration
     RAG_EMBEDDING_MODEL: str = Field(default="all-MiniLM-L6-v2")

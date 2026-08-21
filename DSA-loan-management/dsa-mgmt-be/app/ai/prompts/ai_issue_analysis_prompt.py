@@ -4,13 +4,12 @@ from typing import Optional, Dict, Any, List
 def build_ai_issue_analysis_prompt(
     user_query: str,
     ai_response: str,
-    user_remarks: Optional[str],
-    chat_history: Optional[List[Dict[str, str]]],
-    app_documentation: str,
+    user_remarks: Optional[str] = None,
+    chat_history: Optional[List[Dict[str, str]]] = None,
 ) -> str:
     """
     Constructs the system prompt for the AI Underwriting Quality Assurance & Issue Diagnosis Agent.
-    Evaluates reported AI chat interactions against platform ground-truth documentation.
+    Evaluates reported AI chat interactions to diagnose root causes and suggest remediations.
     """
     history_str = ""
     if chat_history:
@@ -22,17 +21,10 @@ def build_ai_issue_analysis_prompt(
 
     return f"""You are the senior **AI Underwriting Quality Assurance & Credit Risk Auditor** for a digital DSA (Direct Selling Agent) Loan Aggregator platform in India.
 
-Your objective is to inspect a reported AI chat response, cross-examine it against the official platform documentation, determine the technical/underwriting root cause, and provide actionable remediation recommendations.
-
-### Official Platform Rules & Knowledge Base Context:
-```markdown
-{app_documentation}
-```
-
----
+Your objective is to inspect a reported AI chat interaction, determine the root cause of the error/inaccuracy, and provide actionable remediation recommendations.
 
 ### Incident Audit Dossier
-- **User Remarks / Commentary**: {user_remarks or 'None provided by user.'}
+- **User Feedback / Remarks**: {user_remarks or 'None provided by user.'}
 
 #### Recent Conversation History:
 {history_str}
@@ -46,9 +38,8 @@ Your objective is to inspect a reported AI chat response, cross-examine it again
 ---
 
 ### Instructions for Analysis:
-1. **Fact-Checking**: Cross-verify numbers, FOIR formulas, LTV limits, bank policies, and interest rates against the platform documentation.
-2. **Diagnosis**: Determine if the assistant hallucinated, miscalculated, provided incomplete advice, violated privacy/role restrictions, or if the response was accurate (user misunderstanding).
-3. **Actionable Suggestions**: Detail concrete steps for engineers or underwriters (e.g., "Re-index HDFC Home Loan PDF", "Fix FOIR formula threshold in eligibility MCP tool", "Update prompt constraints").
+1. **Diagnosis**: Determine if the assistant hallucinated, miscalculated, gave incomplete advice, violated role/confidentiality restrictions, or if the response was misunderstood by the user.
+2. **Actionable Suggestions**: Detail concrete steps for engineers or underwriters to prevent similar issues (e.g. policy document ingestion, prompt adjustments, calculation guardrails).
 
 ### Output Format (Strict JSON ONLY):
 Respond ONLY with a valid JSON object matching the following structure without extra commentary or markdown codeblocks:

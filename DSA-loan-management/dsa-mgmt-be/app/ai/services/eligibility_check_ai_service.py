@@ -95,17 +95,20 @@ def generate_ai_explanation(eligibility_data: Dict[str, Any], user_role: str = "
         if is_agent
         else "You are a professional, supportive retail loan credit advisor."
     )
-    try:
-        completion = client.chat.completions.create(
-            model=ai_config.primary_model,
-            messages=[
-                {"role": "system", "content": system_role},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.1,
-            max_tokens=1500,
-        )
-        return completion.choices[0].message.content or _build_deterministic_explanation(eligibility_data)
-    except Exception as e:
-        logger.warning(f"AI explanation generation failed: {e}")
-        return _build_deterministic_explanation(eligibility_data)
+    for model_name in ai_config.candidate_models:
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": system_role},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.1,
+                max_tokens=1500,
+            )
+            if completion.choices and completion.choices[0].message.content:
+                return completion.choices[0].message.content
+        except Exception as e:
+            logger.warning(f"Model '{model_name}' failed for explanation: {e}. Trying next...")
+
+    return _build_deterministic_explanation(eligibility_data)

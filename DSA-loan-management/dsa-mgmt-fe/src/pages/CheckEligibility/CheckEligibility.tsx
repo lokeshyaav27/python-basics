@@ -589,7 +589,7 @@ const CheckEligibility: React.FC = () => {
             </div>
           </div>
 
-          {/* ── AI Underwriter Explanation (Groq openai/gpt-oss-120b) ───── */}
+          {/* ── AI Underwriter Explanation ───── */}
           {eligibility.aiExplanation && (
             <div className="rounded-3xl border border-blue-200 bg-blue-50/60 p-6 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
@@ -598,8 +598,8 @@ const CheckEligibility: React.FC = () => {
                     <RobotOutlined />
                   </span>
                   <h4 className="text-sm font-bold text-blue-950">AI Underwriting Insights</h4>
-                  <span className="rounded-full bg-blue-200/80 px-2 py-0.5 text-[10px] font-mono text-blue-900">
-                    Groq • openai/gpt-oss-120b
+                  <span className="rounded-full bg-blue-200/80 px-2.5 py-0.5 text-[10px] font-bold text-blue-900">
+                    AI Copilot
                   </span>
                 </div>
               </div>

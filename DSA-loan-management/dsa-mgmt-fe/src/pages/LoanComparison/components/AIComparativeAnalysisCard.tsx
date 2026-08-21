@@ -146,8 +146,8 @@ export const AIComparativeAnalysisCard: React.FC<AIComparativeAnalysisCardProps>
             <p className="text-xs text-purple-700">Synthesized multi-bank policy evaluation for this applicant</p>
           </div>
         </div>
-        <span className="rounded-full bg-purple-100 border border-purple-200 px-2.5 py-0.5 text-[10px] font-mono text-purple-900">
-          Groq • openai/gpt-oss-120b
+        <span className="rounded-full bg-purple-100 border border-purple-200 px-2.5 py-0.5 text-[10px] font-bold text-purple-900">
+          AI Synthesis
         </span>
       </div>
 

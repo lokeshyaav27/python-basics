@@ -157,25 +157,23 @@ def generate_comparative_ai_analysis(
 
     prompt = build_bank_comparison_prompt(comparison_payload, user_role=user_role)
 
-    try:
-        completion = client.chat.completions.create(
-            model=ai_config.primary_model,
-            messages=[
-                {"role": "system", "content": "You are a professional retail banking comparison analyst. Return clean, concise markdown."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=ai_config.temperature,
-            max_tokens=1500,
-        )
-        if completion.choices and completion.choices[0].message.content:
-            return completion.choices[0].message.content.strip()
-        return _build_deterministic_comparison(
-            customer_name, product_name, requested_amount, valid_banks, user_role=user_role
-        )
+    for model_name in ai_config.candidate_models:
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": "You are a professional retail banking comparison analyst. Return clean, concise markdown."},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=ai_config.temperature,
+                max_tokens=1500,
+            )
+            if completion.choices and completion.choices[0].message.content:
+                return completion.choices[0].message.content.strip()
+        except Exception as err:
+            logger.warning(f"Model '{model_name}' failed for comparison: {err}. Trying next...")
 
-    except Exception as err:
-        logger.warning(f"AI comparison generation failed: {err}")
-        return _build_deterministic_comparison(
-            customer_name, product_name, requested_amount, valid_banks, user_role=user_role
-        )
+    return _build_deterministic_comparison(
+        customer_name, product_name, requested_amount, valid_banks, user_role=user_role
+    )
 

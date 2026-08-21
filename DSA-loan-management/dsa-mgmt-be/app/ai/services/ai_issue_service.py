@@ -1,6 +1,5 @@
 import json
 import logging
-from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 
 from app.ai.config import ai_config
@@ -10,59 +9,11 @@ from app.ai.prompts.ai_issue_analysis_prompt import build_ai_issue_analysis_prom
 logger = logging.getLogger("ai_issue_service")
 logger.setLevel(logging.INFO)
 
-# Cached documentation context
-_CACHED_APP_DOCS: Optional[str] = None
-
-
-def load_application_documentation() -> str:
-    """
-    Loads and caches official application markdown documentation from the context/ directory.
-    """
-    global _CACHED_APP_DOCS
-    if _CACHED_APP_DOCS is not None:
-        return _CACHED_APP_DOCS
-
-    docs_parts: List[str] = []
-
-    # Attempt to locate context/ directory relative to project root
-    base_paths = [
-        Path(__file__).resolve().parents[3] / "context",
-        Path(__file__).resolve().parents[4] / "context",
-        Path.cwd() / "context",
-        Path.cwd().parent / "context",
-    ]
-
-    context_dir = None
-    for bp in base_paths:
-        if bp.is_dir():
-            context_dir = bp
-            break
-
-    if context_dir:
-        for filename in [
-            "DSA_Loan_Eligibility_Rules.md",
-            "DSA_Loan_Platform_Project_Overview.md",
-            "DSA_Loan_Platform_DB_Schema.md",
-        ]:
-            file_path = context_dir / filename
-            if file_path.is_file():
-                try:
-                    content = file_path.read_text(encoding="utf-8")
-                    docs_parts.append(f"### File: {filename}\n{content}\n")
-                except Exception as e:
-                    logger.warning(f"Could not read context file {file_path}: {e}")
-
-    if not docs_parts:
-        docs_parts.append("Official Indian Retail Lending Underwriting Rules & Bank Policy Guidelines.")
-
-    _CACHED_APP_DOCS = "\n\n".join(docs_parts)
-    return _CACHED_APP_DOCS
-
 
 class AIIssueSuggestionService:
     """
-    Service that analyzes reported AI chat interactions, evaluates correctness against
-    platform underwriting specifications, and generates root-cause diagnostics & remediation suggestions.
+    Service that analyzes reported AI chat interactions, evaluates correctness,
+    and generates root-cause diagnostics & remediation suggestions.
     """
 
     def __init__(self):
@@ -87,14 +38,11 @@ class AIIssueSuggestionService:
                 "Review the flagged query and assistant response logs manually.",
             )
 
-        app_docs = load_application_documentation()
-
         prompt = build_ai_issue_analysis_prompt(
             user_query=user_query,
             ai_response=ai_response,
             user_remarks=user_remarks,
             chat_history=chat_history,
-            app_documentation=app_docs[:14000],  # Limit token footprint
         )
 
         messages = [
@@ -105,9 +53,7 @@ class AIIssueSuggestionService:
             {"role": "user", "content": prompt},
         ]
 
-        candidate_models = [self.config.primary_model] + self.config.fallback_models
-        seen_models = set()
-        models_to_try = [m for m in candidate_models if m and not (m in seen_models or seen_models.add(m))]
+        models_to_try = self.config.candidate_models
 
         for model_name in models_to_try:
             try:
@@ -123,15 +69,20 @@ class AIIssueSuggestionService:
                 data = json.loads(raw_json)
 
                 root_cause = data.get("root_cause") or "Reported discrepancy in assistant response."
-                suggestion = data.get("suggestion") or "Audit credit policy and RAG citations."
+                raw_sug = data.get("suggestion")
+                if isinstance(raw_sug, list):
+                    suggestion = "\n".join(f"- {s}" for s in raw_sug)
+                elif isinstance(raw_sug, str):
+                    suggestion = raw_sug
+                else:
+                    suggestion = "Audit credit policy and RAG citations."
 
                 logger.info(f"Issue diagnostic complete: RootCause='{root_cause[:60]}...'")
                 return root_cause, suggestion
 
             except Exception as e:
-                logger.warning(f"Diagnostic model '{model_name}' failed: {e}. Trying fallback...")
+                logger.warning(f"Diagnostic model '{model_name}' failed: {e}. Trying next candidate model from env...")
 
-        # Fallback diagnostic if all models fail
         return (
             f"User reported concern: {user_remarks or 'Response flagged for review.'}",
             "Perform manual audit of underwriting output and check partner bank policy rules.",
