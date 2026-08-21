@@ -1,14 +1,11 @@
 import React from 'react'
-import { ToolExecutionAudit } from '../../../services/chat'
 import { RobotOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons'
-import { ToolAuditAccordion } from './ToolAuditAccordion'
 
 export interface DisplayChatMessage {
   id: string
   sender: 'user' | 'assistant'
   content: string
   timestamp: string
-  toolExecutions?: ToolExecutionAudit[]
   referencedDocs?: string[]
 }
 
@@ -37,20 +34,6 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
         <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
-
-        {/* Tool Execution Audits */}
-        {message.toolExecutions && message.toolExecutions.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 block">
-              Underwriting Tools Executed ({message.toolExecutions.length})
-            </span>
-            <div className="space-y-1.5">
-              {message.toolExecutions.map((tool, idx) => (
-                <ToolAuditAccordion key={idx} tool={tool} index={idx} />
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Referenced Policy Documents */}
         {message.referencedDocs && message.referencedDocs.length > 0 && (

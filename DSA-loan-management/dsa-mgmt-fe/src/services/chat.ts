@@ -16,17 +16,8 @@ export interface ChatAuthContext {
   mobile?: string
 }
 
-export interface ToolExecutionAudit {
-  toolName: string
-  arguments: Record<string, any>
-  status: string
-  summary: string
-  timestamp: string
-}
-
 export interface ChatResponse {
   response: string
-  toolExecutions: ToolExecutionAudit[]
   referencedDocs: string[]
   clarificationNeeded: boolean
   requiresConfirmation: boolean

@@ -6,7 +6,7 @@ import {
   fetchCustomerLoanApplications,
   LoanApplication,
 } from '../../services/loanApplications'
-import { sendChatMessage } from '../../services/chat'
+import { sendChatMessage, ChatMessage } from '../../services/chat'
 import { useAuth } from '../../auth/AuthProvider'
 import { RobotOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import {
@@ -51,15 +51,19 @@ const ChatWithAI: React.FC = () => {
   })
 
   const chatMutation = useMutation({
-    mutationFn: (messageText: string) => sendChatMessage(messageText),
+    mutationFn: (payload: {
+      message: string
+      history: ChatMessage[]
+      applicationId?: number
+      customerId?: string
+    }) => sendChatMessage(payload),
     onSuccess: (res) => {
       const assistantMsg: DisplayChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        content: res.reply,
+        content: res.response || '',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        toolExecutions: res.toolExecutions,
-        referencedDocs: res.referencedDocuments,
+        referencedDocs: res.referencedDocs,
       }
       setMessages((prev) => [...prev, assistantMsg])
     },
@@ -128,9 +132,37 @@ const ChatWithAI: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
 
+    // Build history (last 8 messages)
+    const recentHistory: ChatMessage[] = messages
+      .filter((m) => !m.id.startsWith('error-') && !m.id.startsWith('welcome-'))
+      .slice(-8)
+      .map((m) => ({
+        role: m.sender === 'assistant' ? 'assistant' : 'user',
+        content: m.content,
+      }))
+
+    // Detect @app:123 or @user:xyz tags in userText
+    let linkedAppId: number | undefined
+    let linkedCustId: string | undefined
+
+    const appMatch = userText.match(/@app:(\d+)/i)
+    if (appMatch) {
+      linkedAppId = parseInt(appMatch[1], 10)
+    }
+
+    const userMatch = userText.match(/@user:([a-zA-Z0-9_-]+)/i)
+    if (userMatch) {
+      linkedCustId = userMatch[1]
+    }
+
     setMessages((prev) => [...prev, userMsg])
     setInputVal('')
-    chatMutation.mutate(userText)
+    chatMutation.mutate({
+      message: userText,
+      history: recentHistory,
+      applicationId: linkedAppId,
+      customerId: linkedCustId,
+    })
   }
 
   return (

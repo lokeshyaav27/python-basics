@@ -45,7 +45,6 @@ class ChatService:
         if client is None:
             return ChatResponse(
                 response="⚠️ AI Underwriting service is currently unavailable. Please verify GROQ_API_KEY.",
-                toolExecutions=[],
                 referencedDocs=[],
             )
 
@@ -68,7 +67,6 @@ class ChatService:
         messages.append({"role": "user", "content": request.message})
 
         tools = format_tools_for_groq()
-        tool_executions: List[ToolExecutionAudit] = []
         referenced_docs: List[str] = []
 
         candidate_models = [self.config.primary_model] + self.config.fallback_models
@@ -98,7 +96,6 @@ class ChatService:
                 logger.error(f"All candidate models failed. Last error: {last_error}")
                 return ChatResponse(
                     response=f"⚠️ An error occurred while communicating with the AI Underwriter: {str(last_error)}",
-                    toolExecutions=tool_executions,
                     referencedDocs=referenced_docs,
                 )
 
@@ -109,7 +106,6 @@ class ChatService:
                 final_text = response_message.content or ""
                 return ChatResponse(
                     response=final_text,
-                    toolExecutions=tool_executions,
                     referencedDocs=list(set(referenced_docs)),
                 )
 
@@ -143,38 +139,19 @@ class ChatService:
                 logger.info(f"[AUDIT] Role={user_role} | User={auth.get('userId') or auth.get('identifier')} | Tool={func_name} | Args={args}")
 
                 tool_result_str = ""
-                status = "SUCCESS"
-                summary = ""
 
                 try:
                     result = execute_mcp_tool(db, tool_name=func_name, arguments=args, auth_user=auth)
                     if func_name in ["search_bank_documents", "search_bank_policies", "semantic_search"]:
-                        summary = f"Searched {result.get('totalMatches', 0)} policy document chunks for '{args.get('query')}'"
                         for m in result.get("results", []):
                             if m.get("documentName"):
                                 referenced_docs.append(f"{m.get('bankName')} - {m.get('documentName')}")
-                    else:
-                        summary = f"Executed {func_name} successfully"
                     tool_result_str = json.dumps(result, default=str)
 
                 except HTTPException as he:
-                    status = "DENIED" if he.status_code == 403 else "NOT_FOUND" if he.status_code == 404 else "VALIDATION_ERROR"
-                    summary = f"HTTP {he.status_code}: {he.detail}"
                     tool_result_str = json.dumps({"status": "ERROR", "statusCode": he.status_code, "error": he.detail})
                 except Exception as ex:
-                    status = "ERROR"
-                    summary = f"Error: {str(ex)}"
                     tool_result_str = json.dumps({"status": "ERROR", "error": str(ex)})
-
-                tool_executions.append(
-                    ToolExecutionAudit(
-                        toolName=func_name,
-                        arguments=args,
-                        status=status,
-                        summary=summary,
-                        timestamp=call_time,
-                    )
-                )
 
                 messages.append({
                     "role": "tool",
@@ -185,7 +162,6 @@ class ChatService:
 
         return ChatResponse(
             response="I evaluated the tools for your loan application. Please ask any specific follow-up questions.",
-            toolExecutions=tool_executions,
             referencedDocs=list(set(referenced_docs)),
         )
 

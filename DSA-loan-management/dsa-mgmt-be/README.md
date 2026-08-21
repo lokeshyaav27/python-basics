@@ -184,7 +184,8 @@ You can run the full database seeding workflow all-at-once:
 
 #### Windows (PowerShell):
 ```powershell
-.\.venv\Scripts\python.exe seed_full_database.py
+.venv\Scripts\Activate.ps1
+python seed_full_database.py
 ```
 
 #### Windows (Command Prompt):
