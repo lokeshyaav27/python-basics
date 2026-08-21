@@ -227,7 +227,7 @@ class ChatService:
             logger.info(f"Tool '{tool_name}' executed successfully in {tool_exec_duration}ms")
 
             # Extract referenced document citations if this was a policy RAG search
-            if tool_name in ["search_bank_documents", "search_bank_policies", "semantic_search"]:
+            if tool_name == "search_bank_policies":
                 results_list = tool_result.get("results", []) if isinstance(tool_result, dict) else []
                 for item in results_list:
                     doc_name = item.get("documentName")

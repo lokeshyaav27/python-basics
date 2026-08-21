@@ -1,73 +1,38 @@
-from app.mcp.tools.customer_tools import (
-    CUSTOMER_TOOLS_SPECS,
-    get_customer_details_by_id,
-    get_loan_details_by_customer_id,
-)
 from app.mcp.tools.loan_tools import (
-    LOAN_TOOLS_SPECS,
-    get_loan_by_id,
-    get_all_loans_by_agent_id,
-    get_all_loans,
+    GET_LOAN_DOSSIER_SPEC,
+    get_loan_dossier,
 )
 from app.mcp.tools.bank_tools import (
-    BANK_TOOLS_SPECS,
-    get_bank_list,
-    get_bank_list_by_product_id,
-    get_commission_structure_by_bank_id,
-)
-from app.mcp.tools.product_tools import (
-    PRODUCT_TOOLS_SPECS,
-    get_all_products,
-)
-from app.mcp.tools.agent_tools import (
-    AGENT_TOOLS_SPECS,
-    get_agent_list,
+    GET_BANK_PRODUCT_CATALOG_SPEC,
+    get_bank_product_catalog,
 )
 from app.mcp.tools.eligibility_tool import (
-    ELIGIBILITY_TOOL_SPEC,
+    CHECK_LOAN_ELIGIBILITY_SPEC,
     check_loan_eligibility,
 )
 from app.mcp.tools.comparison_tool import (
-    COMPARISON_TOOL_SPEC,
-    compare_banks,
+    COMPARE_BANK_OFFERS_SPEC,
+    compare_bank_offers,
 )
 from app.mcp.tools.search_tool import (
-    SEARCH_TOOL_SPEC,
-    search_bank_documents,
+    SEARCH_BANK_POLICIES_SPEC,
+    search_bank_policies,
 )
 
+# The 5 Core Orthogonal MCP Tools
 ALL_MCP_SPECS = [
-    ELIGIBILITY_TOOL_SPEC,
-    COMPARISON_TOOL_SPEC,
-    *CUSTOMER_TOOLS_SPECS,
-    *LOAN_TOOLS_SPECS,
-    *BANK_TOOLS_SPECS,
-    *PRODUCT_TOOLS_SPECS,
-    *AGENT_TOOLS_SPECS,
-    SEARCH_TOOL_SPEC,
+    SEARCH_BANK_POLICIES_SPEC,
+    CHECK_LOAN_ELIGIBILITY_SPEC,
+    COMPARE_BANK_OFFERS_SPEC,
+    GET_LOAN_DOSSIER_SPEC,
+    GET_BANK_PRODUCT_CATALOG_SPEC,
 ]
 
 __all__ = [
     "ALL_MCP_SPECS",
-    "CUSTOMER_TOOLS_SPECS",
-    "LOAN_TOOLS_SPECS",
-    "BANK_TOOLS_SPECS",
-    "PRODUCT_TOOLS_SPECS",
-    "AGENT_TOOLS_SPECS",
-    "ELIGIBILITY_TOOL_SPEC",
-    "COMPARISON_TOOL_SPEC",
-    "SEARCH_TOOL_SPEC",
-    "get_customer_details_by_id",
-    "get_loan_details_by_customer_id",
-    "get_loan_by_id",
-    "get_all_loans_by_agent_id",
-    "get_all_loans",
-    "get_bank_list",
-    "get_bank_list_by_product_id",
-    "get_commission_structure_by_bank_id",
-    "get_all_products",
-    "get_agent_list",
+    "search_bank_policies",
     "check_loan_eligibility",
-    "compare_banks",
-    "search_bank_documents",
+    "compare_bank_offers",
+    "get_loan_dossier",
+    "get_bank_product_catalog",
 ]

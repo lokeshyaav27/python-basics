@@ -3,23 +3,40 @@ from sqlalchemy.orm import Session
 from app.rag import rag_service
 
 
-SEARCH_TOOL_SPEC = {
-    "name": "search_bank_documents",
-    "description": "Performs semantic vector search across partner bank loan policy and guideline documents using pgvector. Directly include the bank name and topic in the query string (e.g. 'HDFC home loan age limit', 'ICICI minimum income'). Do not call get_bank_list first.",
+SEARCH_BANK_POLICIES_SPEC = {
+    "name": "search_bank_policies",
+    "description": (
+        "Performs semantic vector search across partner bank credit policy documents, "
+        "eligibility guidelines, interest rate matrices, prepayment rules, FOIR/LTV thresholds, "
+        "and required documentation using pgvector. Directly pass the bank name and topic in the query "
+        "(e.g., 'HDFC home loan age limit', 'SBI prepayment penalty', 'ICICI minimum salary')."
+    ),
     "parameters": {
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "Search query including bank name or policy topic (e.g. 'HDFC home loan age limit', 'SBI minimum salary')."},
-            "bank_id": {"type": ["integer", "null"], "description": "Optional numeric bank ID if already known. Pass null if searching by query text."},
-            "product_id": {"type": ["integer", "null"], "description": "Optional product ID if already known. Pass null otherwise."},
-            "top_k": {"type": ["integer", "null"], "description": "Number of top matching chunks to retrieve (default 4)."}
+            "query": {
+                "type": "string",
+                "description": "Search query including bank name or policy topic (e.g. 'HDFC home loan prepayment penalty', 'SBI minimum salary').",
+            },
+            "bank_id": {
+                "type": ["integer", "null"],
+                "description": "Optional numeric bank ID to filter search results.",
+            },
+            "product_id": {
+                "type": ["integer", "null"],
+                "description": "Optional product ID (e.g., 1 for Home Loan) to filter search results.",
+            },
+            "top_k": {
+                "type": ["integer", "null"],
+                "description": "Number of top matching policy excerpts to retrieve (default 4).",
+            },
         },
-        "required": ["query"]
-    }
+        "required": ["query"],
+    },
 }
 
 
-def search_bank_documents(
+def search_bank_policies(
     db: Session,
     query: str,
     bank_id: Optional[int] = None,
@@ -41,13 +58,17 @@ def search_bank_documents(
 
     context_blocks = []
     for idx, m in enumerate(matches, 1):
-        text_snippet = m['chunkText']
-        if len(text_snippet) > 400:
-            text_snippet = text_snippet[:400] + "..."
+        text_snippet = m["chunkText"]
+        if len(text_snippet) > 450:
+            text_snippet = text_snippet[:450] + "..."
         doc_header = f"[{idx}] {m['bankName']} - {m['documentName']} (Page {m['pageNumber'] or '1'})"
         context_blocks.append(f"{doc_header}\n{text_snippet}")
 
-    llm_context = "\n\n---\n\n".join(context_blocks) if context_blocks else "No relevant bank policy document excerpts found."
+    llm_context = (
+        "\n\n---\n\n".join(context_blocks)
+        if context_blocks
+        else "No relevant bank policy document excerpts found."
+    )
 
     return {
         "query": query,
@@ -55,3 +76,4 @@ def search_bank_documents(
         "llmContext": llm_context,
         "results": matches,
     }
+
