@@ -20,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
     { to: ROUTES.ADMIN.AGENTS, label: t('adminDashboard.cards.agentsTitle') },
     { to: ROUTES.ADMIN.LOAN_APPLICATIONS, label: t('adminDashboard.cards.loansTitle') },
     { to: ROUTES.ADMIN.CONTACT_ENQUIRIES, label: t('common.nav.contactEnquiries') },
+    { to: ROUTES.ADMIN.CHAT_WITH_AI, label: t('common.nav.aiAssistant') },
   ]
 
   const agentMenu = [

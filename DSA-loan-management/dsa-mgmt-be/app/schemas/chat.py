@@ -22,6 +22,7 @@ class ChatRequest(BaseModel):
     authContext: Optional[ChatAuthContext] = Field(default=None, description="Logged-in caller's authentication & authorization context")
     applicationId: Optional[int] = Field(None, description="Optional linked loan application context")
     customerId: Optional[str] = Field(None, description="Optional linked customer context")
+    agentId: Optional[int] = Field(None, description="Optional linked agent context (Admin only)")
 
 
 class ToolExecutionAudit(BaseModel):

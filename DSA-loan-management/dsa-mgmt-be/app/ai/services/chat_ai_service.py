@@ -55,6 +55,7 @@ class ChatService:
             auth_context=auth,
             linked_app_id=request.applicationId,
             linked_cust_id=request.customerId,
+            linked_agent_id=request.agentId,
         )
 
         messages = [{"role": "system", "content": system_instruction}]

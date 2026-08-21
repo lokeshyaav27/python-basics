@@ -29,6 +29,7 @@ export const sendChatMessage = async (payload: {
   authContext?: ChatAuthContext
   applicationId?: number
   customerId?: string
+  agentId?: number
 }): Promise<ChatResponse> => {
   const res = await apiClient.post<ApiResponse<ChatResponse>>(API_ENDPOINT_NAMES.CHAT.ASSISTANT, payload)
   return res.data?.result ?? res.data

@@ -54,6 +54,31 @@ const AdminDashboard: React.FC = () => {
           <div className="text-base font-bold text-slate-900">{t('adminDashboard.cards.loansTitle')}</div>
           <div className="text-xs text-slate-500 mt-1">{t('adminDashboard.cards.loansDesc')}</div>
         </Link>
+
+        <Link
+          to={ROUTES.ADMIN.CHAT_WITH_AI}
+          className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/30 p-6 shadow-sm hover:shadow-md hover:border-purple-300 transition block sm:col-span-2 lg:col-span-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="text-3xl p-3 bg-purple-100 rounded-2xl">🤖</div>
+              <div>
+                <div className="text-base font-bold text-purple-950 flex items-center gap-2">
+                  {t('common.nav.aiAssistant')}
+                  <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-800 border border-purple-200">
+                    Admin AI Copilot
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Interactive AI underwriter with access to bank credit policy RAG search, portfolio dossiers, and commission analysis.
+                </div>
+              </div>
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
+              Open Assistant →
+            </span>
+          </div>
+        </Link>
       </div>
     </div>
   )

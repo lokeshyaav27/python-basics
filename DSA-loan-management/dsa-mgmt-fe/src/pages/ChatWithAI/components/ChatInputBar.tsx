@@ -3,7 +3,7 @@ import { SendOutlined } from '@ant-design/icons'
 
 export interface MentionItem {
   id: string
-  type: 'app' | 'user'
+  type: 'app' | 'user' | 'agent'
   token: string
   title: string
   subtitle: string
@@ -67,9 +67,9 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     <div className="relative">
       {/* Mention Autocomplete Dropdown */}
       {showMentionMenu && filteredMentions.length > 0 && (
-        <div className="absolute bottom-full mb-2 left-0 w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl p-2 z-50 max-h-48 overflow-y-auto">
-          <div className="px-3 py-1 text-[10px] font-bold uppercase text-slate-400">
-            Mention Loan Application or Customer
+        <div className="absolute bottom-full mb-2 left-0 w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-xl p-2 z-50 max-h-56 overflow-y-auto">
+          <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Mention Application, Agent, or Customer
           </div>
           {filteredMentions.map((item) => (
             <button
@@ -82,9 +82,22 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                 <span className="font-bold text-slate-800 block">{item.title}</span>
                 <span className="text-[11px] text-slate-400">{item.subtitle}</span>
               </div>
-              <span className="rounded-md bg-purple-100 px-2 py-0.5 font-mono text-[10px] font-bold text-purple-700">
-                {item.token}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                    item.type === 'agent'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : item.type === 'app'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+                <span className="rounded-md bg-purple-100 px-2 py-0.5 font-mono text-[10px] font-bold text-purple-700">
+                  {item.token}
+                </span>
+              </div>
             </button>
           ))}
         </div>

@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ROUTES } from '../../constants/routes'
 import {
   fetchLoanApplications,
   createLoanApplication,
@@ -21,6 +23,7 @@ import {
 } from './components'
 
 const AdminLoanApplications: React.FC = () => {
+  const navigate = useNavigate()
   const qc = useQueryClient()
 
   const { data: applications = [], isLoading: isApplicationsLoading } = useQuery<LoanApplication[]>({
@@ -103,19 +106,27 @@ const AdminLoanApplications: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">All Loan Applications</h2>
           <p className="text-sm text-slate-500">
             Monitor incoming loan inquiries, assign DSA agents, and track bank forwarding status
           </p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-blue-700 transition"
-        >
-          <PlusOutlined /> New Application
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => navigate(ROUTES.ADMIN.CHAT_WITH_AI)}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-purple-700 transition"
+          >
+            🤖 AI Underwriter Assistant
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
+          >
+            <PlusOutlined /> New Application
+          </button>
+        </div>
       </div>
 
       {/* Table */}
