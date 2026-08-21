@@ -99,6 +99,7 @@ app.include_router(api_routers.contact.router, prefix="/api/contact", tags=["con
 app.include_router(api_routers.eligibility.router, prefix="/api/eligibility", tags=["eligibility"])
 app.include_router(api_routers.comparison.router, prefix="/api/comparison", tags=["comparison"])
 app.include_router(api_routers.chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(api_routers.ai_issues.router, prefix="/api/ai-issues", tags=["ai-issues"])
 
 
 @app.on_event("startup")

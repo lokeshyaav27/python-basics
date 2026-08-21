@@ -5,6 +5,8 @@ from app.ai.services import (
     chat_service,
     generate_ai_explanation,
     generate_comparative_ai_analysis,
+    AIIssueSuggestionService,
+    ai_issue_service,
 )
 from app.ai.prompts import (
     build_chat_assistant_prompt,
@@ -13,6 +15,7 @@ from app.ai.prompts import (
     build_underwriting_prompt,
     build_bank_comparison_prompt,
     build_comparison_prompt,
+    build_ai_issue_analysis_prompt,
 )
 
 __all__ = [
@@ -23,10 +26,13 @@ __all__ = [
     "chat_service",
     "generate_ai_explanation",
     "generate_comparative_ai_analysis",
+    "AIIssueSuggestionService",
+    "ai_issue_service",
     "build_chat_assistant_prompt",
     "build_system_prompt",
     "build_eligibility_explanation_prompt",
     "build_underwriting_prompt",
     "build_bank_comparison_prompt",
     "build_comparison_prompt",
+    "build_ai_issue_analysis_prompt",
 ]

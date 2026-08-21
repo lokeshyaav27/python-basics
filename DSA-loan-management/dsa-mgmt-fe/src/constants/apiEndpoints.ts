@@ -72,6 +72,14 @@ export const API_ENDPOINT_NAMES = {
   CHAT: {
     ASSISTANT: '/api/chat/assistant',
   },
+
+  // AI Chat Issue Reporting & Quality Audit Endpoints
+  AI_ISSUES: {
+    BASE: '/api/ai-issues',
+    REPORT: '/api/ai-issues/report',
+    BY_ID: (id: number | string) => `/api/ai-issues/${id}`,
+    STATUS: (id: number | string) => `/api/ai-issues/${id}/status`,
+  },
 } as const
 
 export const API_ENDPOINTS = API_ENDPOINT_NAMES

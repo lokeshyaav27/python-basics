@@ -57,7 +57,7 @@ const AdminDashboard: React.FC = () => {
 
         <Link
           to={ROUTES.ADMIN.CHAT_WITH_AI}
-          className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/30 p-6 shadow-sm hover:shadow-md hover:border-purple-300 transition block sm:col-span-2 lg:col-span-4"
+          className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/30 p-6 shadow-sm hover:shadow-md hover:border-purple-300 transition block sm:col-span-2 lg:col-span-2"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -70,13 +70,32 @@ const AdminDashboard: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">
-                  Interactive AI underwriter with access to bank credit policy RAG search, portfolio dossiers, and commission analysis.
+                  Interactive AI underwriter with access to bank policy RAG search and portfolio dossiers.
                 </div>
               </div>
             </div>
-            <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
-              Open Assistant →
-            </span>
+          </div>
+        </Link>
+
+        <Link
+          to={ROUTES.ADMIN.AI_ISSUES}
+          className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50/70 via-white to-amber-50/30 p-6 shadow-sm hover:shadow-md hover:border-rose-300 transition block sm:col-span-2 lg:col-span-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="text-3xl p-3 bg-rose-100 rounded-2xl">🚩</div>
+              <div>
+                <div className="text-base font-bold text-rose-950 flex items-center gap-2">
+                  AI Quality & Issue Reports
+                  <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-200">
+                    Quality Assurance
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Audit flagged AI responses, review root-cause analysis, and track remediation.
+                </div>
+              </div>
+            </div>
           </div>
         </Link>
       </div>

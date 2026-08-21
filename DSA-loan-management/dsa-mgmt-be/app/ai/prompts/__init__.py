@@ -7,6 +7,7 @@ from app.ai.prompts.bank_comparison_prompt import (
     build_bank_comparison_prompt,
     build_comparison_prompt,
 )
+from app.ai.prompts.ai_issue_analysis_prompt import build_ai_issue_analysis_prompt
 
 __all__ = [
     "build_chat_assistant_prompt",
@@ -15,4 +16,5 @@ __all__ = [
     "build_underwriting_prompt",
     "build_bank_comparison_prompt",
     "build_comparison_prompt",
+    "build_ai_issue_analysis_prompt",
 ]

@@ -7,6 +7,10 @@ from app.ai.services.bank_comparison_ai_service import (
     generate_comparative_ai_analysis,
     _build_deterministic_comparison,
 )
+from app.ai.services.ai_issue_service import (
+    AIIssueSuggestionService,
+    ai_issue_service,
+)
 
 __all__ = [
     "generate_ai_explanation",
@@ -15,4 +19,6 @@ __all__ = [
     "chat_service",
     "generate_comparative_ai_analysis",
     "_build_deterministic_comparison",
+    "AIIssueSuggestionService",
+    "ai_issue_service",
 ]

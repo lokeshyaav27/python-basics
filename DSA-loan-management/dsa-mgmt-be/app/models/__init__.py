@@ -11,6 +11,7 @@ from app.models.car_loan_detail import CarLoanDetail
 from app.models.personal_loan_detail import PersonalLoanDetail
 from app.models.loan_application import LoanApplication
 from app.models.contact_enquiry import ContactEnquiry
+from app.models.ai_issue_report import AIIssueReport
 
 __all__ = [
     "Base",
@@ -26,4 +27,5 @@ __all__ = [
     "PersonalLoanDetail",
     "LoanApplication",
     "ContactEnquiry",
+    "AIIssueReport",
 ]

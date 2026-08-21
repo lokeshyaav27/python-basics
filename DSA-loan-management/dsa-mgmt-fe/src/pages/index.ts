@@ -1,5 +1,6 @@
 export { default as AboutUs } from './AboutUs'
 export { default as AdminAgents } from './AdminAgents'
+export { default as AdminAIIssues } from './AdminAIIssues'
 export { default as AdminBanks } from './AdminBanks'
 export { default as AdminContactEnquiries } from './AdminContactEnquiries'
 export { default as AdminDashboard } from './AdminDashboard'

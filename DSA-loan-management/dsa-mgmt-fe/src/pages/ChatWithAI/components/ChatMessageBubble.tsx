@@ -1,5 +1,5 @@
 import React from 'react'
-import { RobotOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons'
+import { RobotOutlined, UserOutlined, FileTextOutlined, FlagOutlined } from '@ant-design/icons'
 
 export interface DisplayChatMessage {
   id: string
@@ -11,9 +11,10 @@ export interface DisplayChatMessage {
 
 interface ChatMessageBubbleProps {
   message: DisplayChatMessage
+  onReportIssue?: (message: DisplayChatMessage) => void
 }
 
-export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message }) => {
+export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message, onReportIssue }) => {
   const isAssistant = message.sender === 'assistant'
 
   const renderFormattedContent = (text: string) => {
@@ -179,11 +180,22 @@ export const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({ message })
         )}
 
         <div
-          className={`text-[10px] text-right ${
-            isAssistant ? 'text-slate-400' : 'text-blue-200'
+          className={`text-[10px] flex items-center ${
+            isAssistant ? 'justify-between text-slate-400' : 'justify-end text-blue-200'
           }`}
         >
-          {message.timestamp}
+          {isAssistant && onReportIssue && (
+            <button
+              type="button"
+              onClick={() => onReportIssue(message)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition font-medium"
+              title="Report an inaccurate or insufficient response"
+            >
+              <FlagOutlined className="text-[11px]" />
+              <span>Report Issue</span>
+            </button>
+          )}
+          <span>{message.timestamp}</span>
         </div>
       </div>
 

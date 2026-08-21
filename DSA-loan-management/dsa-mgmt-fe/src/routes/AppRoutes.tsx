@@ -21,6 +21,7 @@ import {
   AdminAgents,
   AdminLoanApplications,
   AdminContactEnquiries,
+  AdminAIIssues,
   AgentLoanApplications,
   CustomerPortal,
   CustomerLoanList,
@@ -71,6 +72,7 @@ export const AppRoutes: React.FC = () => {
       <Route path={ROUTES.ADMIN.LOAN_APPLICATIONS} element={withRole('admin', AdminLoanApplications)} />
       <Route path={ROUTES.ADMIN.CONTACT_ENQUIRIES} element={withRole('admin', AdminContactEnquiries)} />
       <Route path={ROUTES.ADMIN.CHAT_WITH_AI} element={withRole('admin', ChatWithAI)} />
+      <Route path={ROUTES.ADMIN.AI_ISSUES} element={withRole('admin', AdminAIIssues)} />
       <Route path={ROUTES.ADMIN.CHECK_ELIGIBILITY} element={withRole('admin', CheckEligibility)} />
       <Route path={ROUTES.ADMIN.LOAN_COMPARISON} element={withRole('admin', LoanComparison)} />
 

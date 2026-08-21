@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { message as antMessage } from 'antd'
 import {
   fetchLoanApplications,
   fetchCustomerLoanApplications,
@@ -8,6 +9,7 @@ import {
 } from '../../services/loanApplications'
 import { fetchAgents, AgentItem } from '../../services/agents'
 import { sendChatMessage, ChatMessage } from '../../services/chat'
+import { reportAIIssue } from '../../services/aiIssues'
 import { useAuth } from '../../auth/AuthProvider'
 import { RobotOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import {
@@ -15,6 +17,7 @@ import {
   MentionItem,
   ChatMessageBubble,
   ChatInputBar,
+  ReportIssueModal,
 } from './components'
 
 const ChatWithAI: React.FC = () => {
@@ -27,6 +30,7 @@ const ChatWithAI: React.FC = () => {
   const [inputVal, setInputVal] = useState('')
 
   const [messages, setMessages] = useState<DisplayChatMessage[]>([])
+  const [reportingMessage, setReportingMessage] = useState<DisplayChatMessage | null>(null)
 
   // Fetch available applications for mention list
   const { data: applications = [] } = useQuery<LoanApplication[]>({
@@ -74,6 +78,17 @@ const ChatWithAI: React.FC = () => {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages((prev) => [...prev, errorMsg])
+    },
+  })
+
+  const reportIssueMutation = useMutation({
+    mutationFn: reportAIIssue,
+    onSuccess: (res) => {
+      antMessage.success(res.message || 'Issue report recorded successfully')
+      setReportingMessage(null)
+    },
+    onError: (err: any) => {
+      antMessage.error(err?.response?.data?.message || 'Failed to submit issue report')
     },
   })
 
@@ -185,6 +200,58 @@ const ChatWithAI: React.FC = () => {
     })
   }
 
+  // Find the preceding user prompt for the reported assistant message
+  const getPrecedingUserPrompt = (assistantMsg: DisplayChatMessage | null): string => {
+    if (!assistantMsg) return ''
+    const idx = messages.findIndex((m) => m.id === assistantMsg.id)
+    if (idx > 0) {
+      for (let i = idx - 1; i >= 0; i--) {
+        if (messages[i].sender === 'user') {
+          return messages[i].content
+        }
+      }
+    }
+    return ''
+  }
+
+  const handleReportSubmit = async (payload: {
+    issueCategory: string
+    userRemarks: string
+    reportedAssistantMsg: DisplayChatMessage
+  }) => {
+    const userPromptText = getPrecedingUserPrompt(payload.reportedAssistantMsg)
+    const historyPayload = messages.map((m) => ({
+      role: m.sender,
+      content: m.content,
+    }))
+
+    // Extract any @app: or @user: or @agent: mentions in prompt
+    let linkedAppId: number | undefined
+    let linkedCustId: string | undefined
+    let linkedAgentId: number | undefined
+
+    const appMatch = userPromptText.match(/@app:(\d+)/i)
+    if (appMatch) linkedAppId = parseInt(appMatch[1], 10)
+
+    const userMatch = userPromptText.match(/@user:([a-zA-Z0-9_-]+)/i)
+    if (userMatch) linkedCustId = userMatch[1]
+
+    const agentMatch = userPromptText.match(/@agent:(\d+)/i)
+    if (agentMatch) linkedAgentId = parseInt(agentMatch[1], 10)
+
+    await reportIssueMutation.mutateAsync({
+      userQuery: userPromptText || 'User prompt from conversation',
+      aiResponse: payload.reportedAssistantMsg.content,
+      issueCategory: payload.issueCategory,
+      userRemarks: payload.userRemarks,
+      chatHistory: historyPayload,
+      referencedDocs: payload.reportedAssistantMsg.referencedDocs || [],
+      applicationId: linkedAppId,
+      customerId: linkedCustId,
+      agentId: linkedAgentId,
+    })
+  }
+
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 flex flex-col h-[calc(100vh-5rem)]">
       {/* Header */}
@@ -223,7 +290,11 @@ const ChatWithAI: React.FC = () => {
           </div>
         )}
         {messages.map((msg) => (
-          <ChatMessageBubble key={msg.id} message={msg} />
+          <ChatMessageBubble
+            key={msg.id}
+            message={msg}
+            onReportIssue={(target) => setReportingMessage(target)}
+          />
         ))}
         {chatMutation.isPending && (
           <div className="flex items-center gap-3 text-xs text-purple-700 bg-purple-50 border border-purple-200 p-3 rounded-2xl w-fit">
@@ -279,6 +350,16 @@ const ChatWithAI: React.FC = () => {
           mentionItems={mentionItems}
         />
       </div>
+
+      {/* Report Issue Modal */}
+      <ReportIssueModal
+        open={!!reportingMessage}
+        onClose={() => setReportingMessage(null)}
+        targetMessage={reportingMessage}
+        userPromptText={getPrecedingUserPrompt(reportingMessage)}
+        onSubmitReport={handleReportSubmit}
+        isSubmitting={reportIssueMutation.isPending}
+      />
     </div>
   )
 }
