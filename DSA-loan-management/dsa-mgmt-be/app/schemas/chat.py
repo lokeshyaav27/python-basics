@@ -36,5 +36,7 @@ class ToolExecutionAudit(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     referencedDocs: List[str] = Field(default_factory=list)
+    modelUsed: Optional[str] = None
+    toolUsed: Optional[str] = None
     clarificationNeeded: bool = False
     requiresConfirmation: bool = False
