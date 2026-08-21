@@ -45,6 +45,24 @@ def format_tools_for_groq() -> List[Dict[str, Any]]:
     return groq_tools
 
 
+def format_llm_response_for_log(response: Any) -> str:
+    """
+    Pretty-formats an LLM response object into clean, indented JSON for readable logging.
+    """
+    if response is None:
+        return "None"
+    try:
+        if hasattr(response, "model_dump"):
+            return json.dumps(response.model_dump(), indent=2, default=str)
+        if hasattr(response, "dict"):
+            return json.dumps(response.dict(), indent=2, default=str)
+        if hasattr(response, "__dict__"):
+            return json.dumps(response.__dict__, indent=2, default=str)
+        return json.dumps(response, indent=2, default=str)
+    except Exception:
+        return str(response)
+
+
 class ChatService:
     """
     Service responsible for handling interactive AI Underwriting chat conversations.
@@ -189,6 +207,8 @@ class ChatService:
                 referencedDocs=[],
             )
 
+        logger.info(f"📥 [STEP 3 LLM RESPONSE (PRETTIFIED JSON)]:\n" + "-" * 90 + f"\n{format_llm_response_for_log(response)}\n" + "-" * 90)
+
         response_message = response.choices[0].message
         tool_calls = response_message.tool_calls
 
@@ -331,6 +351,8 @@ class ChatService:
                 response=f"⚠️ Tool executed successfully, but failed to format final response: {str(final_error)}",
                 referencedDocs=list(set(referenced_docs)),
             )
+
+        logger.info(f"📥 [STEP 5 FINAL SYNTHESIS LLM RESPONSE (PRETTIFIED JSON)]:\n" + "-" * 90 + f"\n{format_llm_response_for_log(final_response)}\n" + "-" * 90)
 
         final_content = final_response.choices[0].message.content or ""
         total_duration_ms = int((time.time() - start_time) * 1000)
