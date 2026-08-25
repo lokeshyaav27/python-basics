@@ -16,11 +16,70 @@ from app.mcp.tools import (
 )
 
 
+def _parse_int(val: Any) -> Optional[int]:
+    """Safely converts value to int, handling 'null', None, and non-digits gracefully."""
+    if val is None:
+        return None
+    s = str(val).strip().lower()
+    if s in ["null", "none", "", "undefined"]:
+        return None
+    try:
+        return int(s)
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_bool(val: Any, default: bool = False) -> bool:
+    """Safely converts value to boolean."""
+    if val is None:
+        return default
+    if isinstance(val, bool):
+        return val
+    s = str(val).strip().lower()
+    if s in ["true", "1", "yes"]:
+        return True
+    if s in ["false", "0", "no", "null", "none"]:
+        return False
+    return default
+
+
 def get_all_tool_specs() -> List[Dict[str, Any]]:
     """
     Returns the complete list of all registered MCP tool specifications.
     """
     return ALL_MCP_SPECS
+
+
+# Role-Based Tool Visibility Mapping
+CUSTOMER_TOOL_NAMES = {
+    "search_bank_policies",
+    "check_loan_eligibility",
+    "compare_bank_offers",
+    "get_loan_dossier",
+    "get_bank_product_catalog",
+}
+
+AGENT_TOOL_NAMES = CUSTOMER_TOOL_NAMES | {
+    "get_commission_analytics",
+    "get_portfolio_kpis",
+    "get_contact_enquiries",
+}
+
+
+def get_tools_for_role(user_role: str) -> List[Dict[str, Any]]:
+    """
+    Returns only the MCP tool specifications permitted for a given user role.
+    - Customer: Only policy search, eligibility, comparison, own dossier, and catalog.
+    - Agent: Customer tools + personal commission analytics, portfolio KPIs, and contact leads.
+    - Admin: All 9 tools (including full agent directory and team workload).
+    """
+    r = (user_role or "customer").lower()
+    if r == "admin":
+        return ALL_MCP_SPECS
+    elif r == "agent":
+        return [s for s in ALL_MCP_SPECS if s["name"] in AGENT_TOOL_NAMES]
+    else:  # customer
+        return [s for s in ALL_MCP_SPECS if s["name"] in CUSTOMER_TOOL_NAMES]
 
 
 def execute_mcp_tool(
@@ -39,20 +98,20 @@ def execute_mcp_tool(
         return search_bank_policies(
             db=db,
             query=arguments.get("query", ""),
-            bank_id=arguments.get("bank_id"),
-            product_id=arguments.get("product_id"),
-            top_k=int(arguments.get("top_k", 4)),
+            bank_id=_parse_int(arguments.get("bank_id")),
+            product_id=_parse_int(arguments.get("product_id")),
+            top_k=_parse_int(arguments.get("top_k")) or 4,
             auth_user=auth_user,
         )
 
     # Tool 2: Credit Underwriting Eligibility Calculation
     elif name == "check_loan_eligibility":
-        app_id = int(arguments.get("application_id", 0))
+        app_id = _parse_int(arguments.get("application_id")) or 0
         return check_loan_eligibility(db=db, application_id=app_id, auth_user=auth_user)
 
     # Tool 3: Multi-Bank Comparison Engine
     elif name == "compare_bank_offers":
-        app_id = int(arguments.get("application_id", 0))
+        app_id = _parse_int(arguments.get("application_id")) or 0
         bank_ids = arguments.get("bank_ids")
         user_role = arguments.get("user_role")
         return compare_bank_offers(
@@ -65,12 +124,8 @@ def execute_mcp_tool(
 
     # Tool 4: Unified Loan & Customer Dossier Lookup
     elif name == "get_loan_dossier":
-        raw_app_id = arguments.get("application_id")
-        app_id = int(raw_app_id) if raw_app_id else None
-
-        raw_agent_id = arguments.get("agent_id")
-        agent_id = int(raw_agent_id) if raw_agent_id else None
-
+        app_id = _parse_int(arguments.get("application_id"))
+        agent_id = _parse_int(arguments.get("agent_id"))
         customer_id = arguments.get("customer_id")
         customer_ident = arguments.get("customer_identifier")
 
@@ -85,11 +140,8 @@ def execute_mcp_tool(
 
     # Tool 5: Unified Bank & Product Catalog
     elif name == "get_bank_product_catalog":
-        raw_prod_id = arguments.get("product_id")
-        prod_id = int(raw_prod_id) if raw_prod_id else None
-
-        raw_bank_id = arguments.get("bank_id")
-        bank_id = int(raw_bank_id) if raw_bank_id else None
+        prod_id = _parse_int(arguments.get("product_id"))
+        bank_id = _parse_int(arguments.get("bank_id"))
 
         return get_bank_product_catalog(
             db=db,
@@ -100,27 +152,23 @@ def execute_mcp_tool(
 
     # Tool 6: Agent Directory & Team Workload Metrics (Admin only)
     elif name == "get_agent_directory":
-        raw_agent_id = arguments.get("agent_id")
-        agent_id = int(raw_agent_id) if raw_agent_id else None
+        agent_id = _parse_int(arguments.get("agent_id"))
+        include_inactive = _parse_bool(arguments.get("include_inactive"), False)
+        with_workload_metrics = _parse_bool(arguments.get("with_workload_metrics"), True)
 
         return get_agent_directory(
             db=db,
             agent_id=agent_id,
-            include_inactive=arguments.get("include_inactive", False),
-            with_workload_metrics=arguments.get("with_workload_metrics", True),
+            include_inactive=include_inactive,
+            with_workload_metrics=with_workload_metrics,
             auth_user=auth_user,
         )
 
     # Tool 7: DSA Commission & Revenue Analytics (Admin & Agent)
     elif name == "get_commission_analytics":
-        raw_agent_id = arguments.get("agent_id")
-        agent_id = int(raw_agent_id) if raw_agent_id else None
-
-        raw_bank_id = arguments.get("bank_id")
-        bank_id = int(raw_bank_id) if raw_bank_id else None
-
-        raw_prod_id = arguments.get("product_id")
-        prod_id = int(raw_prod_id) if raw_prod_id else None
+        agent_id = _parse_int(arguments.get("agent_id"))
+        bank_id = _parse_int(arguments.get("bank_id"))
+        prod_id = _parse_int(arguments.get("product_id"))
 
         return get_commission_analytics(
             db=db,
@@ -133,8 +181,7 @@ def execute_mcp_tool(
 
     # Tool 8: Portfolio KPI & Status Distribution (Admin & Agent)
     elif name == "get_portfolio_kpis":
-        raw_agent_id = arguments.get("agent_id")
-        agent_id = int(raw_agent_id) if raw_agent_id else None
+        agent_id = _parse_int(arguments.get("agent_id"))
 
         return get_portfolio_kpis(
             db=db,
@@ -145,8 +192,7 @@ def execute_mcp_tool(
 
     # Tool 9: Contact Lead Enquiries (Admin & Agent)
     elif name == "get_contact_enquiries":
-        raw_limit = arguments.get("limit")
-        limit = int(raw_limit) if raw_limit else 20
+        limit = _parse_int(arguments.get("limit")) or 20
 
         return get_contact_enquiries(
             db=db,
@@ -158,4 +204,5 @@ def execute_mcp_tool(
 
     else:
         raise HTTPException(status_code=404, detail=f"MCP Tool '{tool_name}' is not recognized.")
+
 

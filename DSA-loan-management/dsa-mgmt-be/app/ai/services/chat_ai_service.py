@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.ai.config import ai_config
 from app.ai.client import get_ai_client, get_groq_client
 from app.ai.prompts.chat_assistant_prompt import build_chat_assistant_prompt
-from app.mcp.registry import get_all_tool_specs, execute_mcp_tool
+from app.mcp.registry import get_all_tool_specs, get_tools_for_role, execute_mcp_tool
 
 # Configure structured logger for AI Chat Service
 logger = logging.getLogger("ai_chat_service")
@@ -28,11 +28,11 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-def format_tools_for_groq() -> List[Dict[str, Any]]:
+def format_tools_for_groq(user_role: str = "customer") -> List[Dict[str, Any]]:
     """
-    Transforms MCP tool specifications into OpenAI/Groq function calling format.
+    Transforms role-permitted MCP tool specifications into OpenAI/Groq function calling format.
     """
-    specs = get_all_tool_specs()
+    specs = get_tools_for_role(user_role)
     groq_tools = []
     for s in specs:
         groq_tools.append({
@@ -44,6 +44,7 @@ def format_tools_for_groq() -> List[Dict[str, Any]]:
             },
         })
     return groq_tools
+
 
 
 def format_llm_response_for_log(response: Any) -> str:
@@ -192,9 +193,10 @@ class ChatService:
         # -------------------------------------------------------------
         # STEP 3 & 4: ReAct Multi-Tool & Multi-Hop Execution Loop
         # -------------------------------------------------------------
-        all_tools = format_tools_for_groq()
+        all_tools = format_tools_for_groq(user_role=user_role)
         tool_names = [t["function"]["name"] for t in all_tools]
-        logger.info(f"🛠️ Exposed {len(all_tools)} MCP Tools to LLM: {tool_names}")
+        logger.info(f"🛠️ Exposed {len(all_tools)} MCP Tools to LLM for role '{user_role.upper()}': {tool_names}")
+
 
         max_turns = self.config.max_agent_turns or 4
         current_turn = 0

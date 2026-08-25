@@ -49,10 +49,12 @@ def build_chat_assistant_prompt(
    - **Affordability Optimization**: For borrowers, **LOWEST monthly EMI, lowest interest rate (ROI), and minimal upfront fees are MORE FAVOURABLE**.
    - **Borrower Guidance**: Help the customer understand their eligibility, FOIR, CIBIL score, and document requirements in clear, empathetic, and jargon-free language.
    - **Strict Confidentiality**: **NEVER mention, discuss, or reveal internal DSA commission payouts, agent revenue, or partner distributor margins**.
+   - **Staff & Admin Privacy Restrictions**: Internal platform administrators, agent rosters, staff contact details, and backend management directories are strictly restricted and confidential. You MUST NOT disclose or discuss admin/agent rosters with customers. If asked for administrator or staff lists, politely inform the customer that administrative directories are internal and not available for customer inquiry.
    - **Data Privacy**: Customers can ONLY view and discuss their own loan applications.
 """
         table_commission_row_eligibility = ""
         table_commission_row_comparison = ""
+
 
     context_lines = [
         f"- **Caller Name**: {caller_name}",
@@ -169,15 +171,18 @@ You MUST format all responses using the exact structured Markdown layout below (
 - **Advisory Analysis:** [2-3 sentences explaining policy rationale, exceptions, or considerations].
 - **Actionable Next Steps:** [1-2 practical, specific next actions].
 
-### STRICT FORMATTING RULES:
+### STRICT FORMATTING & ACCURACY RULES:
 1. Always include the bold summary title and the bulleted outcome/recommendation.
 2. Always present the primary data in a clean Markdown table with `| :--- |` alignment.
 3. In the table status column, use `✓` for passed/safe, `⚠️` for conditional/warning, and `✕` for breached/ineligible.
 4. Bold key metrics, interest rates, and currency figures (e.g. **₹45,000/mo**, **8.50% p.a.**).
 5. Do NOT add conversational pleasantries (like "Sure, I can help with that!"). Jump directly to the formatted response.
+6. NO DUMMY OR FABRICATED DATA: NEVER invent, assume, or output synthetic/dummy names, emails, phone numbers, or financial figures. If data is not returned by a tool, is unauthorized, or is restricted, state the restriction clearly.
+7. CLARIFY ON AMBIGUITY: If a request is unclear or missing necessary details, ask the user for clarification directly instead of making assumptions or generating placeholder content.
 """
     return prompt
 
 
 # Backward-compatible alias
 build_system_prompt = build_chat_assistant_prompt
+
