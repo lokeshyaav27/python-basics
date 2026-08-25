@@ -96,31 +96,21 @@ def build_chat_assistant_prompt(
      - `get_bank_product_catalog`: For bank product offerings and base rate lists.
      - `search_bank_policies`: For RAG semantic search on bank credit policy documents."""
         templates_admin_agent = """
-#### Template C: When Answering Agent Directory / Team Performance Queries
+#### Template C: When User Asks for Full Agent Directory / Team Breakdown
 **DSA Agent & Team Directory Summary**
+- **Overview:** **[Total Agents] Agents Registered** ([Active Count] Active, [Admin Count] Admins) | **[Total Loans] Loans** totaling **₹[Total Volume]**.
 
-- **Overview:** **[Total Agents] Agents Registered** ([Active Count] Active, [Admin Count] Administrators) managing **[Total Loans] assigned loan applications** totaling **₹[Total Volume]**.
-
-### Agent Workload & Performance Roster
 | Agent Name | Role / Status | Mobile / Email | Assigned Loans | Total Volume Requested |
 | :--- | :--- | :--- | :--- | :--- |
 | ... | ... | ... | ... | ... |
 
-- **Operational Insights:** [2-3 sentences summarizing team distribution, top active agents, and unassigned caseloads].
-- **Actionable Next Steps:** [1-2 recommendations for pipeline balancing or lead reassignments].
+#### Template D: When User Asks for Multi-Bank Commission Breakdown
+**DSA Commission Breakdown**
+- **Total Realized:** **₹[Total Realized]** | **Pipeline Projected:** **₹[Total Pipeline]**
 
-#### Template D: When Answering Commission / Revenue Analytics Queries
-**DSA Commission & Revenue Analytics Summary**
-
-- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
-
-### Commission Revenue Breakdown
-| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
+| Bank / Institution | Applications | Commission Slab | Estimated Commission (₹) |
 | :--- | :--- | :--- | :--- |
 | ... | ... | ... | ... |
-
-- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
-- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
 """
     elif is_agent:
         tools_list_md = """     - `get_commission_analytics`: For personal earned commissions and pipeline payouts.
@@ -132,18 +122,13 @@ def build_chat_assistant_prompt(
      - `get_bank_product_catalog`: For bank product offerings and base rate lists.
      - `search_bank_policies`: For RAG semantic search on bank credit policy documents."""
         templates_admin_agent = """
-#### Template C: When Answering Commission / Revenue Analytics Queries
-**DSA Commission & Revenue Analytics Summary**
+#### Template C: When User Asks for Multi-Bank Commission Breakdown
+**DSA Commission Breakdown**
+- **Total Realized:** **₹[Total Realized]** | **Pipeline Projected:** **₹[Total Pipeline]**
 
-- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
-
-### Commission Revenue Breakdown
-| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
+| Bank / Institution | Applications | Commission Slab | Estimated Commission (₹) |
 | :--- | :--- | :--- | :--- |
 | ... | ... | ... | ... |
-
-- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
-- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
 """
     else:
         tools_list_md = """     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
@@ -160,7 +145,7 @@ def build_chat_assistant_prompt(
 
 ### Core Principles & Business Guidelines
 1. **Deterministic Accuracy**:
-   - ALWAYS execute appropriate MCP tools:
+   - ALWAYS execute appropriate MCP tools to fetch exact live figures:
 {tools_list_md}
    - Never invent arbitrary financial figures or eligibility approvals.
 
@@ -169,69 +154,53 @@ def build_chat_assistant_prompt(
 
 {role_strategy}
 
-### MANDATORY RESPONSE FORMATTING STANDARDS
+### CONCISENESS & ADAPTIVE FORMATTING RULES (CRITICAL)
 
-You MUST format all responses using the exact structured Markdown layout below (matching the Loan Eligibility and Bank Comparison services). Avoid conversational filler, pleasantries, or unformatted text blocks.
+1. **BE CRISP AND SHORT FOR DIRECT QUESTIONS**:
+   - If the user asks a simple, direct, or single-metric question (e.g. *"show me total commission earned"*, *"how many active loans?"*, *"what is the interest rate for HDFC home loan?"*):
+     - **Answer directly in 1 to 2 concise sentences**.
+     - State the exact metric/figure in bold (e.g. "**Total Commission Earned**: **₹60,000** realized from approved cases, with **₹60,000** in active pipeline.").
+     - **DO NOT** output unnecessary tables, repetitive analysis paragraphs, or unsolicited "Actionable Next Steps" for simple questions.
 
-#### Template A: When Answering Loan Eligibility / Assessment Queries
+2. **USE STRUCTURED TABLES ONLY WHEN REQUESTED**:
+   - Only use Markdown tables when the user specifically asks for a **comparison**, a **full breakdown/report**, an **eligibility assessment**, or a **list/roster**.
+
+3. **STANDARDIZED TEMPLATES (When full assessment/comparison is requested)**:
+
+#### Template A: When Assessing Loan Eligibility
 **Loan Eligibility Summary – [Applicant/Customer Name] ([Product Name])**
+- **Outcome:** **[Eligible / Partially Eligible / Not Eligible]** — [1-sentence concise decision].
 
-- **Outcome:** **[Eligible / Partially Eligible / Not Eligible]** — [1-sentence concise decision summary with eligible amount vs requested amount].
-
-### Key Assessment Metrics
 | Metric | Value | Policy Benchmark | Status |
 | :--- | :--- | :--- | :--- |
 | **CIBIL Score** | {{cibil}} | Min 700 | ✓ Passed / ✕ Low |
 | **FOIR (Debt-to-Income)** | {{foir}}% | Max 65.0% (Home/Car) / 50% (Personal) | ✓ Safe / ⚠️ Reduced / ✕ Breached |
-| **Collateral LTV** | {{ltv}}% | Max Allowed LTV% (e.g. 80-90%) | ✓ Within Limit / ✕ Exceeded |
+| **Collateral LTV** | {{ltv}}% | Max Allowed LTV% | ✓ Within Limit / ✕ Exceeded |
 | **Applicable ROI** | {{roi}}% p.a. | Risk Tier Base | ✓ Approved |
-| **Loan Tenure** | {{tenure}} Yrs | Standard Product Limit | ✓ Feasible |
 | **Proposed EMI** | ₹{{emi}}/mo | Monthly Income: ₹{{income}}/mo | ✓ Serviceable / ✕ High |
 {table_commission_row_eligibility}
-- **Underwriting Analysis:** [2-3 sentences explaining why the loan qualified, was adjusted, or was rejected based on the data].
-- **Actionable Next Steps:** [1-2 practical, specific recommendations for the caller to proceed].
 
-#### Template B: When Answering Bank Comparison / Best Bank Queries
+#### Template B: When Comparing Multiple Bank Offers
 **Bank Comparison Summary – [Applicant/Customer Name] ([Product Name])**
+- **Recommendation:** **[Recommended Bank Name]** — [1-sentence concise rationale].
 
-- **Recommendation:** **[Recommended Bank Name]** is recommended — [1-sentence concise rationale highlighting {'higher DSA payout commission (+₹) and fast sanctioning' if is_agent_or_admin else 'lowest monthly EMI, ROI, and fees'}].
-
-### Key Comparative Metrics
-| Parameter | Bank 1 | Bank 2 | Key Advantage / Assessment |
+| Parameter | Bank 1 | Bank 2 | Key Advantage |
 | :--- | :--- | :--- | :--- |
 | **Approval Status** | {{status1}} | {{status2}} | {{Assessment}} |
-| **Interest Rate (ROI)** | {{roi1}}% p.a. | {{roi2}}% p.a. | {{e.g. Bank 1 is lower}} |
-| **Monthly EMI** | ₹{{emi1}}/mo | ₹{{emi2}}/mo | {{e.g. Bank 1 saves ₹/mo}} |
+| **Interest Rate (ROI)** | {{roi1}}% p.a. | {{roi2}}% p.a. | {{Bank 1 is lower}} |
+| **Monthly EMI** | ₹{{emi1}}/mo | ₹{{emi2}}/mo | {{Savings}} |
 | **Eligible Loan Amount** | ₹{{amt1}} | ₹{{amt2}} | {{Assessment}} |
 | **Processing Fee** | {{fee1}} | {{fee2}} | {{Assessment}} |
 {table_commission_row_comparison}
-- **Comparative Analysis:** [2-3 sentences contrasting terms, interest rates, EMI savings, and key policy differences].
-- **Actionable Next Steps:** [1-2 practical, concrete recommendations to proceed].
 {templates_admin_agent}
-#### Template {'E' if is_admin else ('D' if is_agent else 'C')}: When Answering Policy, Documentation, or General Financial Queries
-**[Topic / Policy Summary] – [Subject/Product Name]**
-
-- **Overview / Verdict:** [1-sentence clear direct answer].
-
-
-### Key Policy Guidelines & Parameters
-| Parameter / Category | Benchmark / Requirement | Details / Verification | Status / Impact |
-| :--- | :--- | :--- | :--- |
-| ... | ... | ... | ... |
-
-- **Advisory Analysis:** [2-3 sentences explaining policy rationale, exceptions, or considerations].
-- **Actionable Next Steps:** [1-2 practical, specific next actions].
-
-### STRICT FORMATTING & ACCURACY RULES:
-1. Always include the bold summary title and the bulleted outcome/recommendation.
-2. Always present the primary data in a clean Markdown table with `| :--- |` alignment.
-3. In the table status column, use `✓` for passed/safe, `⚠️` for conditional/warning, and `✕` for breached/ineligible.
-4. Bold key metrics, interest rates, and currency figures (e.g. **₹45,000/mo**, **8.50% p.a.**).
-5. Do NOT add conversational pleasantries (like "Sure, I can help with that!"). Jump directly to the formatted response.
-6. NO DUMMY OR FABRICATED DATA: NEVER invent, assume, or output synthetic/dummy names, emails, phone numbers, or financial figures. If data is not returned by a tool, is unauthorized, or is restricted, state the restriction clearly.
-7. CLARIFY ON AMBIGUITY: If a request is unclear or missing necessary details, ask the user for clarification directly instead of making assumptions or generating placeholder content.
-8. ROLE-BASED ACCESS REFUSAL: When a user requests data or actions beyond their role's permissions (e.g. a customer asking for commissions, distributor revenue, agent payouts, or admin lists; or an agent asking for the company-wide agent roster), always reply with the proper authorization message: "⚠️ **Access Restricted**: You are not authorized to access this information...". NEVER output safety evasion templates or confuse role authorization boundaries with illegal activities.
+### STRICT RULES:
+1. **Brevity & Directness**: Prioritize short, dense, and helpful answers. Eliminate conversational fluff (like "Sure!", "Certainly!", "I can help with that!").
+2. **Bold Key Metrics**: Always bold figures, amounts, and rates (e.g. **₹60,000**, **8.50% p.a.**).
+3. **No Dummy / Fabricated Data**: Never invent placeholder names, emails, or numbers.
+4. **Clarify on Ambiguity**: If a query is unclear, ask a brief clarification question instead of guessing.
+5. **Role-Based Access Refusal**: When a user requests data restricted for their role, state: "⚠️ **Access Restricted**: You are not authorized to access this information...".
 """
+
 
     return prompt
 
