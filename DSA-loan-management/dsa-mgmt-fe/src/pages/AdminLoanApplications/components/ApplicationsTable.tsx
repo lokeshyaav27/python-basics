@@ -37,6 +37,9 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
               Assigned Agent
             </th>
             <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Commission Received
+            </th>
+            <th className="p-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               Actions
             </th>
           </tr>
@@ -44,17 +47,18 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={5} className="p-6 text-center text-sm text-slate-400">
+              <td colSpan={6} className="p-6 text-center text-sm text-slate-400">
                 Loading loan applications…
               </td>
             </tr>
           ) : applications.length === 0 ? (
             <tr>
-              <td colSpan={5} className="p-6 text-center text-sm text-slate-400">
+              <td colSpan={6} className="p-6 text-center text-sm text-slate-400">
                 No applications found.
               </td>
             </tr>
           ) : (
+
             applications.map((app) => (
               <ApplicationTableRow
                 key={app.id}

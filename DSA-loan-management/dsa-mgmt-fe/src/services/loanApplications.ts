@@ -62,6 +62,10 @@ export interface LoanApplication {
   agent_name?: string | null
   agent?: { id: number; name: string; email?: string; mobile?: string } | null
   description?: string | null
+  loanAmountRequired?: number | null
+  commissionRatePct?: number | null
+  commissionReceived?: number | null
+  commissionEstimated?: number | null
   clientGeneralDetail?: ClientGeneralDetailsData | null
   homeLoanDetail?: HomeLoanDetailsData | null
   carLoanDetail?: CarLoanDetailsData | null
@@ -69,6 +73,7 @@ export interface LoanApplication {
   created_at?: string
   updated_at?: string
 }
+
 
 export type FullLoanApplicationData = {
   name: string

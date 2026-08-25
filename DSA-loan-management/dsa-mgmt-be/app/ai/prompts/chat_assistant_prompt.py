@@ -69,6 +69,74 @@ def build_chat_assistant_prompt(
         context_lines.append(f"- **Linked Agent in Chat**: Agent #{linked_agent_id}")
     context_block = "\n".join(context_lines)
 
+    if is_admin:
+        tools_list_md = """     - `get_agent_directory`: For listing agents, team rosters, and agent-wise loan counts.
+     - `get_commission_analytics`: For total commission earned, revenue breakdowns by bank/agent, and projected payouts.
+     - `get_portfolio_kpis`: For portfolio volume, status distribution, and conversion rates.
+     - `get_contact_enquiries`: For customer contact leads and website inquiries.
+     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
+     - `compare_bank_offers`: For side-by-side bank loan comparisons and rate matrices.
+     - `get_loan_dossier`: For looking up specific loan files, customer dossiers, or agent pipelines.
+     - `get_bank_product_catalog`: For bank product offerings and base rate lists.
+     - `search_bank_policies`: For RAG semantic search on bank credit policy documents."""
+        templates_admin_agent = """
+#### Template C: When Answering Agent Directory / Team Performance Queries
+**DSA Agent & Team Directory Summary**
+
+- **Overview:** **[Total Agents] Agents Registered** ([Active Count] Active, [Admin Count] Administrators) managing **[Total Loans] assigned loan applications** totaling **₹[Total Volume]**.
+
+### Agent Workload & Performance Roster
+| Agent Name | Role / Status | Mobile / Email | Assigned Loans | Total Volume Requested |
+| :--- | :--- | :--- | :--- | :--- |
+| ... | ... | ... | ... | ... |
+
+- **Operational Insights:** [2-3 sentences summarizing team distribution, top active agents, and unassigned caseloads].
+- **Actionable Next Steps:** [1-2 recommendations for pipeline balancing or lead reassignments].
+
+#### Template D: When Answering Commission / Revenue Analytics Queries
+**DSA Commission & Revenue Analytics Summary**
+
+- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
+
+### Commission Revenue Breakdown
+| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
+| :--- | :--- | :--- | :--- |
+| ... | ... | ... | ... |
+
+- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
+- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
+"""
+    elif is_agent:
+        tools_list_md = """     - `get_commission_analytics`: For personal earned commissions and pipeline payouts.
+     - `get_portfolio_kpis`: For portfolio volume and status distributions.
+     - `get_contact_enquiries`: For customer contact leads.
+     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
+     - `compare_bank_offers`: For side-by-side bank loan comparisons and rate matrices.
+     - `get_loan_dossier`: For looking up specific loan files, customer dossiers, or assigned pipelines.
+     - `get_bank_product_catalog`: For bank product offerings and base rate lists.
+     - `search_bank_policies`: For RAG semantic search on bank credit policy documents."""
+        templates_admin_agent = """
+#### Template C: When Answering Commission / Revenue Analytics Queries
+**DSA Commission & Revenue Analytics Summary**
+
+- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
+
+### Commission Revenue Breakdown
+| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
+| :--- | :--- | :--- | :--- |
+| ... | ... | ... | ... |
+
+- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
+- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
+"""
+    else:
+        tools_list_md = """     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
+     - `compare_bank_offers`: For side-by-side bank loan comparisons and rate matrices.
+     - `get_loan_dossier`: For looking up your personal loan application details.
+     - `get_bank_product_catalog`: For browsing loan products and participating partner banks.
+     - `search_bank_policies`: For checking bank eligibility criteria, document requirements, and lending guidelines."""
+        templates_admin_agent = ""
+
     prompt = f"""{persona}
 
 ### Current User Session Context
@@ -77,15 +145,7 @@ def build_chat_assistant_prompt(
 ### Core Principles & Business Guidelines
 1. **Deterministic Accuracy**:
    - ALWAYS execute appropriate MCP tools:
-     - `get_agent_directory`: For listing agents, team rosters, and agent-wise loan counts (Admin only).
-     - `get_commission_analytics`: For total commission earned, revenue breakdowns by bank/agent, and projected payouts.
-     - `get_portfolio_kpis`: For portfolio volume, status distribution, and conversion rates.
-     - `get_contact_enquiries`: For customer contact leads and website inquiries.
-     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
-     - `compare_bank_offers`: For side-by-side bank loan comparisons and rate matrices.
-     - `get_loan_dossier`: For looking up specific loan files, customer dossiers, or agent pipelines.
-     - `get_bank_product_catalog`: For bank product offerings and base rate lists.
-     - `search_bank_policies`: For RAG semantic search on bank credit policy documents.
+{tools_list_md}
    - Never invent arbitrary financial figures or eligibility approvals.
 
 2. **Policy Verification via RAG**:
@@ -131,37 +191,12 @@ You MUST format all responses using the exact structured Markdown layout below (
 {table_commission_row_comparison}
 - **Comparative Analysis:** [2-3 sentences contrasting terms, interest rates, EMI savings, and key policy differences].
 - **Actionable Next Steps:** [1-2 practical, concrete recommendations to proceed].
-
-#### Template C: When Answering Agent Directory / Team Performance Queries
-**DSA Agent & Team Directory Summary**
-
-- **Overview:** **[Total Agents] Agents Registered** ([Active Count] Active, [Admin Count] Administrators) managing **[Total Loans] assigned loan applications** totaling **₹[Total Volume]**.
-
-### Agent Workload & Performance Roster
-| Agent Name | Role / Status | Mobile / Email | Assigned Loans | Total Volume Requested |
-| :--- | :--- | :--- | :--- | :--- |
-| ... | ... | ... | ... | ... |
-
-- **Operational Insights:** [2-3 sentences summarizing team distribution, top active agents, and unassigned caseloads].
-- **Actionable Next Steps:** [1-2 recommendations for pipeline balancing or lead reassignments].
-
-#### Template D: When Answering Commission / Revenue Analytics Queries
-**DSA Commission & Revenue Analytics Summary**
-
-- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
-
-### Commission Revenue Breakdown
-| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
-| :--- | :--- | :--- | :--- |
-| ... | ... | ... | ... |
-
-- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
-- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
-
-#### Template E: When Answering Policy, Documentation, or General Financial Queries
+{templates_admin_agent}
+#### Template {'E' if is_admin else ('D' if is_agent else 'C')}: When Answering Policy, Documentation, or General Financial Queries
 **[Topic / Policy Summary] – [Subject/Product Name]**
 
 - **Overview / Verdict:** [1-sentence clear direct answer].
+
 
 ### Key Policy Guidelines & Parameters
 | Parameter / Category | Benchmark / Requirement | Details / Verification | Status / Impact |

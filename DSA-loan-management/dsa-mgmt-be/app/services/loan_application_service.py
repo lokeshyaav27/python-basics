@@ -28,6 +28,46 @@ class LoanApplicationService:
     @staticmethod
     def serialize(app: LoanApplication) -> Dict[str, Any]:
         created_at_val = getattr(app, 'createdAt', None)
+        # Calculate Commission Metrics
+
+        cgd = app.clientGeneralDetail
+        loan_amt = 0.0
+        if cgd and cgd.loan_amount_required is not None:
+            try:
+                loan_amt = float(cgd.loan_amount_required)
+            except (ValueError, TypeError):
+                loan_amt = 0.0
+        elif app.personalLoanDetail and app.personalLoanDetail.required_amount is not None:
+            try:
+                loan_amt = float(app.personalLoanDetail.required_amount)
+            except (ValueError, TypeError):
+                loan_amt = 0.0
+
+        comm_pct = None
+        comm_received = None
+        comm_estimated = None
+
+        if app.bankId and app.productId:
+            target_link = None
+            if app.bank:
+                links = getattr(app.bank, 'product_links', [])
+                target_link = next((l for l in links if getattr(l, 'productId', None) == app.productId and getattr(l, 'isActive', True) != False), None)
+            
+            if target_link and getattr(target_link, 'commission', None) is not None:
+                try:
+                    comm_pct = float(target_link.commission)
+                except (ValueError, TypeError):
+                    comm_pct = 1.0
+            else:
+                comm_pct = 1.0
+
+            if comm_pct is not None and loan_amt > 0:
+                comm_estimated = round((loan_amt * comm_pct) / 100.0, 2)
+                is_approved = bool(app.status and any(w in app.status.lower() for w in ["approved", "disbursed", "sanction"]))
+                if is_approved:
+                    comm_received = comm_estimated
+
+
         return {
             "id": app.id,
             "name": app.name,
@@ -45,6 +85,10 @@ class LoanApplicationService:
             "productId": app.productId,
             "productName": app.product.name if app.product else None,
             "productImage": app.product.image if app.product else None,
+            "loanAmountRequired": loan_amt,
+            "commissionRatePct": comm_pct,
+            "commissionReceived": comm_received,
+            "commissionEstimated": comm_estimated,
             "clientGeneralDetailTableId": app.clientGeneralDetailTableId,
             "homeLoanDetailId": app.homeLoanDetailId,
             "carLoanDetailId": app.carLoanDetailId,
@@ -93,6 +137,7 @@ class LoanApplicationService:
             "createdAt": created_at_val.isoformat() if created_at_val else None,
             "isActive": app.isActive,
         }
+
 
     def list_applications(
         self,

@@ -42,10 +42,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
 
   const effectiveRole = role || (user.role as Role)
   const currentLang = i18n.language || 'en'
+  const isChatPage = location.pathname.includes('chat-with-ai')
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+    <div className={`min-h-screen bg-slate-50 text-slate-800 flex flex-col ${isChatPage ? 'h-screen overflow-hidden' : ''}`}>
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm shrink-0">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-900 text-lg font-extrabold text-white">
@@ -95,14 +96,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto flex flex-1 w-full">
+      <div className={`max-w-7xl mx-auto flex flex-1 w-full ${isChatPage ? 'overflow-hidden min-h-0' : ''}`}>
         {effectiveRole && <Sidebar role={effectiveRole} />}
-        <main className="flex-1 p-6">{children}</main>
+        <main className={`flex-1 ${isChatPage ? 'p-3 sm:p-4 overflow-hidden flex flex-col min-h-0' : 'p-6'}`}>{children}</main>
       </div>
 
-      <Footer />
+      {!isChatPage && <Footer />}
     </div>
   )
 }
 
 export default ProtectedRoute
+

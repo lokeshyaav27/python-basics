@@ -133,7 +133,27 @@ export const ApplicationTableRow: React.FC<ApplicationTableRowProps> = ({
         )}
       </td>
       <td className="p-3">
+
+        {app.commissionReceived !== undefined && app.commissionReceived !== null && app.commissionReceived > 0 ? (
+          <div className="flex flex-col">
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-xs w-fit">
+              <span>💰</span> ₹{app.commissionReceived.toLocaleString('en-IN')}
+            </span>
+            {app.commissionRatePct && (
+              <span className="text-[10px] text-slate-400 mt-0.5">
+                Slab: {app.commissionRatePct}%
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="inline-flex items-center text-xs text-slate-400">
+            —
+          </span>
+        )}
+      </td>
+      <td className="p-3">
         <div className="flex items-center gap-1.5">
+
           <Tooltip title="View Complete Application & 11 Financial Parameters">
             <button
               onClick={() => onViewDetails(app)}

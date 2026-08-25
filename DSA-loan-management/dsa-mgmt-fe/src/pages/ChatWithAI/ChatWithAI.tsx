@@ -234,9 +234,9 @@ const ChatWithAI: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6 flex flex-col h-[calc(100vh-5rem)]">
+    <div className="mx-auto w-full max-w-5xl flex flex-col flex-1 h-full min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -256,8 +256,9 @@ const ChatWithAI: React.FC = () => {
       </div>
 
       {/* Message Stream */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2 mb-3">
         {messages.length === 0 && (
+
           <div className="flex flex-col items-center justify-center h-full text-center p-8 space-y-3">
             <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-purple-100 text-purple-700 text-3xl shadow-xs">
               <RobotOutlined />
@@ -287,8 +288,9 @@ const ChatWithAI: React.FC = () => {
       </div>
 
       {/* Helper Info & Input Bar */}
-      <div className="space-y-2">
+      <div className="space-y-2 shrink-0">
         <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/40 to-purple-50/90 border border-purple-200/80 text-[11px] sm:text-xs text-purple-950 shadow-2xs">
+
           <div className="flex items-center gap-2">
             <span className="text-sm">💡</span>
             <span>
