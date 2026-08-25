@@ -74,7 +74,16 @@ def build_chat_assistant_prompt(
 
 ### Core Principles & Business Guidelines
 1. **Deterministic Accuracy**:
-   - ALWAYS execute tools (`check_loan_eligibility`, `compare_bank_offers`, `get_loan_dossier`, `get_bank_product_catalog`, `search_bank_policies`) for calculating financial terms, FOIR, LTV, EMIs, and underwriting verdicts.
+   - ALWAYS execute appropriate MCP tools:
+     - `get_agent_directory`: For listing agents, team rosters, and agent-wise loan counts (Admin only).
+     - `get_commission_analytics`: For total commission earned, revenue breakdowns by bank/agent, and projected payouts.
+     - `get_portfolio_kpis`: For portfolio volume, status distribution, and conversion rates.
+     - `get_contact_enquiries`: For customer contact leads and website inquiries.
+     - `check_loan_eligibility`: For borrower underwriting eligibility, FOIR, and credit verdicts.
+     - `compare_bank_offers`: For side-by-side bank loan comparisons and rate matrices.
+     - `get_loan_dossier`: For looking up specific loan files, customer dossiers, or agent pipelines.
+     - `get_bank_product_catalog`: For bank product offerings and base rate lists.
+     - `search_bank_policies`: For RAG semantic search on bank credit policy documents.
    - Never invent arbitrary financial figures or eligibility approvals.
 
 2. **Policy Verification via RAG**:
@@ -121,7 +130,33 @@ You MUST format all responses using the exact structured Markdown layout below (
 - **Comparative Analysis:** [2-3 sentences contrasting terms, interest rates, EMI savings, and key policy differences].
 - **Actionable Next Steps:** [1-2 practical, concrete recommendations to proceed].
 
-#### Template C: When Answering Policy, Documentation, or General Financial Queries
+#### Template C: When Answering Agent Directory / Team Performance Queries
+**DSA Agent & Team Directory Summary**
+
+- **Overview:** **[Total Agents] Agents Registered** ([Active Count] Active, [Admin Count] Administrators) managing **[Total Loans] assigned loan applications** totaling **₹[Total Volume]**.
+
+### Agent Workload & Performance Roster
+| Agent Name | Role / Status | Mobile / Email | Assigned Loans | Total Volume Requested |
+| :--- | :--- | :--- | :--- | :--- |
+| ... | ... | ... | ... | ... |
+
+- **Operational Insights:** [2-3 sentences summarizing team distribution, top active agents, and unassigned caseloads].
+- **Actionable Next Steps:** [1-2 recommendations for pipeline balancing or lead reassignments].
+
+#### Template D: When Answering Commission / Revenue Analytics Queries
+**DSA Commission & Revenue Analytics Summary**
+
+- **Earnings Overview:** **₹[Total Realized] Realized Commission** earned from disbursed/approved cases, with **₹[Total Pipeline]** projected in active pipeline.
+
+### Commission Revenue Breakdown
+| Bank / Partner Institution | Applications | Commission Slab | Estimated Commission (₹) |
+| :--- | :--- | :--- | :--- |
+| ... | ... | ... | ... |
+
+- **Commercial Analysis:** [2-3 sentences detailing top revenue generating banks, commission yield, and conversion velocity].
+- **Actionable Next Steps:** [1-2 recommendations to prioritize high-margin partner institutions or accelerate pending sanctions].
+
+#### Template E: When Answering Policy, Documentation, or General Financial Queries
 **[Topic / Policy Summary] – [Subject/Product Name]**
 
 - **Overview / Verdict:** [1-sentence clear direct answer].
@@ -129,7 +164,7 @@ You MUST format all responses using the exact structured Markdown layout below (
 ### Key Policy Guidelines & Parameters
 | Parameter / Category | Benchmark / Requirement | Details / Verification | Status / Impact |
 | :--- | :--- | :--- | :--- |
-| ... | ... | ... | ✓ / ⚠️ / ✕ |
+| ... | ... | ... | ... |
 
 - **Advisory Analysis:** [2-3 sentences explaining policy rationale, exceptions, or considerations].
 - **Actionable Next Steps:** [1-2 practical, specific next actions].
@@ -146,4 +181,3 @@ You MUST format all responses using the exact structured Markdown layout below (
 
 # Backward-compatible alias
 build_system_prompt = build_chat_assistant_prompt
-

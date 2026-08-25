@@ -65,3 +65,17 @@ class ContactRepository:
         self.db.add(enquiry)
         self.db.commit()
         return enquiry
+
+    def list_enquiries_filtered(
+        self,
+        status: Optional[str] = None,
+        loan_type: Optional[str] = None,
+        limit: int = 20,
+    ) -> List[ContactEnquiry]:
+        query = self.db.query(ContactEnquiry).filter(ContactEnquiry.isActive != False)
+        if status and status.lower() != "all":
+            query = query.filter(ContactEnquiry.status.ilike(f"%{status}%"))
+        if loan_type and loan_type.lower() != "all":
+            query = query.filter(ContactEnquiry.loanType.ilike(f"%{loan_type}%"))
+        return query.order_by(ContactEnquiry.id.desc()).limit(limit).all()
+

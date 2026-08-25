@@ -9,12 +9,16 @@ from app.mcp.tools import (
     compare_bank_offers,
     get_loan_dossier,
     get_bank_product_catalog,
+    get_agent_directory,
+    get_commission_analytics,
+    get_portfolio_kpis,
+    get_contact_enquiries,
 )
 
 
 def get_all_tool_specs() -> List[Dict[str, Any]]:
     """
-    Returns the complete list of 5 consolidated MCP tool specifications.
+    Returns the complete list of all registered MCP tool specifications.
     """
     return ALL_MCP_SPECS
 
@@ -26,7 +30,7 @@ def execute_mcp_tool(
     auth_user: Optional[Dict[str, Any]] = None,
 ) -> Any:
     """
-    Directs and executes any of the 5 consolidated MCP tools by exact name with arguments and authorization checks.
+    Directs and executes any of the registered MCP tools by exact name with arguments and authorization checks.
     """
     name = (tool_name or "").strip()
 
@@ -94,5 +98,64 @@ def execute_mcp_tool(
             auth_user=auth_user,
         )
 
+    # Tool 6: Agent Directory & Team Workload Metrics (Admin only)
+    elif name == "get_agent_directory":
+        raw_agent_id = arguments.get("agent_id")
+        agent_id = int(raw_agent_id) if raw_agent_id else None
+
+        return get_agent_directory(
+            db=db,
+            agent_id=agent_id,
+            include_inactive=arguments.get("include_inactive", False),
+            with_workload_metrics=arguments.get("with_workload_metrics", True),
+            auth_user=auth_user,
+        )
+
+    # Tool 7: DSA Commission & Revenue Analytics (Admin & Agent)
+    elif name == "get_commission_analytics":
+        raw_agent_id = arguments.get("agent_id")
+        agent_id = int(raw_agent_id) if raw_agent_id else None
+
+        raw_bank_id = arguments.get("bank_id")
+        bank_id = int(raw_bank_id) if raw_bank_id else None
+
+        raw_prod_id = arguments.get("product_id")
+        prod_id = int(raw_prod_id) if raw_prod_id else None
+
+        return get_commission_analytics(
+            db=db,
+            agent_id=agent_id,
+            bank_id=bank_id,
+            product_id=prod_id,
+            status=arguments.get("status"),
+            auth_user=auth_user,
+        )
+
+    # Tool 8: Portfolio KPI & Status Distribution (Admin & Agent)
+    elif name == "get_portfolio_kpis":
+        raw_agent_id = arguments.get("agent_id")
+        agent_id = int(raw_agent_id) if raw_agent_id else None
+
+        return get_portfolio_kpis(
+            db=db,
+            product_type=arguments.get("product_type"),
+            agent_id=agent_id,
+            auth_user=auth_user,
+        )
+
+    # Tool 9: Contact Lead Enquiries (Admin & Agent)
+    elif name == "get_contact_enquiries":
+        raw_limit = arguments.get("limit")
+        limit = int(raw_limit) if raw_limit else 20
+
+        return get_contact_enquiries(
+            db=db,
+            status=arguments.get("status"),
+            loan_type=arguments.get("loan_type"),
+            limit=limit,
+            auth_user=auth_user,
+        )
+
     else:
         raise HTTPException(status_code=404, detail=f"MCP Tool '{tool_name}' is not recognized.")
+

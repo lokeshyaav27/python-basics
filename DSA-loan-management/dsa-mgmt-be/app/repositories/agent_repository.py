@@ -82,3 +82,54 @@ class AgentRepository:
         self.db.add(agent)
         self.db.commit()
         return agent
+
+    def get_agent_workload_metrics(
+        self, agent_id: Optional[int] = None, include_inactive: bool = False
+    ) -> List[dict]:
+        from app.models.loan_application import LoanApplication
+        from app.models.client_general_detail import ClientGeneralDetail
+
+        query = self.db.query(Agent)
+        if not include_inactive:
+            query = query.filter(Agent.isActive == True)
+        if agent_id is not None:
+            query = query.filter(Agent.id == agent_id)
+
+        agents = query.order_by(Agent.id.asc()).all()
+        results = []
+
+        for a in agents:
+            apps = (
+                self.db.query(LoanApplication)
+                .filter(LoanApplication.agentId == a.id, LoanApplication.isActive != False)
+                .all()
+            )
+
+            total_count = len(apps)
+            status_counts = {}
+            total_volume = 0.0
+
+            for app in apps:
+                st = app.status or "Lead Created"
+                status_counts[st] = status_counts.get(st, 0) + 1
+                if app.clientGeneralDetail and app.clientGeneralDetail.loan_amount_required:
+                    try:
+                        total_volume += float(app.clientGeneralDetail.loan_amount_required)
+                    except (ValueError, TypeError):
+                        pass
+
+            results.append({
+                "agentId": a.id,
+                "name": a.name,
+                "email": a.email,
+                "mobile": a.mobile,
+                "isAdmin": a.isAdmin,
+                "isActive": a.isActive,
+                "photo": a.photo,
+                "totalAssignedLoans": total_count,
+                "totalLoanVolumeRequested": total_volume,
+                "statusBreakdown": status_counts,
+            })
+
+        return results
+
