@@ -22,10 +22,17 @@ class Settings(BaseSettings):
     STORAGE_AGENT_PHOTOS_DIR: str = Field(default="agent-photos")
     STORAGE_BANK_DOCS_DIR: str = Field(default="bank-documents")
 
-    # AI & Groq Configuration (Configured purely via .env)
+    # AI Provider Switch & Configuration
+    USE_OLLAMA: bool = Field(default=False)
+
+    # Groq Configuration (Active when USE_OLLAMA=False)
     GROQ_API_KEY: str = Field(default="")
     GROQ_MODEL: str = Field(default="")
     GROQ_FALLBACK_MODEL: str = Field(default="")
+
+    # Ollama Local Configuration (Active when USE_OLLAMA=True)
+    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
+    OLLAMA_MODEL: str = Field(default="llama3.1:8b")
 
     # RAG Vector Search Configuration
     RAG_EMBEDDING_MODEL: str = Field(default="all-MiniLM-L6-v2")

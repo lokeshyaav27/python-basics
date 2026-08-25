@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.schemas.chat import ChatRequest, ChatResponse, ChatMessage
+from app.core.config import settings
 from app.ai.config import ai_config
-from app.ai.client import get_groq_client
+from app.ai.client import get_ai_client, get_groq_client
 from app.ai.prompts.chat_assistant_prompt import build_chat_assistant_prompt
 from app.mcp.registry import get_all_tool_specs, execute_mcp_tool
 
@@ -146,12 +147,13 @@ class ChatService:
         logger.info(f"💬 User Prompt Text  -> \"{request.message}\"")
         logger.info(f"📜 History Depth     -> {len(request.history)} prior messages in session")
 
-        # Check Groq client availability
-        client = get_groq_client()
+        # Check AI client availability
+        client = get_ai_client()
         if client is None:
-            logger.error("❌ Groq client initialization failed. GROQ_API_KEY may be missing.")
+            provider_name = "Ollama (local server)" if settings.USE_OLLAMA else "Groq Cloud"
+            logger.error(f"❌ AI client initialization failed. Please check {provider_name} configuration in .env.")
             return ChatResponse(
-                response="⚠️ AI Underwriting service is currently unavailable. Please verify GROQ_API_KEY.",
+                response=f"⚠️ AI Underwriting service is currently unavailable. Please verify {provider_name} configuration in .env.",
                 referencedDocs=[],
             )
 
