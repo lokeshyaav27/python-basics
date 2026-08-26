@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { SendOutlined } from '@ant-design/icons'
 
 export interface MentionItem {
@@ -27,20 +27,32 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 }) => {
   const [showMentionMenu, setShowMentionMenu] = useState(false)
   const [mentionFilter, setMentionFilter] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // Auto-resize textarea height as content expands
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 120)
+      textareaRef.current.style.height = `${Math.max(newHeight, 46)}px`
+    }
+  }, [inputVal])
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      onSendMessage()
+      if (inputVal.trim() && !isLoading) {
+        onSendMessage()
+      }
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value
     setInputVal(val)
 
     // Check if user is typing a mention
-    const lastWord = val.split(' ').pop() || ''
+    const lastWord = val.split(/\s+/).pop() || ''
     if (lastWord.startsWith('@')) {
       setShowMentionMenu(true)
       setMentionFilter(lastWord.slice(1).toLowerCase())
@@ -50,11 +62,12 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   }
 
   const handleSelectMention = (item: MentionItem) => {
-    const words = inputVal.split(' ')
+    const words = inputVal.split(/\s+/)
     words.pop() // remove current '@partial'
     words.push(item.token)
     setInputVal(words.join(' ') + ' ')
     setShowMentionMenu(false)
+    textareaRef.current?.focus()
   }
 
   const filteredMentions = mentionItems.filter(
@@ -103,21 +116,22 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         </div>
       )}
 
-      {/* Input Box */}
-      <div className="flex gap-2">
-        <input
-          type="text"
+      {/* Input Box with Auto-Resizing Textarea */}
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          rows={1}
           value={inputVal}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a question or type @ to reference a loan application..."
-          className="flex-1 rounded-2xl border border-slate-300 px-4 py-3.5 text-xs sm:text-sm outline-none focus:border-purple-600 focus:ring-3 focus:ring-purple-100 transition"
+          placeholder="Ask a question or type @ to reference a loan... (Shift + Enter for new line)"
+          className="flex-1 resize-none overflow-y-auto max-h-32 rounded-2xl border border-slate-300 px-4 py-3 text-xs sm:text-sm outline-none focus:border-purple-600 focus:ring-3 focus:ring-purple-100 transition leading-relaxed min-h-[46px]"
         />
         <button
           type="button"
           onClick={onSendMessage}
           disabled={isLoading || !inputVal.trim()}
-          className="rounded-2xl bg-purple-600 px-6 py-3.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-purple-600/30 hover:bg-purple-700 disabled:opacity-40 transition active:scale-95 flex items-center gap-2"
+          className="h-[46px] rounded-2xl bg-purple-600 px-6 text-xs sm:text-sm font-bold text-white shadow-md shadow-purple-600/30 hover:bg-purple-700 disabled:opacity-40 transition active:scale-95 flex items-center gap-2 shrink-0"
         >
           <SendOutlined />
           <span className="hidden sm:inline">Send</span>
@@ -128,3 +142,4 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 }
 
 export default ChatInputBar
+
