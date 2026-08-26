@@ -23,6 +23,10 @@ import {
   RightOutlined,
   BarChartOutlined,
   CalculatorOutlined,
+  BankOutlined,
+  SafetyCertificateOutlined,
+  RiseOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { Tooltip, message } from 'antd'
 
@@ -325,6 +329,43 @@ const CheckEligibility: React.FC = () => {
         </div>
       )}
 
+      {/* ── Compact Highlighted Advisory Banner (Dark Blue) ────── */}
+      {eligibility && (
+        <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-950 via-indigo-950 to-blue-950 px-4 py-3 sm:px-5 sm:py-2.5 text-white shadow-lg shadow-indigo-950/20">
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 text-sm font-bold shadow-xs">
+                <BankOutlined />
+              </span>
+              <p className="text-xs text-slate-200 leading-snug">
+                <span className="font-extrabold text-amber-300 mr-1.5">
+                  💡 Market Best Practices Check:
+                </span>
+                This evaluation is based on standard market rules. For exact eligibility & live policy matching, check{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate(`${getComparisonRoute()}?applicationId=${selectedApplicationId}`)}
+                  className="font-bold text-white underline decoration-amber-400 decoration-2 underline-offset-2 hover:text-amber-200 cursor-pointer inline"
+                >
+                  Loan Comparison with Bank
+                </button>
+                .
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`${getComparisonRoute()}?applicationId=${selectedApplicationId}`)
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 px-4 py-2 text-xs font-black shadow-md shadow-amber-400/20 hover:shadow-amber-400/30 hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              <BarChartOutlined /> Compare with Banks <RightOutlined className="text-[10px]" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Incomplete Details Warning ─────────────────────────────────── */}
       {eligibility && eligibility.status === 'INCOMPLETE_DETAILS' && (
         <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-8 shadow-sm space-y-4">
@@ -544,48 +585,6 @@ const CheckEligibility: React.FC = () => {
                   ? `Max Allowed: ${eligibility.maxAllowedLtvPct || 0}%`
                   : 'Unsecured Personal Loan'}
               </p>
-            </div>
-          </div>
-
-          {/* ── High-Level Check Advisory & Direct Bank Comparison CTA ────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-indigo-900/10 bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 p-6 sm:p-7 text-white shadow-xl shadow-indigo-950/15">
-            {/* Decorative ambient lighting */}
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
-
-            <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 shadow-lg shadow-amber-400/20 text-xl font-bold">
-                  ⚡
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-400/30 px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-300">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      Important Policy Advisory
-                    </span>
-                    <span className="text-xs text-slate-400">• High-Level Simulation</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">
-                    High-Level Algorithmic Underwriting Assessment
-                  </h3>
-                  <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">
-                    This evaluation is a high-level mathematical simulation based on standardized benchmarks. Actual loan limits, interest rates, and approval criteria <strong className="text-white font-semibold">differ across partner banks</strong> based on proprietary risk models and document verification. We strongly advise comparing real-time offers across our partner banks.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`${getComparisonRoute()}?applicationId=${selectedApplicationId}`)
-                  }
-                  className="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 px-6 py-3.5 text-xs font-extrabold shadow-lg shadow-amber-400/25 hover:shadow-amber-400/40 hover:scale-105 active:scale-95 transition cursor-pointer"
-                >
-                  <BarChartOutlined className="text-sm" /> Compare with Partner Banks <RightOutlined className="text-[10px]" />
-                </button>
-              </div>
             </div>
           </div>
 
