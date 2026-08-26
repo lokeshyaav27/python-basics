@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchBankComparison, BankComparisonResponse } from '../../services/comparison'
 import { fetchBanks, Bank } from '../../services/banks'
 import {
@@ -9,11 +9,15 @@ import {
   LoanApplication,
 } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
+import ApplicationDetailModal from '../../components/ApplicationDetailModal'
 import {
   BarChartOutlined,
   ArrowLeftOutlined,
   ReloadOutlined,
+  WarningOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
+import { message } from 'antd'
 import {
   BankSelectorBar,
   BankComparisonCard,
@@ -96,6 +100,30 @@ const LoanComparison: React.FC = () => {
     enabled: !!selectedApplicationId && comparedBankIds.length > 0,
   })
 
+  const qc = useQueryClient()
+  const [editingApplication, setEditingApplication] = useState<LoanApplication | null>(null)
+
+  const currentAppObj = applications.find((a) => a.id === selectedApplicationId) || null
+
+  const handleOpenEdit = () => {
+    if (currentAppObj) {
+      setEditingApplication(currentAppObj)
+    } else if (comparison) {
+      setEditingApplication({
+        id: comparison.applicationId,
+        name: comparison.customerName || '',
+        uniqueCustomerId: comparison.uniqueCustomerId || '',
+      } as any)
+    }
+  }
+
+  const handleModalUpdated = () => {
+    qc.invalidateQueries({ queryKey: ['bank-comparison', selectedApplicationId] })
+    qc.invalidateQueries({ queryKey: ['comparison-applications-list'] })
+    refetch()
+    message.success('Application updated! Re-evaluating bank comparison...')
+  }
+
   const handleSelectApp = (id: number) => {
     setSelectedApplicationId(id)
     setSearchParams({ applicationId: String(id) })
@@ -160,6 +188,54 @@ const LoanComparison: React.FC = () => {
         <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-center text-rose-700 text-sm">
           Failed to load loan comparison. Please ensure an application and bank are selected.
         </div>
+      ) : comparison?.status === 'INCOMPLETE_DETAILS' ? (
+        /* ── Incomplete Details Warning ── */
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-8 shadow-sm space-y-4">
+          <div className="flex items-start gap-4">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-100 text-amber-700 text-2xl shrink-0">
+              <WarningOutlined />
+            </span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-amber-200 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-amber-900">
+                  Incomplete Details
+                </span>
+                <h3 className="text-lg font-bold text-amber-950">
+                  Missing Information for {comparison.customerName || 'Applicant'}
+                </h3>
+              </div>
+              <p className="mt-1 text-xs text-amber-800">
+                To evaluate bank policy guidelines, eligibility, and interest rates, the following parameters must be completed:
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {comparison.missingFields?.map((field, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 rounded-xl bg-white/80 border border-amber-200 px-3.5 py-2 text-xs font-semibold text-amber-900"
+                  >
+                    <span className="text-amber-500 font-bold">•</span> {field}
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex items-center gap-3">
+                <button
+                  onClick={handleOpenEdit}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-amber-600/20 hover:bg-amber-700 transition active:scale-95 cursor-pointer"
+                >
+                  <EditOutlined /> Complete Details Now
+                </button>
+                <button
+                  onClick={() => refetch()}
+                  className="rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-semibold text-amber-900 hover:bg-amber-100/50 transition cursor-pointer"
+                >
+                  Refresh Check
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : !comparison || comparison.banks.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center text-slate-400">
           Select banks above to view comparison matrix.
@@ -182,6 +258,16 @@ const LoanComparison: React.FC = () => {
             disclaimer={comparison.disclaimer}
           />
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingApplication && (
+        <ApplicationDetailModal
+          application={editingApplication}
+          open={!!editingApplication}
+          onClose={() => setEditingApplication(null)}
+          onUpdated={handleModalUpdated}
+        />
       )}
     </div>
   )

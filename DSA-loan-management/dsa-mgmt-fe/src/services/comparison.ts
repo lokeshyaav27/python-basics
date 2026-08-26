@@ -53,6 +53,8 @@ export interface BankComparisonResponse {
   customerName?: string
   productName?: string
   productType?: string
+  status?: string
+  missingFields?: string[]
   requestedAmount?: number
   cibilScore?: number
   monthlyIncome?: number
