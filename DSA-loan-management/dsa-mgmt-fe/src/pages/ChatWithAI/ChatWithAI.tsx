@@ -320,10 +320,8 @@ const ChatWithAI: React.FC = () => {
               )}
             </span>
           </div>
-          <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-md">
-            Policy RAG Active ✓
-          </span>
         </div>
+
 
         <ChatInputBar
           inputVal={inputVal}
