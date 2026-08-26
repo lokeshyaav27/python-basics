@@ -57,7 +57,9 @@ LLM → recommendation explanation
 
 
 4. Agent Assistant — MCP + RAG
-
+show me the status of rohan goupta's loan application
+can you tell me which bank will be best for it and how much commission we will get
+Okay, Pls approve thsi application and forward it to SBI - add a comment - all documents are verified
 - Show me my customers who are currently in progress.
 - What is the status of Rahul's loan?
 - Why is Rahul not eligible for SBI?
@@ -93,3 +95,17 @@ User → LLM → MCP + RAG → Python Business Logic → Recommendation → LLM 
 5. What is my loan/customer status and what documents are required?
 
 These demonstrate LLM + RAG + MCP + Python business logic.
+
+
+
+
+
+---------------------
+what is total commision, we earned 
+list of agents with their total number of applications 
+
+
+
+
+
+
