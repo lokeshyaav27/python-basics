@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.services.comparison.engine import compare_banks_for_application
 from app.core.security import CurrentUser
+from app.core.constants import MAX_BANKS_COMPARISON_LIMIT
 
 
 class ComparisonService:
@@ -20,8 +21,8 @@ class ComparisonService:
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid bankIds format. Provide comma-separated integers.")
 
-        if len(parsed_bank_ids) > 2:
-            raise HTTPException(status_code=400, detail="You cannot compare more than 2 banks at once.")
+        if len(parsed_bank_ids) > MAX_BANKS_COMPARISON_LIMIT:
+            raise HTTPException(status_code=400, detail=f"You cannot compare more than {MAX_BANKS_COMPARISON_LIMIT} banks at once.")
         if len(parsed_bank_ids) == 0:
             raise HTTPException(status_code=400, detail="Please select at least 1 bank to compare.")
 

@@ -11,6 +11,20 @@ from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
 from app.models.loan_application import LoanApplication
 from app.rag import rag_service
+from app.core.constants import (
+    BANK_MATURITY_AGE_PRIVATE,
+    BANK_MATURITY_AGE_PUBLIC_NBFC,
+    BANK_COMPARISON_FEMALE_REBATE_PCT,
+    BANK_COMPARISON_MIN_ROI_FLOOR,
+    HOME_LOAN_MAX_TENURE_YEARS,
+    CAR_LOAN_MAX_TENURE_YEARS,
+    HOME_LOAN_LTV_FLAT_APARTMENT,
+    HOME_LOAN_LTV_READY_OR_UNDER_CONSTRUCTION,
+    HOME_LOAN_LTV_STANDARD,
+    FOIR_MAX_CEILING,
+    FOIR_INCOME_ALLOCATION_PCT,
+    MIN_CIBIL_SCORE,
+)
 from app.services.eligibility.common import (
     calculate_monthly_emi,
     calculate_max_loan_from_emi,
@@ -152,15 +166,17 @@ def evaluate_single_bank_offer(
 
     # 4. Extract Applicant Data
     cgd = application.clientGeneralDetail
-    age = (cgd.age if cgd and cgd.age else 32)
-    cibil_score = (cgd.cibil_score if cgd and cgd.cibil_score else 750)
+    age = int(cgd.age) if cgd and cgd.age else 0
+    cibil_score = int(cgd.cibil_score) if cgd and cgd.cibil_score else 0
     monthly_income = float(cgd.monthly_income if cgd and cgd.monthly_income else 0.0)
     existing_emi = float(cgd.existing_emi if cgd and cgd.existing_emi else 0.0)
     monthly_obligation = float(cgd.monthly_obligation if cgd and cgd.monthly_obligation else 0.0)
     
     req_amt_general = float(cgd.loan_amount_required if cgd and cgd.loan_amount_required else 0.0)
-    requested_amount = req_amt_general if req_amt_general > 0 else 5000000.0
-    preferred_tenure = (cgd.preferred_tenure if cgd and cgd.preferred_tenure else 20)
+    requested_amount = req_amt_general if req_amt_general > 0 else (
+        float(application.personalLoanDetail.required_amount) if application.personalLoanDetail and application.personalLoanDetail.required_amount else 0.0
+    )
+    preferred_tenure = int(cgd.preferred_tenure if cgd and cgd.preferred_tenure else 0)
 
     # Extract Product Details
     female_co_applicant = False
@@ -197,11 +213,10 @@ def evaluate_single_bank_offer(
             print(f"RAG search error for bank {bank.name}: {e}")
 
     # 6. Evaluate Bank-Specific Tenure
-    # Private banks -> mature by age 60; Public/NBFC -> mature by age 65
-    max_maturity_age = 60 if bank.isPrivate else 65
+    max_maturity_age = BANK_MATURITY_AGE_PRIVATE if bank.isPrivate else BANK_MATURITY_AGE_PUBLIC_NBFC
     tenure_cap_by_age = max(1, max_maturity_age - age)
-    max_product_tenure = 30 if is_home_loan else 5
-    tenure_years = min(max_product_tenure, tenure_cap_by_age, preferred_tenure if preferred_tenure else 20)
+    max_product_tenure = HOME_LOAN_MAX_TENURE_YEARS if is_home_loan else CAR_LOAN_MAX_TENURE_YEARS
+    tenure_years = min(max_product_tenure, tenure_cap_by_age, preferred_tenure if preferred_tenure > 0 else max_product_tenure)
     maturity_age = age + tenure_years
 
     if tenure_years < 1:
@@ -210,9 +225,9 @@ def evaluate_single_bank_offer(
     # 7. Evaluate Bank-Specific Interest Rate (ROI) & Female Rebate
     base_roi = get_bank_specific_home_loan_roi(bank.name, cibil_score, bank.isPrivate, bank.isNbfc)
     
-    female_rebate_pct = 0.05
+    female_rebate_pct = BANK_COMPARISON_FEMALE_REBATE_PCT
     if female_co_applicant:
-        effective_roi = max(6.5, round(base_roi - female_rebate_pct, 2))
+        effective_roi = max(BANK_COMPARISON_MIN_ROI_FLOOR, round(base_roi - female_rebate_pct, 2))
         female_rebate_desc = f"{female_rebate_pct}% ROI concession applied (Effective: {effective_roi}%)"
     else:
         effective_roi = base_roi
@@ -222,22 +237,22 @@ def evaluate_single_bank_offer(
     proposed_emi = calculate_monthly_emi(requested_amount, effective_roi, tenure_years)
     calculated_foir = calculate_foir(existing_emi, monthly_obligation, proposed_emi, monthly_income)
 
-    if calculated_foir > 65.0:
-        rejections.append(f"FOIR ({calculated_foir:.1f}%) exceeds maximum permissible ceiling of 65%.")
+    if calculated_foir > FOIR_MAX_CEILING:
+        rejections.append(f"FOIR ({calculated_foir:.1f}%) exceeds maximum permissible ceiling of {FOIR_MAX_CEILING:.0f}%.")
 
     foir_multiplier, _ = get_foir_reduction_multiplier(calculated_foir)
-    max_available_emi = max(0.0, (monthly_income * 0.50) - existing_emi - monthly_obligation)
+    max_available_emi = max(0.0, (monthly_income * FOIR_INCOME_ALLOCATION_PCT) - existing_emi - monthly_obligation)
     foir_max_unscaled_loan = calculate_max_loan_from_emi(max_available_emi, effective_roi, tenure_years)
     foir_eligible_amount = foir_max_unscaled_loan * foir_multiplier if foir_multiplier > 0 else 0.0
 
     # 9. Evaluate Collateral LTV Cap
     if is_home_loan and property_value > 0:
         if "flat" in property_type:
-            max_ltv_pct = 60.0
+            max_ltv_pct = HOME_LOAN_LTV_FLAT_APARTMENT
         elif "ready" in property_status or "under" in property_status:
-            max_ltv_pct = 80.0
+            max_ltv_pct = HOME_LOAN_LTV_READY_OR_UNDER_CONSTRUCTION
         else:
-            max_ltv_pct = 75.0 if (bank.isNationalize or bank.isNbfc) else 70.0
+            max_ltv_pct = 75.0 if (bank.isNationalize or bank.isNbfc) else HOME_LOAN_LTV_STANDARD
 
         ltv_cap_amount = property_value * (max_ltv_pct / 100.0)
         max_eligible_amount = min(foir_eligible_amount, ltv_cap_amount)
@@ -245,8 +260,8 @@ def evaluate_single_bank_offer(
         max_eligible_amount = foir_eligible_amount
 
     # 10. Status Determination
-    if cibil_score < 600:
-        rejections.append(f"CIBIL score ({cibil_score}) is below bank minimum threshold of 600.")
+    if cibil_score < MIN_CIBIL_SCORE:
+        rejections.append(f"CIBIL score ({cibil_score}) is below bank minimum threshold of {MIN_CIBIL_SCORE}.")
 
     if len(rejections) > 0 or max_eligible_amount <= 0:
         status = "NOT_ELIGIBLE"

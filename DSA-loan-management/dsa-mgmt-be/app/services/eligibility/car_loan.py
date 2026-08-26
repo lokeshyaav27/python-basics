@@ -3,6 +3,22 @@ Car Loan Eligibility Evaluation Service
 Implements rules from DSA_Loan_Eligibility_Rules.md
 """
 from typing import Dict, Any, List
+from app.core.constants import (
+    CAR_LOAN_MAX_TENURE_YEARS,
+    CAR_LOAN_MAX_USED_VEHICLE_AGE_YEARS,
+    CAR_LOAN_LTV_NEW,
+    CAR_LOAN_LTV_USED,
+    CAR_LOAN_ROI_TIER_1,
+    CAR_LOAN_ROI_TIER_2,
+    CAR_LOAN_ROI_TIER_3,
+    CAR_LOAN_ROI_TIER_4,
+    CIBIL_TIER_EXCELLENT,
+    CIBIL_TIER_GOOD,
+    CIBIL_TIER_FAIR,
+    FOIR_MAX_CEILING,
+    FOIR_BENCHMARK_NORMAL,
+    FOIR_INCOME_ALLOCATION_PCT,
+)
 from .common import (
     calculate_monthly_emi,
     calculate_max_loan_from_emi,
@@ -15,19 +31,19 @@ from .common import (
 def get_car_loan_interest_rate(cibil_score: int) -> float:
     """
     Determines Car Loan interest rate by CIBIL tier:
-    - >= 750: 8.75%
-    - 700 - 749: 9.50%
-    - 650 - 699: 10.50%
-    - 600 - 649: 11.50%
+    - >= 750: Tier 1
+    - 700 - 749: Tier 2
+    - 650 - 699: Tier 3
+    - < 650: Tier 4
     """
-    if cibil_score is None or cibil_score >= 750:
-        return 8.75
-    elif cibil_score >= 700:
-        return 9.50
-    elif cibil_score >= 650:
-        return 10.50
+    if cibil_score is None or cibil_score >= CIBIL_TIER_EXCELLENT:
+        return CAR_LOAN_ROI_TIER_1
+    elif cibil_score >= CIBIL_TIER_GOOD:
+        return CAR_LOAN_ROI_TIER_2
+    elif cibil_score >= CIBIL_TIER_FAIR:
+        return CAR_LOAN_ROI_TIER_3
     else:
-        return 11.50
+        return CAR_LOAN_ROI_TIER_4
 
 
 def evaluate_car_loan_eligibility(
@@ -42,13 +58,13 @@ def evaluate_car_loan_eligibility(
     reduction_notes: List[str] = []
 
     # Extract Applicant fields
-    age = applicant_data.get("age") or 30
-    cibil_score = applicant_data.get("cibil_score") or 750
+    age = int(applicant_data.get("age") or 0)
+    cibil_score = int(applicant_data.get("cibil_score") or 0)
     monthly_income = float(applicant_data.get("monthly_income") or 0.0)
     existing_emi = float(applicant_data.get("existing_emi") or 0.0)
     monthly_obligation = float(applicant_data.get("monthly_obligation") or 0.0)
     requested_amount = float(applicant_data.get("loan_amount_required") or 0.0)
-    preferred_tenure = applicant_data.get("preferred_tenure") or 5
+    preferred_tenure = int(applicant_data.get("preferred_tenure") or 0)
 
     # Extract Car Detail fields
     new_or_used = str(car_detail_data.get("new_or_used") or "new").lower()
@@ -61,28 +77,26 @@ def evaluate_car_loan_eligibility(
     is_valid_common, common_rejections = validate_common_eligibility_checks(age, cibil_score, monthly_income)
     rejections.extend(common_rejections)
 
-    # 2. Used Vehicle Age Check (Reject if > 15 years)
-    if is_used and vehicle_age > 15:
-        rejections.append(f"Used vehicle age ({vehicle_age} years) exceeds the maximum permissible limit of 15 years.")
+    # 2. Used Vehicle Age Check
+    if is_used and vehicle_age > CAR_LOAN_MAX_USED_VEHICLE_AGE_YEARS:
+        rejections.append(f"Used vehicle age ({vehicle_age} years) exceeds the maximum permissible limit of {CAR_LOAN_MAX_USED_VEHICLE_AGE_YEARS} years.")
     elif is_used:
-        positive_factors.append(f"Used vehicle age ({vehicle_age} years) satisfies age criteria (<= 15 years).")
+        positive_factors.append(f"Used vehicle age ({vehicle_age} years) satisfies age criteria (<= {CAR_LOAN_MAX_USED_VEHICLE_AGE_YEARS} years).")
     else:
-        positive_factors.append("New car loan application eligible for up to 100% on-road funding.")
+        positive_factors.append(f"New car loan application eligible for up to {CAR_LOAN_LTV_NEW:.0f}% on-road funding.")
 
     # 3. Vehicle Valuation / LTV Cap
-    # New Car -> 100% of car value
-    # Used Car -> 50% of car value
     if is_used:
-        max_ltv_pct = 50.0
-        vehicle_cap = car_value * 0.50 if car_value > 0 else 0.0
-        reduction_notes.append("Used vehicle financing is capped at a maximum 50% of appraised car value.")
+        max_ltv_pct = CAR_LOAN_LTV_USED
+        vehicle_cap = car_value * (CAR_LOAN_LTV_USED / 100.0) if car_value > 0 else 0.0
+        reduction_notes.append(f"Used vehicle financing is capped at a maximum {CAR_LOAN_LTV_USED:.0f}% of appraised car value.")
     else:
-        max_ltv_pct = 100.0
-        vehicle_cap = car_value if car_value > 0 else 0.0
+        max_ltv_pct = CAR_LOAN_LTV_NEW
+        vehicle_cap = car_value * (CAR_LOAN_LTV_NEW / 100.0) if car_value > 0 else 0.0
 
     # 4. Tenure Calculation (Max 5 years for Car Loans)
-    tenure_years = min(5, preferred_tenure if preferred_tenure and preferred_tenure > 0 else 5)
-    positive_factors.append(f"Applicable loan tenure: {tenure_years} years (max 5 years allowed).")
+    tenure_years = min(CAR_LOAN_MAX_TENURE_YEARS, preferred_tenure if preferred_tenure > 0 else CAR_LOAN_MAX_TENURE_YEARS)
+    positive_factors.append(f"Applicable loan tenure: {tenure_years} years (max {CAR_LOAN_MAX_TENURE_YEARS} years allowed).")
 
     # 5. Interest Rate Determination
     roi = get_car_loan_interest_rate(cibil_score)
@@ -95,15 +109,15 @@ def evaluate_car_loan_eligibility(
     # 7. FOIR Assessment & Multiplier
     foir_multiplier, foir_msg = get_foir_reduction_multiplier(calculated_foir)
 
-    if calculated_foir > 65.0:
-        rejections.append(f"Fixed Obligation to Income Ratio (FOIR) is {calculated_foir:.1f}%, exceeding the maximum 65% ceiling.")
-    elif calculated_foir > 50.0:
+    if calculated_foir > FOIR_MAX_CEILING:
+        rejections.append(f"Fixed Obligation to Income Ratio (FOIR) is {calculated_foir:.1f}%, exceeding the maximum {FOIR_MAX_CEILING:.0f}% ceiling.")
+    elif calculated_foir > FOIR_BENCHMARK_NORMAL:
         reduction_notes.append(f"{foir_msg}. Proposed obligations consume {calculated_foir:.1f}% of gross income.")
     else:
-        positive_factors.append(f"Healthy FOIR of {calculated_foir:.1f}% (within normal <= 50% limit).")
+        positive_factors.append(f"Healthy FOIR of {calculated_foir:.1f}% (within normal <= {FOIR_BENCHMARK_NORMAL:.0f}% limit).")
 
     # 8. Maximum FOIR-Supported Loan Calculation
-    max_available_emi_for_proposed = max(0.0, (monthly_income * 0.50) - existing_emi - monthly_obligation)
+    max_available_emi_for_proposed = max(0.0, (monthly_income * FOIR_INCOME_ALLOCATION_PCT) - existing_emi - monthly_obligation)
     foir_max_unscaled_loan = calculate_max_loan_from_emi(max_available_emi_for_proposed, roi, tenure_years)
     
     # Scale with FOIR multiplier if in the 50-65% bracket
@@ -113,7 +127,7 @@ def evaluate_car_loan_eligibility(
     if vehicle_cap > 0:
         max_eligible_amount = min(foir_eligible_amount, vehicle_cap)
         if vehicle_cap < foir_eligible_amount:
-            reduction_notes.append(f"Loan amount is capped at ₹{vehicle_cap:,.0f} due to vehicle valuation limit ({max_ltv_pct}%).")
+            reduction_notes.append(f"Loan amount is capped at ₹{vehicle_cap:,.0f} due to vehicle valuation limit ({max_ltv_pct:.0f}%).")
     else:
         max_eligible_amount = foir_eligible_amount
 
@@ -149,7 +163,7 @@ def evaluate_car_loan_eligibility(
         "interestRatePct": roi,
         "tenureYears": tenure_years,
         "foirPct": calculated_foir,
-        "maxAllowedFoirPct": 65.0,
+        "maxAllowedFoirPct": FOIR_MAX_CEILING,
         "ltvPct": actual_ltv,
         "maxAllowedLtvPct": max_ltv_pct,
         "monthlyIncome": monthly_income,

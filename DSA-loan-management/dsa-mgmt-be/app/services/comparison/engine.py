@@ -33,24 +33,30 @@ def compare_banks_for_application(
     prod_name = app.product.name if app.product else ("Home Loan" if prod_type == "home_loan" else "Loan")
 
     if not is_complete:
-        missing_text = ", ".join(missing_fields)
         return {
             "applicationId": app.id,
             "uniqueCustomerId": app.uniqueCustomerId,
             "customerName": customer_name,
             "productName": prod_name,
-            "productType": prod_type,
             "status": "INCOMPLETE_DETAILS",
             "missingFields": missing_fields,
-            "requestedAmount": float(cgd.loan_amount_required if cgd and cgd.loan_amount_required else 0.0),
-            "cibilScore": cgd.cibil_score if cgd else None,
-            "monthlyIncome": float(cgd.monthly_income) if cgd and cgd.monthly_income else 0.0,
             "banks": [],
-            "aiComparativeAnalysis": f"Application profile is incomplete. Please complete: {missing_text} to compare bank policies.",
-            "disclaimer": "Please complete applicant profile and financial details to evaluate bank policies.",
         }
 
-    req_amt = float(cgd.loan_amount_required if cgd and cgd.loan_amount_required else 5000000.0)
+    req_amt = float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else (
+        float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
+    )
+
+    if req_amt <= 0:
+        return {
+            "applicationId": app.id,
+            "uniqueCustomerId": app.uniqueCustomerId,
+            "customerName": customer_name,
+            "productName": prod_name,
+            "status": "INCOMPLETE_DETAILS",
+            "missingFields": ["Requested Loan Amount"],
+            "banks": [],
+        }
 
     # Evaluate each selected bank
     compared_banks: List[Dict[str, Any]] = []

@@ -3,6 +3,21 @@ Common Financial Math & Validation Utilities for DSA Loan Eligibility
 Based on DSA_Loan_Eligibility_Rules.md
 """
 from typing import Dict, Any, List, Tuple
+from app.core.constants import (
+    MIN_APPLICANT_AGE,
+    MAX_APPLICANT_AGE,
+    MIN_CIBIL_SCORE,
+    MIN_GROSS_MONTHLY_INCOME,
+    FOIR_BENCHMARK_NORMAL,
+    FOIR_TIER_1_MAX,
+    FOIR_TIER_2_MAX,
+    FOIR_MAX_CEILING,
+    FOIR_MULTIPLIER_NORMAL,
+    FOIR_MULTIPLIER_TIER_1,
+    FOIR_MULTIPLIER_TIER_2,
+    FOIR_MULTIPLIER_TIER_3,
+    FOIR_MULTIPLIER_REJECT,
+)
 
 
 def calculate_monthly_emi(principal: float, annual_interest_rate_pct: float, tenure_years: int) -> float:
@@ -65,23 +80,18 @@ def calculate_foir(existing_emi: float, monthly_obligations: float, proposed_emi
 
 def get_foir_reduction_multiplier(foir: float) -> Tuple[float, str]:
     """
-    FOIR Rules:
-    - If FOIR is 50% or below -> normal eligibility (1.0 multiplier, 0% reduction)
-    - If FOIR is between 50 to 55% -> 10% reduction (0.90 multiplier)
-    - If FOIR is between 56 to 60% -> 20% reduction (0.80 multiplier)
-    - If FOIR is between 61 to 65% -> 30% reduction (0.70 multiplier)
-    - If FOIR is above 65% -> 0.0 multiplier (reject application)
+    Evaluates FOIR reduction tiers against centralized policy constants.
     """
-    if foir <= 50.0:
-        return 1.0, "Normal FOIR (<= 50%)"
-    elif foir <= 55.0:
-        return 0.90, "FOIR is between 50%–55% (10% reduction applied)"
-    elif foir <= 60.0:
-        return 0.80, "FOIR is between 56%–60% (20% reduction applied)"
-    elif foir <= 65.0:
-        return 0.70, "FOIR is between 61%–65% (30% reduction applied)"
+    if foir <= FOIR_BENCHMARK_NORMAL:
+        return FOIR_MULTIPLIER_NORMAL, f"Normal FOIR (<= {FOIR_BENCHMARK_NORMAL:.0f}%)"
+    elif foir <= FOIR_TIER_1_MAX:
+        return FOIR_MULTIPLIER_TIER_1, f"FOIR is between {FOIR_BENCHMARK_NORMAL:.0f}%–{FOIR_TIER_1_MAX:.0f}% (10% reduction applied)"
+    elif foir <= FOIR_TIER_2_MAX:
+        return FOIR_MULTIPLIER_TIER_2, f"FOIR is between {FOIR_TIER_1_MAX+1:.0f}%–{FOIR_TIER_2_MAX:.0f}% (20% reduction applied)"
+    elif foir <= FOIR_MAX_CEILING:
+        return FOIR_MULTIPLIER_TIER_3, f"FOIR is between {FOIR_TIER_2_MAX+1:.0f}%–{FOIR_MAX_CEILING:.0f}% (30% reduction applied)"
     else:
-        return 0.0, "FOIR exceeds maximum threshold of 65% (Rejection)"
+        return FOIR_MULTIPLIER_REJECT, f"FOIR exceeds maximum threshold of {FOIR_MAX_CEILING:.0f}% (Rejection)"
 
 
 def validate_common_eligibility_checks(
@@ -91,23 +101,23 @@ def validate_common_eligibility_checks(
 ) -> Tuple[bool, List[str]]:
     """
     Executes standard common baseline rules:
-    - Minimum CIBIL score: reject if below 600
-    - Minimum applicant age: reject if below 18
-    - Maximum applicant age: reject if above 60
-    - Minimum income: reject if less than 15,000
+    - Minimum CIBIL score
+    - Minimum and maximum applicant age
+    - Minimum monthly income
     """
     rejections: List[str] = []
 
-    if cibil_score is not None and cibil_score < 600:
-        rejections.append(f"CIBIL score ({cibil_score}) is below minimum required score of 600.")
+    if cibil_score is not None and cibil_score < MIN_CIBIL_SCORE:
+        rejections.append(f"CIBIL score ({cibil_score}) is below minimum required score of {MIN_CIBIL_SCORE}.")
 
     if age is not None:
-        if age < 18:
-            rejections.append(f"Applicant age ({age} yrs) is below legal minimum age of 18.")
-        elif age > 60:
-            rejections.append(f"Applicant age ({age} yrs) exceeds maximum permissible age of 60.")
+        if age < MIN_APPLICANT_AGE:
+            rejections.append(f"Applicant age ({age} yrs) is below legal minimum age of {MIN_APPLICANT_AGE}.")
+        elif age > MAX_APPLICANT_AGE:
+            rejections.append(f"Applicant age ({age} yrs) exceeds maximum permissible age of {MAX_APPLICANT_AGE}.")
 
-    if monthly_income is not None and monthly_income < 15000:
-        rejections.append(f"Monthly gross income (₹{monthly_income:,.0f}) is below the minimum required threshold of ₹15,000.")
+    if monthly_income is not None and monthly_income < MIN_GROSS_MONTHLY_INCOME:
+        rejections.append(f"Monthly gross income (₹{monthly_income:,.0f}) is below the minimum required threshold of ₹{MIN_GROSS_MONTHLY_INCOME:,.0f}.")
 
     return len(rejections) == 0, rejections
+
