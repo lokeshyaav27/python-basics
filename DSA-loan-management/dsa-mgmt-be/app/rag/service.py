@@ -64,23 +64,6 @@ class RAGService:
         db.commit()
         return len(chunk_objs)
 
-    def index_pdf_document(
-        self,
-        db: Session,
-        bank_document_id: int,
-        bank_id: int,
-        product_id: int,
-        pdf_path: Path | str,
-    ) -> int:
-        """Alias for index_document for PDF documents."""
-        return self.index_document(
-            db=db,
-            bank_document_id=bank_document_id,
-            bank_id=bank_id,
-            product_id=product_id,
-            file_path=pdf_path,
-        )
-
     def search_relevant_chunks(
         self,
         db: Session,
@@ -100,6 +83,8 @@ class RAGService:
 
         # 1. Generate query vector
         model = get_embedding_model()
+
+        # normalize_embeddings=True Normalization ensures that only the semantic direction (meaning) is compared, not the length or size of the text.
         query_vector = model.encode(query_text.strip(), normalize_embeddings=True).tolist()
 
         # 2. Build filtered SQL query using pgvector's cosine distance operator (<=>)
@@ -159,23 +144,6 @@ class RAGService:
             })
 
         return formatted
-
-    def search_similar_chunks(
-        self,
-        db: Session,
-        query_text: str,
-        bank_id: Optional[int] = None,
-        product_id: Optional[int] = None,
-        top_k: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        """Alias for search_relevant_chunks."""
-        return self.search_relevant_chunks(
-            db=db,
-            query_text=query_text,
-            bank_id=bank_id,
-            product_id=product_id,
-            top_k=top_k,
-        )
 
     def remove_document_chunks(self, db: Session, bank_document_id: int) -> int:
         """

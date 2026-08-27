@@ -191,12 +191,12 @@ class BankService:
 
         # Index PDF / text into RAG vector embeddings
         try:
-            rag_service.index_pdf_document(
+            rag_service.index_document(
                 db=self.bank_repo.db,
                 bank_document_id=doc.id,
                 bank_id=bank_id,
                 product_id=product_id,
-                pdf_path=str(file_path),
+                file_path=str(file_path),
             )
         except Exception as e:
             print(f"[RAG Index Warning] Could not index document chunks: {e}")
