@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from sqlalchemy.orm import Session
 from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
@@ -93,6 +93,13 @@ class BankRepository:
 
     def update_product_bank_link(self, link: ProductBankLink, commission: Optional[float]) -> ProductBankLink:
         link.commission = commission
+        self.db.add(link)
+        self.db.commit()
+        self.db.refresh(link)
+        return link
+
+    def update_policy_parameters(self, link: ProductBankLink, policy_parameters: Dict[str, Any]) -> ProductBankLink:
+        link.policyParameters = policy_parameters
         self.db.add(link)
         self.db.commit()
         self.db.refresh(link)

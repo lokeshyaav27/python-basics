@@ -212,10 +212,17 @@ def evaluate_single_bank_offer(
         except Exception as e:
             print(f"RAG search error for bank {bank.name}: {e}")
 
+    # Read verified dynamic policy parameters if configured on product bank link
+    policy = link.policyParameters or {}
+
     # 6. Evaluate Bank-Specific Tenure
-    max_maturity_age = BANK_MATURITY_AGE_PRIVATE if bank.isPrivate else BANK_MATURITY_AGE_PUBLIC_NBFC
+    if policy and "max_maturity_age_salaried" in policy:
+        max_maturity_age = int(policy.get("max_maturity_age_salaried", 60) if bank.isPrivate else policy.get("max_maturity_age_self_employed", 65))
+    else:
+        max_maturity_age = BANK_MATURITY_AGE_PRIVATE if bank.isPrivate else BANK_MATURITY_AGE_PUBLIC_NBFC
+
     tenure_cap_by_age = max(1, max_maturity_age - age)
-    max_product_tenure = HOME_LOAN_MAX_TENURE_YEARS if is_home_loan else CAR_LOAN_MAX_TENURE_YEARS
+    max_product_tenure = int(policy.get("max_tenure_years")) if (policy and policy.get("max_tenure_years")) else (HOME_LOAN_MAX_TENURE_YEARS if is_home_loan else CAR_LOAN_MAX_TENURE_YEARS)
     tenure_years = min(max_product_tenure, tenure_cap_by_age, preferred_tenure if preferred_tenure > 0 else max_product_tenure)
     maturity_age = age + tenure_years
 
@@ -223,11 +230,23 @@ def evaluate_single_bank_offer(
         rejections.append(f"Applicant age ({age} yrs) exceeds bank maturity limit ({max_maturity_age} yrs).")
 
     # 7. Evaluate Bank-Specific Interest Rate (ROI) & Female Rebate
-    base_roi = get_bank_specific_home_loan_roi(bank.name, cibil_score, bank.isPrivate, bank.isNbfc)
+    if policy and "roi_tier_1_cibil_750_plus" in policy:
+        if cibil_score >= 750:
+            base_roi = float(policy.get("roi_tier_1_cibil_750_plus", 7.35))
+        elif cibil_score >= 700:
+            base_roi = float(policy.get("roi_tier_2_cibil_700_749", 7.65))
+        elif cibil_score >= 650:
+            base_roi = float(policy.get("roi_tier_3_cibil_650_699", 8.10))
+        else:
+            base_roi = float(policy.get("roi_tier_4_cibil_below_650", 8.75))
+    else:
+        base_roi = get_bank_specific_home_loan_roi(bank.name, cibil_score, bank.isPrivate, bank.isNbfc)
     
-    female_rebate_pct = BANK_COMPARISON_FEMALE_REBATE_PCT
+    female_rebate_pct = float(policy.get("female_rebate_pct", BANK_COMPARISON_FEMALE_REBATE_PCT)) if policy else BANK_COMPARISON_FEMALE_REBATE_PCT
+    min_roi_floor = float(policy.get("min_roi_floor", BANK_COMPARISON_MIN_ROI_FLOOR)) if policy else BANK_COMPARISON_MIN_ROI_FLOOR
+
     if female_co_applicant:
-        effective_roi = max(BANK_COMPARISON_MIN_ROI_FLOOR, round(base_roi - female_rebate_pct, 2))
+        effective_roi = max(min_roi_floor, round(base_roi - female_rebate_pct, 2))
         female_rebate_desc = f"{female_rebate_pct}% ROI concession applied (Effective: {effective_roi}%)"
     else:
         effective_roi = base_roi
@@ -248,11 +267,11 @@ def evaluate_single_bank_offer(
     # 9. Evaluate Collateral LTV Cap
     if is_home_loan and property_value > 0:
         if "flat" in property_type:
-            max_ltv_pct = HOME_LOAN_LTV_FLAT_APARTMENT
+            max_ltv_pct = float(policy.get("ltv_flat_pct", HOME_LOAN_LTV_FLAT_APARTMENT)) if policy else HOME_LOAN_LTV_FLAT_APARTMENT
         elif "ready" in property_status or "under" in property_status:
-            max_ltv_pct = HOME_LOAN_LTV_READY_OR_UNDER_CONSTRUCTION
+            max_ltv_pct = float(policy.get("ltv_ready_pct", HOME_LOAN_LTV_READY_OR_UNDER_CONSTRUCTION)) if policy else HOME_LOAN_LTV_READY_OR_UNDER_CONSTRUCTION
         else:
-            max_ltv_pct = 75.0 if (bank.isNationalize or bank.isNbfc) else HOME_LOAN_LTV_STANDARD
+            max_ltv_pct = float(policy.get("ltv_standard_pct", 75.0 if (bank.isNationalize or bank.isNbfc) else HOME_LOAN_LTV_STANDARD)) if policy else (75.0 if (bank.isNationalize or bank.isNbfc) else HOME_LOAN_LTV_STANDARD)
 
         ltv_cap_amount = property_value * (max_ltv_pct / 100.0)
         max_eligible_amount = min(foir_eligible_amount, ltv_cap_amount)
@@ -260,8 +279,9 @@ def evaluate_single_bank_offer(
         max_eligible_amount = foir_eligible_amount
 
     # 10. Status Determination
-    if cibil_score < MIN_CIBIL_SCORE:
-        rejections.append(f"CIBIL score ({cibil_score}) is below bank minimum threshold of {MIN_CIBIL_SCORE}.")
+    min_cibil_req = int(policy.get("min_cibil", MIN_CIBIL_SCORE)) if policy else MIN_CIBIL_SCORE
+    if cibil_score < min_cibil_req:
+        rejections.append(f"CIBIL score ({cibil_score}) is below bank minimum threshold of {min_cibil_req}.")
 
     if len(rejections) > 0 or max_eligible_amount <= 0:
         status = "NOT_ELIGIBLE"
@@ -277,28 +297,34 @@ def evaluate_single_bank_offer(
         final_emi = calculate_monthly_emi(final_eligible_loan, effective_roi, tenure_years)
 
     # 11. Insurance Calculations (From Bank Documents Guidelines)
-    # Property Insurance = 0.10% of Loan Amount
-    # Applicant Insurance = 0.50% of Loan Amount
+    prop_ins_pct = float(policy.get("property_insurance_pct", 0.10)) if policy else 0.10
+    app_ins_pct = float(policy.get("applicant_insurance_pct", 0.50)) if policy else 0.50
+
     active_loan_base = final_eligible_loan if final_eligible_loan > 0 else requested_amount
-    prop_insurance_amt = round(active_loan_base * 0.0010, 0)
-    app_insurance_amt = round(active_loan_base * 0.0050, 0)
+    prop_insurance_amt = round(active_loan_base * (prop_ins_pct / 100.0), 0)
+    app_insurance_amt = round(active_loan_base * (app_ins_pct / 100.0), 0)
 
     property_insurance_item = {
         "isProvided": "Yes",
-        "percentage": 0.10,
+        "percentage": prop_ins_pct,
         "amount": prop_insurance_amt,
-        "description": f"0.10% of loan amount (approx ₹{prop_insurance_amt:,.0f})",
+        "description": f"{prop_ins_pct:.2f}% of loan amount (approx ₹{prop_insurance_amt:,.0f})",
     }
 
     applicant_insurance_item = {
         "isProvided": "Yes",
-        "percentage": 0.50,
+        "percentage": app_ins_pct,
         "amount": app_insurance_amt,
-        "description": f"0.50% of loan amount (approx ₹{app_insurance_amt:,.0f})",
+        "description": f"{app_ins_pct:.2f}% of loan amount (approx ₹{app_insurance_amt:,.0f})",
     }
 
     # 12. Processing Fee
-    if bank.isNationalize:
+    if policy and "processing_fee_pct" in policy:
+        proc_pct = float(policy.get("processing_fee_pct", 0.50))
+        min_fee = float(policy.get("min_processing_fee", 5000.0))
+        max_fee = float(policy.get("max_processing_fee", 25000.0))
+        proc_fee = f"{proc_pct:.2f}% of Loan Amount (Min ₹{min_fee:,.0f}, Max ₹{max_fee:,.0f} + GST)"
+    elif bank.isNationalize:
         proc_fee = "0.35% of Loan Amount (Min ₹5,000 + GST, Max ₹15,000 + GST)"
     elif bank.isPrivate:
         proc_fee = "0.50% to 1.00% of Loan Amount (Min ₹10,000 + GST)"

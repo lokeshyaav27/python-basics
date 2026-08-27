@@ -38,9 +38,10 @@ def reset_and_seed_full_database():
     # 0. Ensure target database exists in PostgreSQL
     ensure_database_exists()
 
-    # 1. Enable pgvector extension
+    # 1. Enable pgvector extension and ensure columns exist
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.execute(text("ALTER TABLE IF EXISTS product_bank_links ADD COLUMN IF NOT EXISTS policy_parameters JSON;"))
         conn.commit()
 
     # 2. Create tables

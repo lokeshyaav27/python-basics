@@ -17,6 +17,7 @@ from app.models.bank import Bank
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
 from app.rag import rag_service
+from app.ai.services.policy_extractor_ai_service import get_default_policy_parameters
 
 
 def copy_bank_documents_static_assets():
@@ -34,6 +35,7 @@ def seed_product_bank_mapping():
     
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        conn.execute(text("ALTER TABLE IF EXISTS product_bank_links ADD COLUMN IF NOT EXISTS policy_parameters JSON;"))
         conn.commit()
 
     Base.metadata.create_all(bind=engine)
@@ -138,6 +140,11 @@ def seed_product_bank_mapping():
                         file_path=dest_path,
                     )
                     indexed_chunks_total += chunks_count
+
+                if not target_link.policyParameters:
+                    target_link.policyParameters = get_default_policy_parameters(target_bank.name, p_home.name)
+                    db.add(target_link)
+                    db.commit()
 
             print(f"Indexed {indexed_chunks_total} vector document chunks across partner banks.")
 

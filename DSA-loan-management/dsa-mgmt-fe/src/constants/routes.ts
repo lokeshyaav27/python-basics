@@ -30,6 +30,8 @@ export const ROUTES = {
     CONTACT_ENQUIRIES: '/admin/contact-enquiries',
     CHAT_WITH_AI: '/admin/chat-with-ai',
     AI_ISSUES: '/admin/ai-issues',
+    CHECK_ELIGIBILITY: '/admin/check-eligibility',
+    LOAN_COMPARISON: '/admin/loan-comparison',
   },
 
   // Agent Portal Routes

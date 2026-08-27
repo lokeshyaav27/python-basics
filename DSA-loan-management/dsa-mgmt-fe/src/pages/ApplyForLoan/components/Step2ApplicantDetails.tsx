@@ -26,7 +26,19 @@ export const Step2ApplicantDetails: React.FC<Step2ApplicantDetailsProps> = ({
         </p>
       </div>
 
-      {!isUserLoggedInCustomer && (
+      {isUserLoggedInCustomer ? (
+        <div className="rounded-2xl bg-emerald-50/80 border border-emerald-200 p-4 text-xs text-emerald-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🔒</span>
+            <span>
+              <strong>Verified Profile:</strong> Contact details are locked to your logged-in customer account.
+            </span>
+          </div>
+          <span className="text-[11px] font-bold bg-emerald-200/60 text-emerald-900 px-2.5 py-0.5 rounded-full">
+            Verified
+          </span>
+        </div>
+      ) : (
         <div className="rounded-2xl bg-blue-50/80 border border-blue-200 p-4 text-xs text-blue-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span>ℹ️</span>
@@ -43,37 +55,54 @@ export const Step2ApplicantDetails: React.FC<Step2ApplicantDetailsProps> = ({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Full Name (as per PAN / Aadhaar) <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-700">
+              Full Name (as per PAN / Aadhaar) <span className="text-rose-500">*</span>
+            </label>
+            {isUserLoggedInCustomer && (
+              <span className="text-[10px] font-medium text-slate-400 italic">Locked to logged-in profile</span>
+            )}
+          </div>
           <input
             required
             type="text"
+            disabled={isUserLoggedInCustomer}
             placeholder="e.g. Rahul Sharma"
             value={basicInfo.name}
             onChange={(e) => setBasicInfo({ ...basicInfo, name: e.target.value })}
-            className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 transition"
+            className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed transition"
           />
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Email Address <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-700">
+              Email Address <span className="text-rose-500">*</span>
+            </label>
+            {isUserLoggedInCustomer && (
+              <span className="text-[10px] font-medium text-slate-400 italic">Locked</span>
+            )}
+          </div>
           <input
             required
             type="email"
+            disabled={isUserLoggedInCustomer}
             placeholder="e.g. rahul.sharma@example.com"
             value={basicInfo.email}
             onChange={(e) => setBasicInfo({ ...basicInfo, email: e.target.value })}
-            className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 transition"
+            className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed transition"
           />
         </div>
 
         <div>
-          <label className="text-xs font-bold text-slate-700 block mb-1.5">
-            Mobile Number (10 Digits) <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-700">
+              Mobile Number (10 Digits) <span className="text-rose-500">*</span>
+            </label>
+            {isUserLoggedInCustomer && (
+              <span className="text-[10px] font-medium text-slate-400 italic">Locked</span>
+            )}
+          </div>
           <div className="relative">
             <span className="absolute left-4 top-3.5 text-sm font-semibold text-slate-400">
               +91
@@ -81,11 +110,12 @@ export const Step2ApplicantDetails: React.FC<Step2ApplicantDetailsProps> = ({
             <input
               required
               type="tel"
+              disabled={isUserLoggedInCustomer}
               maxLength={10}
               placeholder="9876543210"
               value={basicInfo.mobile}
               onChange={(e) => setBasicInfo({ ...basicInfo, mobile: e.target.value.replace(/\D/g, '') })}
-              className="w-full rounded-2xl border border-slate-300 py-3.5 pl-14 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 transition font-mono font-medium"
+              className="w-full rounded-2xl border border-slate-300 py-3.5 pl-14 pr-4 text-sm outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-100 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed transition font-mono font-medium"
             />
           </div>
         </div>

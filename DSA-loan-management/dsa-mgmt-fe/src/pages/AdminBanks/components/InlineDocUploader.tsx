@@ -7,7 +7,7 @@ import { uploadBankProductDocument } from '../../../services/banks'
 interface InlineDocUploaderProps {
   bankId: number
   productId: number
-  onUploaded: () => void
+  onUploaded: (policyData?: any) => void
 }
 
 export const InlineDocUploader: React.FC<InlineDocUploaderProps> = ({
@@ -29,12 +29,12 @@ export const InlineDocUploader: React.FC<InlineDocUploaderProps> = ({
         docTitle.trim() || uploadFile.name
       )
     },
-    onSuccess: () => {
-      message.success('Document uploaded successfully')
+    onSuccess: (data) => {
+      message.success('Document uploaded and policy analyzed by AI!')
       setUploadFile(null)
       setDocTitle('')
       setShowUpload(false)
-      onUploaded()
+      onUploaded(data?.policyParameters)
     },
     onError: (err: any) => {
       message.error(err?.response?.data?.detail || 'Failed to upload document')

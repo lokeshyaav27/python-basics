@@ -53,7 +53,7 @@ const LoanComparison: React.FC = () => {
   // Fetch all banks for selector
   const { data: allBanks = [] } = useQuery<Bank[]>({
     queryKey: ['banks-list-for-comparison'],
-    queryFn: fetchBanks,
+    queryFn: () => fetchBanks(),
   })
 
   // Auto-select first application or sync when query param changes
@@ -264,7 +264,6 @@ const LoanComparison: React.FC = () => {
       {editingApplication && (
         <ApplicationDetailModal
           application={editingApplication}
-          open={!!editingApplication}
           onClose={() => setEditingApplication(null)}
           onUpdated={handleModalUpdated}
         />

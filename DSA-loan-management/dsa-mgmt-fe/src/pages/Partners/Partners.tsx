@@ -7,7 +7,7 @@ import { ROUTES, API_BASE_URL } from '../../constants'
 
 const Partners: React.FC = () => {
   const { t } = useTranslation()
-  const { data: banks = [], isLoading } = useQuery({ queryKey: ['banks-all-partners'], queryFn: fetchBanks })
+  const { data: banks = [], isLoading } = useQuery({ queryKey: ['banks-all-partners'], queryFn: () => fetchBanks() })
   const [filter, setFilter] = useState<'all' | 'nationalized' | 'private' | 'nbfc'>('all')
 
   const filteredBanks = banks.filter((b: any) => {

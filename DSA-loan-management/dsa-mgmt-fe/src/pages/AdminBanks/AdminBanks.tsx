@@ -21,7 +21,7 @@ const AdminBanks: React.FC = () => {
   const qc = useQueryClient()
   const { data: banks = [], isLoading } = useQuery<Bank[]>({
     queryKey: ['admin-banks'],
-    queryFn: fetchBanks,
+    queryFn: () => fetchBanks(),
   })
 
   const [showAdd, setShowAdd] = useState(false)

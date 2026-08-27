@@ -11,7 +11,7 @@ import { changeLanguage } from '../../i18n'
 
 interface ProtectedRouteProps {
   children: ReactNode
-  role?: Role
+  role?: Role | Role[]
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
@@ -27,20 +27,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
 
   if (!user) {
     let loginPath: string = ROUTES.CUSTOMER_LOGIN
-    if (role === 'admin') {
+    if (role === 'admin' || (Array.isArray(role) && role.includes('admin') && role.length === 1)) {
       loginPath = ROUTES.ADMIN_LOGIN
-    } else if (role === 'agent') {
+    } else if (role === 'agent' || (Array.isArray(role) && role.includes('agent') && role.length === 1)) {
       loginPath = ROUTES.AGENT_LOGIN
     }
 
     return <Navigate to={loginPath} state={{ from: location }} replace />
   }
 
-  if (role && user.role !== role) {
-    return <Unauthorized requiredRole={role} currentRole={user.role} />
+  if (role) {
+    const isAllowed = Array.isArray(role) ? role.includes(user.role as Role) : user.role === role
+    if (!isAllowed) {
+      return <Unauthorized requiredRole={Array.isArray(role) ? role.join(', ') : role} currentRole={user.role} />
+    }
   }
 
-  const effectiveRole = role || (user.role as Role)
+  const effectiveRole = (Array.isArray(role) ? (user.role as Role) : role) || (user.role as Role)
   const currentLang = i18n.language || 'en'
   const isChatPage = location.pathname.includes('chat-with-ai')
 

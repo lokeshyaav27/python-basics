@@ -24,8 +24,17 @@ export const fetchBanks = async (params?: {
   include_inactive?: boolean
   product_id?: number
 }): Promise<Bank[]> => {
+  const queryParams: Record<string, any> = {}
+  if (params && typeof params === 'object') {
+    if (typeof params.include_inactive === 'boolean') {
+      queryParams.include_inactive = params.include_inactive
+    }
+    if (typeof params.product_id === 'number' && !isNaN(params.product_id)) {
+      queryParams.product_id = params.product_id
+    }
+  }
   const res = await apiClient.get<ApiResponse<Bank[]>>(API_ENDPOINT_NAMES.BANKS.BASE, {
-    params,
+    params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
   })
   return res.data?.result ?? res.data ?? []
 }
@@ -78,6 +87,29 @@ export const deleteBank = async (id: number) => {
   return res.data?.result ?? res.data
 }
 
+export interface BankPolicyParameters {
+  min_cibil?: number
+  roi_tier_1_cibil_750_plus?: number
+  roi_tier_2_cibil_700_749?: number
+  roi_tier_3_cibil_650_699?: number
+  roi_tier_4_cibil_below_650?: number
+  female_rebate_pct?: number
+  min_roi_floor?: number
+  processing_fee_pct?: number
+  min_processing_fee?: number
+  max_processing_fee?: number
+  property_insurance_pct?: number
+  applicant_insurance_pct?: number
+  max_maturity_age_salaried?: number
+  max_maturity_age_self_employed?: number
+  max_tenure_years?: number
+  ltv_ready_pct?: number
+  ltv_under_construction_pct?: number
+  ltv_flat_pct?: number
+  ltv_standard_pct?: number
+  special_notes?: string[]
+}
+
 export type BankProductLink = {
   productId: number
   productName: string
@@ -86,6 +118,7 @@ export type BankProductLink = {
   isLinked: boolean
   linkId?: number | null
   commission?: number | null
+  policyParameters?: BankPolicyParameters | null
   documents?: BankDocumentItem[]
 }
 
@@ -144,3 +177,36 @@ export const deleteBankProductDocument = async (
   )
   return res.data?.result ?? res.data
 }
+
+export const fetchPolicyParameters = async (
+  bankId: number,
+  productId: number
+): Promise<BankPolicyParameters> => {
+  const res = await apiClient.get<ApiResponse<BankPolicyParameters>>(
+    API_ENDPOINT_NAMES.BANKS.POLICY_PARAMETERS(bankId, productId)
+  )
+  return res.data?.result ?? res.data
+}
+
+export const savePolicyParameters = async (
+  bankId: number,
+  productId: number,
+  payload: BankPolicyParameters
+): Promise<BankPolicyParameters> => {
+  const res = await apiClient.put<ApiResponse<BankPolicyParameters>>(
+    API_ENDPOINT_NAMES.BANKS.POLICY_PARAMETERS(bankId, productId),
+    payload
+  )
+  return res.data?.result ?? res.data
+}
+
+export const extractPolicyParameters = async (
+  bankId: number,
+  productId: number
+): Promise<BankPolicyParameters> => {
+  const res = await apiClient.post<ApiResponse<BankPolicyParameters>>(
+    API_ENDPOINT_NAMES.BANKS.EXTRACT_POLICY(bankId, productId)
+  )
+  return res.data?.result ?? res.data
+}
+

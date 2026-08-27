@@ -35,6 +35,10 @@ export const API_ENDPOINT_NAMES = {
       productId: number | string,
       docId: number | string
     ) => `/api/banks/${bankId}/products/${productId}/documents/${docId}`,
+    POLICY_PARAMETERS: (bankId: number | string, productId: number | string) =>
+      `/api/banks/${bankId}/products/${productId}/policy-parameters`,
+    EXTRACT_POLICY: (bankId: number | string, productId: number | string) =>
+      `/api/banks/${bankId}/products/${productId}/extract-policy`,
   },
 
   // Products Endpoints

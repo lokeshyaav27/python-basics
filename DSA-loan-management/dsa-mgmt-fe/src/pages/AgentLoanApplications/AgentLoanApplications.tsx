@@ -28,9 +28,9 @@ const AgentLoanApplications: React.FC = () => {
     enabled: !!user?.id,
   })
 
-  const { data: banks = [] } = useQuery({
+  const { data: banks = [] } = useQuery<Bank[]>({
     queryKey: ['banks-list-agent'],
-    queryFn: fetchBanks,
+    queryFn: () => fetchBanks(),
   })
 
   const [approveModal, setApproveModal] = useState<{ open: boolean; app: LoanApplication | null }>({

@@ -15,8 +15,8 @@ import {
 } from './components'
 
 const Home: React.FC = () => {
-  const { data: products = [] } = useQuery({ queryKey: ['products-home'], queryFn: fetchProducts })
-  const { data: banks = [] } = useQuery({ queryKey: ['banks-home'], queryFn: fetchBanks })
+  const { data: products = [] } = useQuery({ queryKey: ['products-home'], queryFn: () => fetchProducts() })
+  const { data: banks = [] } = useQuery({ queryKey: ['banks-home'], queryFn: () => fetchBanks() })
 
   return (
     <div className="bg-slate-50">

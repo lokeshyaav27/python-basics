@@ -216,3 +216,49 @@ def delete_bank_document(
         result=res,
         message="Bank policy document deleted successfully",
     )
+
+
+# ── Policy Parameters (Human-in-the-Loop Review & Configuration) ─────────────
+
+@router.get("/{bank_id}/products/{product_id}/policy-parameters")
+def get_bank_policy_parameters(
+    bank_id: int,
+    product_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    bank_service: BankService = Depends(get_bank_service),
+):
+    params = bank_service.get_policy_parameters(bank_id, product_id)
+    return success_response(
+        result=params,
+        message="Policy parameters fetched successfully",
+    )
+
+
+@router.put("/{bank_id}/products/{product_id}/policy-parameters")
+async def update_bank_policy_parameters(
+    bank_id: int,
+    product_id: int,
+    request: Request,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    bank_service: BankService = Depends(get_bank_service),
+):
+    body = await request.json()
+    updated = bank_service.update_policy_parameters(bank_id, product_id, body)
+    return success_response(
+        result=updated,
+        message="Policy parameters approved and saved successfully",
+    )
+
+
+@router.post("/{bank_id}/products/{product_id}/extract-policy")
+def reextract_bank_policy_parameters(
+    bank_id: int,
+    product_id: int,
+    current_user: CurrentUser = Depends(require_role(["admin"])),
+    bank_service: BankService = Depends(get_bank_service),
+):
+    extracted = bank_service.reextract_policy_parameters(bank_id, product_id)
+    return success_response(
+        result=extracted,
+        message="Policy parameters re-extracted via AI successfully",
+    )
