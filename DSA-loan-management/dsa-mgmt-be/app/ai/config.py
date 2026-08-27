@@ -14,7 +14,7 @@ class AIConfig(BaseModel):
         Dynamically returns candidate models based on provider toggle (Ollama vs Groq).
         """
         if settings.USE_OLLAMA:
-            return [settings.OLLAMA_MODEL] if settings.OLLAMA_MODEL else ["llama3.1:8b"]
+            return [settings.OLLAMA_MODEL] if settings.OLLAMA_MODEL else []
 
         models: List[str] = []
         if settings.GROQ_MODEL:

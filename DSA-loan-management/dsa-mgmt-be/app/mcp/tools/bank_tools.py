@@ -96,6 +96,8 @@ def get_bank_product_catalog(
             }
             if show_comm:
                 item["dsaCommissionPct"] = float(link.commission) if link.commission is not None else None
+            if link.policyParameters:
+                item["policyParameters"] = link.policyParameters
             banks_list.append(item)
 
         return {

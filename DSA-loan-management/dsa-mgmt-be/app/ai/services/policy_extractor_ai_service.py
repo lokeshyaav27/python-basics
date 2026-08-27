@@ -123,21 +123,29 @@ Policy Document Text:
 If any specific value is not explicitly mentioned in the text, provide a sensible standard banking value.
 Output ONLY valid JSON.
 """
-
-    model_name = settings.OLLAMA_MODEL if settings.USE_OLLAMA else (settings.GROQ_MODEL or "llama-3.3-70b-versatile")
+    models_to_try = ai_config.candidate_models
+    if not models_to_try:
+        logger.error("No AI model configured in .env (GROQ_MODEL / OLLAMA_MODEL).")
+        return get_default_policy_parameters(bank_name, product_name)
 
     try:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.1,
-        )
+        content = "{}"
+        for model_name in models_to_try:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                )
+                content = response.choices[0].message.content or "{}"
+                break
+            except Exception as e:
+                logger.warning(f"Model '{model_name}' failed for policy extraction: {e}. Trying next candidate from env...")
 
-        content = response.choices[0].message.content or "{}"
         parsed = json.loads(content)
 
         # Merge with defaults to guarantee all keys exist with valid numeric types
