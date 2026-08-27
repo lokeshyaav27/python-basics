@@ -39,10 +39,15 @@ def seed_loan_applications():
             from seeds.seed_3_agents import seed_agents
             agents = [a for a in seed_agents() if not a.isAdmin]
 
+        lokesh_agent = next((a for a in agents if "lokesh_yadav@yopmail.com" in a.email.lower()), agents[0])
+        other_agents = [a for a in agents if a.id != lokesh_agent.id]
+        if not other_agents:
+            other_agents = [lokesh_agent]
+
         # ── Customer Data Definitions ─────────────────────────────────────────
         print("\n--- Seeding Loan Applications (Pending Review) ---")
         customers = [
-            {"name": "Lokesh Yadav", "mobile": "123123", "email": "lokesh@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
+            {"name": "Nishchay Yadav", "mobile": "123123", "email": "nishchay@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
             {"name": "Rahul Sharma", "mobile": "9876543210", "email": "rahul.sharma@gmail.com", "city": "Mumbai", "income": 120000, "age": 36, "gender": "Male"},
             {"name": "Pooja Hegde", "mobile": "9822334455", "email": "pooja.h@yahoo.com", "city": "Bangalore", "income": 85000, "age": 29, "gender": "Female"},
             {"name": "Rohan Gupta", "mobile": "9811223344", "email": "rohan.gupta@outlook.com", "city": "Pune", "income": 110000, "age": 34, "gender": "Male"},
@@ -52,45 +57,45 @@ def seed_loan_applications():
             {"name": "Karan Kapoor", "mobile": "9877889900", "email": "karan.k@yahoo.com", "city": "Chandigarh", "income": 105000, "age": 35, "gender": "Male"},
         ]
 
-        # 17 Loan Applications across 8 unique customers
-        apps_plan = [
-            # Customer 1 (Lokesh)
-            {"cust_idx": 0, "prod_idx": 0, "req_amt": 5000000, "tenure": 240},
-            {"cust_idx": 0, "prod_idx": 1, "req_amt": 1200000, "tenure": 60},
-            {"cust_idx": 0, "prod_idx": 2, "req_amt": 300000, "tenure": 24},
-            # Customer 2 (Rahul)
-            {"cust_idx": 1, "prod_idx": 0, "req_amt": 7500000, "tenure": 300},
-            {"cust_idx": 1, "prod_idx": 2, "req_amt": 500000, "tenure": 36},
-            # Customer 3 (Pooja)
-            {"cust_idx": 2, "prod_idx": 1, "req_amt": 950000, "tenure": 48},
-            {"cust_idx": 2, "prod_idx": 0, "req_amt": 4200000, "tenure": 180},
-            # Customer 4 (Rohan)
-            {"cust_idx": 3, "prod_idx": 0, "req_amt": 6000000, "tenure": 240},
-            {"cust_idx": 3, "prod_idx": 1, "req_amt": 1500000, "tenure": 60},
-            # Customer 5 (Neha)
-            {"cust_idx": 4, "prod_idx": 2, "req_amt": 800000, "tenure": 36},
-            {"cust_idx": 4, "prod_idx": 0, "req_amt": 3500000, "tenure": 180},
-            # Customer 6 (Siddharth)
-            {"cust_idx": 5, "prod_idx": 0, "req_amt": 8500000, "tenure": 240},
-            {"cust_idx": 5, "prod_idx": 1, "req_amt": 2200000, "tenure": 60},
-            # Customer 7 (Divya)
-            {"cust_idx": 6, "prod_idx": 0, "req_amt": 4800000, "tenure": 240},
-            {"cust_idx": 6, "prod_idx": 2, "req_amt": 250000, "tenure": 24},
-            # Customer 8 (Karan)
-            {"cust_idx": 7, "prod_idx": 0, "req_amt": 5500000, "tenure": 180},
-            {"cust_idx": 7, "prod_idx": 1, "req_amt": 1100000, "tenure": 60},
-        ]
-
         p_home = next((p for p in products if "home" in p.name.lower()), products[0])
         p_car = next((p for p in products if "car" in p.name.lower()), products[min(1, len(products)-1)])
         p_personal = next((p for p in products if "personal" in p.name.lower()), products[min(2, len(products)-1)])
-        product_list = [p_home, p_car, p_personal]
+
+        # 18 Loan Applications: Exactly 1 Personal, 2 Car, 15 Home
+        # 15 applications assigned to lokesh agent (1 Personal, 2 Car, 12 Home)
+        apps_plan = [
+            # Exactly 1 Personal Loan -> Assigned to Lokesh Agent
+            {"cust_idx": 0, "prod": p_personal, "req_amt": 350000, "tenure": 24, "agent": lokesh_agent},
+
+            # Exactly 2 Car Loans -> Both assigned to Lokesh Agent
+            {"cust_idx": 0, "prod": p_car, "req_amt": 1200000, "tenure": 60, "agent": lokesh_agent},
+            {"cust_idx": 1, "prod": p_car, "req_amt": 1800000, "tenure": 60, "agent": lokesh_agent},
+
+            # 12 Home Loans assigned to Lokesh Agent
+            {"cust_idx": 0, "prod": p_home, "req_amt": 5000000, "tenure": 240, "agent": lokesh_agent},
+            {"cust_idx": 1, "prod": p_home, "req_amt": 7500000, "tenure": 300, "agent": lokesh_agent},
+            {"cust_idx": 2, "prod": p_home, "req_amt": 4200000, "tenure": 180, "agent": lokesh_agent},
+            {"cust_idx": 3, "prod": p_home, "req_amt": 6000000, "tenure": 240, "agent": lokesh_agent},
+            {"cust_idx": 4, "prod": p_home, "req_amt": 3500000, "tenure": 180, "agent": lokesh_agent},
+            {"cust_idx": 5, "prod": p_home, "req_amt": 8500000, "tenure": 240, "agent": lokesh_agent},
+            {"cust_idx": 6, "prod": p_home, "req_amt": 4800000, "tenure": 240, "agent": lokesh_agent},
+            {"cust_idx": 7, "prod": p_home, "req_amt": 5500000, "tenure": 180, "agent": lokesh_agent},
+            {"cust_idx": 0, "prod": p_home, "req_amt": 3200000, "tenure": 180, "agent": lokesh_agent},
+            {"cust_idx": 1, "prod": p_home, "req_amt": 6500000, "tenure": 240, "agent": lokesh_agent},
+            {"cust_idx": 2, "prod": p_home, "req_amt": 2800000, "tenure": 120, "agent": lokesh_agent},
+            {"cust_idx": 3, "prod": p_home, "req_amt": 9000000, "tenure": 300, "agent": lokesh_agent},
+
+            # Remaining 3 Home Loans assigned to other team agents
+            {"cust_idx": 4, "prod": p_home, "req_amt": 4500000, "tenure": 240, "agent": other_agents[0 % len(other_agents)]},
+            {"cust_idx": 5, "prod": p_home, "req_amt": 7000000, "tenure": 240, "agent": other_agents[1 % len(other_agents)]},
+            {"cust_idx": 6, "prod": p_home, "req_amt": 5200000, "tenure": 200, "agent": other_agents[2 % len(other_agents)]},
+        ]
 
         created_apps = []
         for i, plan in enumerate(apps_plan, 1):
             cust = customers[plan["cust_idx"]]
-            prod = product_list[plan["prod_idx"]]
-            assigned_agent = agents[(i - 1) % len(agents)]
+            prod = plan["prod"]
+            assigned_agent = plan["agent"]
 
             # 1. Create client general details
             cgd = ClientGeneralDetail(

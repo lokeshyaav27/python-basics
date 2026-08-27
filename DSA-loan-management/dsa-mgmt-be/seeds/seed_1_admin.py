@@ -38,11 +38,11 @@ def seed_admin():
 
     try:
         print("\n--- Seeding 1 Default Admin User ---")
-        admin_email = "lokesh_dsa_admin@yopmail.com"
+        admin_email = "dsa_admin@yopmail.com"
         existing_admin = db.query(Agent).filter(Agent.email.ilike(admin_email)).first()
 
         if existing_admin:
-            existing_admin.name = "Lokesh Admin"
+            existing_admin.name = "Admin"
             existing_admin.mobile = "1111111111"
             existing_admin.password = hash_password("azilen@123")
             existing_admin.tempPasswordReset = True
@@ -55,7 +55,7 @@ def seed_admin():
             return existing_admin
         else:
             admin = Agent(
-                name="Lokesh Admin",
+                name="Admin",
                 email=admin_email,
                 mobile="1111111111",
                 password=hash_password("azilen@123"),

@@ -39,7 +39,7 @@ def seed_agents():
         print("\n--- Seeding DSA Agents & Secondary Admins ---")
         agents_data = [
             {"name": "Rajesh Sharma (Admin)", "email": "rajesh.admin@dsafinance.com", "mobile": "9810011223", "password": "azilen@123", "is_admin": True, "photo": "user-02.png"},
-            {"name": "Lokesh Agent", "email": "lokesh_agent@yopmail.com", "mobile": "2222222222", "password": "azilen@123", "is_admin": False, "photo": "user-03.png"},
+            {"name": "Lokesh Yadav", "email": "lokesh_yadav@yopmail.com", "mobile": "2222222222", "password": "azilen@123", "is_admin": False, "photo": "user-03.png"},
             {"name": "Priya Verma", "email": "priya.verma@dsafinance.com", "mobile": "9876500001", "password": "azilen@123", "is_admin": False, "photo": "user-04.png"},
             {"name": "Amitabh Sen", "email": "amitabh.sen@dsafinance.com", "mobile": "9876500002", "password": "azilen@123", "is_admin": False, "photo": "user-05.png"},
             {"name": "Sneha Kulkarni", "email": "sneha.k@dsafinance.com", "mobile": "9876500003", "password": "azilen@123", "is_admin": False, "photo": "user-06.png"},

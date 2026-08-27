@@ -227,11 +227,11 @@ Each seeder script in the `seeds/` directory is completely standalone and can be
 
 | Step | Script | Description & Static Assets Handled | Standalone Command |
 | :---: | :--- | :--- | :--- |
-| **1** | `seeds/seed_1_admin.py` | **Default Admin Only**: Seeds 1 primary admin (`lokesh_dsa_admin@yopmail.com`) and copies `user-01.png`. | `python seeds/seed_1_admin.py` |
+| **1** | `seeds/seed_1_admin.py` | **Default Admin Only**: Seeds 1 primary admin (`dsa_admin@yopmail.com`) and copies `user-01.png`. | `python seeds/seed_1_admin.py` |
 | **2** | `seeds/seed_2_products_banks.py` | **Products & Banks**: Seeds 3 Products (Home, Car, Personal) & 7 Institutions (5 Banks + 2 NBFCs), copying product images and bank logos. | `python seeds/seed_2_products_banks.py` |
 | **3** | `seeds/seed_3_agents.py` | **DSA Agents**: Seeds 6 regular DSA Agents + 1 secondary admin with encrypted passwords, copying `user-02.png` to `user-08.png`. | `python seeds/seed_3_agents.py` |
 | **4** | `seeds/seed_4_product_bank_mapping.py` | **Product-Bank Mapping & Vectors**: Maps products to banks with commissions and indexes bank policy PDFs into `pgvector`. | `python seeds/seed_4_product_bank_mapping.py` |
-| **5** | `seeds/seed_5_loan_applications.py` | **Loan Applications**: Seeds 17 realistic applications across 8 unique customers in *Pending Review* status with linked financial details. | `python seeds/seed_5_loan_applications.py` |
+| **5** | `seeds/seed_5_loan_applications.py` | **Loan Applications**: Seeds 18 realistic applications across 8 unique customers in *Pending Review* status with linked financial details. | `python seeds/seed_5_loan_applications.py` |
 
 ---
 
