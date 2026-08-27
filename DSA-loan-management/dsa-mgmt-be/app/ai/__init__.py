@@ -8,9 +8,8 @@ from app.ai.services import (
     AIIssueSuggestionService,
     ai_issue_service,
 )
+from app.ai.agents import OrchestratorAgent, orchestrator_agent
 from app.ai.prompts import (
-    build_chat_assistant_prompt,
-    build_system_prompt,
     build_eligibility_explanation_prompt,
     build_underwriting_prompt,
     build_bank_comparison_prompt,
@@ -24,12 +23,12 @@ __all__ = [
     "get_groq_client",
     "ChatService",
     "chat_service",
+    "OrchestratorAgent",
+    "orchestrator_agent",
     "generate_ai_explanation",
     "generate_comparative_ai_analysis",
     "AIIssueSuggestionService",
     "ai_issue_service",
-    "build_chat_assistant_prompt",
-    "build_system_prompt",
     "build_eligibility_explanation_prompt",
     "build_underwriting_prompt",
     "build_bank_comparison_prompt",
