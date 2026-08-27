@@ -308,15 +308,18 @@ class ChatService:
 
                     # Collect citations if RAG tool
                     if t_name == "search_bank_policies":
-                        results_list = t_result.get("results", []) if isinstance(t_result, dict) else []
+                        results_list = t_result.get("excerpts", t_result.get("results", [])) if isinstance(t_result, dict) else []
                         for item in results_list:
-                            doc_name = item.get("documentName")
-                            bank_name = item.get("bankName")
+                            doc_name = item.get("documentName") or item.get("document")
+                            bank_name = item.get("bankName") or item.get("bank")
                             if doc_name and bank_name:
-                                referenced_docs.append(f"{bank_name} - {doc_name}")
+                                ref = f"{bank_name} - {doc_name}"
+                                if ref not in referenced_docs:
+                                    referenced_docs.append(ref)
                             elif doc_name:
-                                referenced_docs.append(doc_name)
-                        logger.info(f"   📚 RAG citations updated: {len(referenced_docs)} total document citations")
+                                if doc_name not in referenced_docs:
+                                    referenced_docs.append(doc_name)
+                        logger.info(f"   📚 RAG citations updated: {len(referenced_docs)} unique document citations")
 
                     t_result_str = json.dumps(t_result, default=str)
                     tools_executed_list.append(t_name)
