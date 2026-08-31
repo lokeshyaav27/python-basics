@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.ai.config import ai_config
 from app.ai.client import get_ai_client
+from app.ai.agents.tool_parser import extract_tool_calls
 from app.mcp.registry import execute_mcp_tool
 
 logger = logging.getLogger("ai_subagent")
@@ -107,7 +108,7 @@ class BaseSubAgent:
 
             choice = response.choices[0]
             msg = choice.message
-            tool_calls = getattr(msg, "tool_calls", None)
+            tool_calls = extract_tool_calls(msg)
 
             # Case A: Sub-agent generated final summary text
             if not tool_calls:
@@ -131,7 +132,7 @@ class BaseSubAgent:
                         "type": "function",
                         "function": {
                             "name": tc.function.name,
-                            "arguments": tc.function.arguments,
+                            "arguments": tc.function.arguments if isinstance(tc.function.arguments, str) else json.dumps(tc.function.arguments),
                         },
                     }
                     for tc in tool_calls

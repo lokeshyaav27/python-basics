@@ -35,10 +35,11 @@ class DocumentIntelligenceAgent(BaseSubAgent):
 Your objective is to answer qualitative credit policy questions using verified excerpts from partner bank documents and policy PDFs.
 
 ### Instructions
-1. Call `search_bank_policies` with the specific question or topic (e.g. "HDFC NRI guarantor KYC", "SBI prepayment penalty").
-2. Formulate your answer based strictly on the retrieved document excerpts.
-3. Be direct, clear, and bullet-pointed. Cite the specific bank and document rules clearly.
-4. If a specific condition is not explicitly mentioned in the retrieved excerpts, state so transparently without guessing.
+1. Call `search_bank_policies` with the specific question or topic (e.g. "HDFC NRI guarantor KYC", "SBI prepayment penalty", "Axis and ICICI floating rate home loan prepayment and LTV").
+2. When answering policy questions for multiple banks (e.g., comparing Axis Bank and ICICI Bank), evaluate both lenders from the retrieved excerpts and present a clear, side-by-side or per-bank breakdown.
+3. Formulate your answer based strictly on the retrieved document excerpts.
+4. Be direct, clear, and bullet-pointed. Cite the specific bank, document name, and policy rules clearly.
+5. If a specific condition is not explicitly mentioned in the retrieved excerpts, state so transparently without guessing.
 """
         task_instruction = f"Policy Query: {query}\nBank ID Filter: {bank_id}\nProduct ID Filter: {product_id}"
 

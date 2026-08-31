@@ -56,6 +56,7 @@ def _resolve_bank_and_product_from_query(
 
     if resolved_bank_id is None:
         active_banks = db.query(Bank).filter(Bank.isActive != False).all()
+        matched_banks = []
         for b in active_banks:
             # Check bank name and standard short aliases
             b_name_lower = b.name.lower()
@@ -76,9 +77,15 @@ def _resolve_bank_and_product_from_query(
                 aliases.extend(["tata", "tata capital"])
 
             if any(re.search(rf"\b{re.escape(alias)}\b", q_lower) for alias in aliases):
-                resolved_bank_id = b.id
-                matched_bank_name = b.name
-                break
+                matched_banks.append(b)
+
+        if len(matched_banks) == 1:
+            resolved_bank_id = matched_banks[0].id
+            matched_bank_name = matched_banks[0].name
+        elif len(matched_banks) > 1:
+            # When multiple banks are mentioned in query (e.g. Axis and ICICI), do not restrict by single bank ID
+            resolved_bank_id = None
+            matched_bank_name = ", ".join(b.name for b in matched_banks)
 
     if resolved_product_id is None:
         active_products = db.query(Product).filter(Product.isActive != False).all()
@@ -110,7 +117,9 @@ def search_bank_policies(
         product_id=product_id,
     )
 
-    limit = min(top_k or 3, 4)
+    # If multiple banks or all banks are targeted, retrieve more excerpts (up to 6)
+    is_multi_bank = res_bank_id is None or (matched_bank and "," in matched_bank)
+    limit = min(top_k or (6 if is_multi_bank else 3), 8 if is_multi_bank else 4)
 
     matches = rag_service.search_relevant_chunks(
         db=db,

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.config import ai_config
 from app.ai.client import get_ai_client
+from app.ai.agents.tool_parser import extract_tool_calls
 from app.ai.agents.subagents import (
     LoanMatchingAgent,
     DocumentIntelligenceAgent,
@@ -50,18 +51,18 @@ ORCHESTRATOR_TOOLS_SPEC = [
             "description": (
                 "Delegates task to the Document Intelligence Sub-Agent. "
                 "Use when the user asks about: bank credit policy PDFs, KYC documents, NRI guarantor rules, "
-                "prepayment penalties, LTV limits, or specific bank guidelines."
+                "prepayment penalties, LTV limits, or specific bank guidelines across one or multiple partner banks."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Specific policy question or topic to search (e.g. 'HDFC NRI guarantor KYC', 'SBI prepayment penalty').",
+                        "description": "Specific policy question or topic to search across partner banks (e.g. 'HDFC NRI guarantor KYC', 'SBI prepayment penalty', 'Axis and ICICI floating rate prepayment and LTV').",
                     },
                     "bank_id": {
                         "type": ["integer", "null"],
-                        "description": "Optional numeric bank ID to filter search results.",
+                        "description": "Optional numeric bank ID if filtering for a single specific bank, or null to search across banks.",
                     },
                     "product_id": {
                         "type": ["integer", "null"],
@@ -166,6 +167,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
 
 ### Instructions:
 - For multi-part or compound questions (e.g. compare rates AND check KYC documents), call the relevant sub-agents.
+- For comparative policy queries across multiple banks (e.g. comparing Axis Bank and ICICI Bank rules), pass the query mentioning both banks to `ask_document_agent` or search each lender.
 - Once you receive the sub-agents' data, synthesize a comprehensive, clean, and well-structured final answer.
 - Always use professional banking formatting (bullet points, bold key rates, EMIs, and document names).
 """
@@ -248,7 +250,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
 
             choice = response.choices[0]
             msg = choice.message
-            tool_calls = getattr(msg, "tool_calls", None)
+            tool_calls = extract_tool_calls(msg)
 
             # If LLM concluded reasoning without tool calls, we have the final answer
             if not tool_calls:
@@ -265,7 +267,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
                         "type": "function",
                         "function": {
                             "name": tc.function.name,
-                            "arguments": tc.function.arguments,
+                            "arguments": tc.function.arguments if isinstance(tc.function.arguments, str) else json.dumps(tc.function.arguments),
                         },
                     }
                     for tc in tool_calls
