@@ -35,10 +35,10 @@ def check_auth_permission(
         return
 
     if role == "customer":
-        if target_agent_id is not None:
+        if target_agent_id is not None and target_app is None:
             raise HTTPException(status_code=403, detail="Forbidden: Customers cannot access internal agent records.")
 
-        if target_customer_id:
+        if target_customer_id and target_app is None:
             cleaned_target = str(target_customer_id).strip().lower()
             if cleaned_target != caller_identifier and str(caller_user_id) != cleaned_target:
                 raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view other customer records.")

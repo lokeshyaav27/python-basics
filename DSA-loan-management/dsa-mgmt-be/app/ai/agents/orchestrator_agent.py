@@ -304,6 +304,17 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
                     "content": json.dumps(sub_result.get("summary", str(sub_result)), default=str),
                 })
 
+        if not final_answer:
+            synth_resp, synth_model, _ = self._call_llm(
+                client=client,
+                messages=messages,
+                tools=None,
+            )
+            if synth_resp and synth_resp.choices:
+                final_answer = synth_resp.choices[0].message.content or ""
+                if synth_model:
+                    last_model_used = synth_model
+
         return final_answer, all_referenced_docs, all_tools_executed, last_model_used
 
     def process_conversation(
@@ -316,6 +327,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
         and unifies final response.
         """
         start_time = time.time()
+        #.model_dump() converts ChatAuthContext(role="agent", userId=2) $\rightarrow$ {"role": "agent", "userId": 2}.
         auth = request.authContext.model_dump() if request.authContext else {}
         role = (auth.get("role") or "customer").lower()
         user_name = auth.get("name") or "User"

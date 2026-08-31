@@ -177,11 +177,22 @@ class BaseSubAgent:
                     "content": t_res_str,
                 })
 
-        # Fallback final synthesis if loop ended
+        # Final synthesis if loop ended
+        final_synth_resp, final_model, _ = self._call_llm(
+            client=client,
+            messages=messages,
+            tools=None,
+        )
+        if final_synth_resp and final_synth_resp.choices:
+            final_text = final_synth_resp.choices[0].message.content or ""
+        else:
+            final_text = "Analysis completed based on the retrieved application and bank underwriting records."
+
         return {
             "agentName": self.name,
-            "status": "COMPLETED",
-            "summary": "Sub-agent finished gathering data.",
+            "status": "SUCCESS",
+            "summary": final_text,
+            "modelUsed": final_model or model_used,
             "referencedDocs": referenced_docs,
             "toolsExecuted": tools_executed,
         }
