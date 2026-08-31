@@ -72,6 +72,7 @@ def extract_tool_calls(msg: Any) -> List[ParsedToolCall]:
             fn_args = getattr(fn, "arguments", "{}")
             results.append(ParsedToolCall(id=tc_id, name=fn_name, arguments=fn_args))
         if results:
+            logger.info(f"   🔧 [tool_parser] Extracted {len(results)} native OpenAI tool calls: {[r.function.name for r in results]}")
             return results
 
     content = getattr(msg, "content", "") or ""
@@ -98,7 +99,7 @@ def extract_tool_calls(msg: Any) -> List[ParsedToolCall]:
             args_dict[p_name] = _parse_param_value(p_val)
 
         tc_id = f"call_xml_{uuid.uuid4().hex[:8]}"
-        logger.info(f"Parsed text-based XML tool call: {fn_name} with args {args_dict}")
+        logger.info(f"   🔧 [tool_parser] Extracted text-based XML tool call: '{fn_name}' with args {args_dict}")
         results.append(ParsedToolCall(id=tc_id, name=fn_name, arguments=args_dict))
 
     if results:
@@ -116,6 +117,7 @@ def extract_tool_calls(msg: Any) -> List[ParsedToolCall]:
             fn_args = data.get("arguments") or data.get("parameters") or {}
             if fn_name:
                 tc_id = f"call_json_{uuid.uuid4().hex[:8]}"
+                logger.info(f"   🔧 [tool_parser] Extracted text-based JSON tool call: '{fn_name}' with args {fn_args}")
                 results.append(ParsedToolCall(id=tc_id, name=fn_name, arguments=fn_args))
         except Exception:
             pass
@@ -133,11 +135,13 @@ def extract_tool_calls(msg: Any) -> List[ParsedToolCall]:
                     fn_name = item.get("name")
                     fn_args = item.get("arguments", {})
                     if fn_name:
+                        logger.info(f"   🔧 [tool_parser] Extracted [TOOL_CALLS] item: '{fn_name}' with args {fn_args}")
                         results.append(ParsedToolCall(id=f"call_{uuid.uuid4().hex[:8]}", name=fn_name, arguments=fn_args))
             elif isinstance(data, dict):
                 fn_name = data.get("name")
                 fn_args = data.get("arguments", {})
                 if fn_name:
+                    logger.info(f"   🔧 [tool_parser] Extracted [TOOL_CALLS] dict: '{fn_name}' with args {fn_args}")
                     results.append(ParsedToolCall(id=f"call_{uuid.uuid4().hex[:8]}", name=fn_name, arguments=fn_args))
         except Exception:
             pass

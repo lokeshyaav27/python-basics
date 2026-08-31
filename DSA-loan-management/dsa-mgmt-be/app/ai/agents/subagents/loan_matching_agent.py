@@ -1,7 +1,10 @@
+import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
 from app.mcp.tools import COMPARE_BANK_OFFERS_SPEC, CHECK_LOAN_ELIGIBILITY_SPEC
+
+logger = logging.getLogger("loan_matching_agent")
 
 
 class LoanMatchingAgent(BaseSubAgent):
@@ -32,6 +35,11 @@ class LoanMatchingAgent(BaseSubAgent):
         """
         role = (auth_user.get("role") or "customer").lower() if auth_user else "customer"
         is_agent_or_admin = role in ["agent", "admin"]
+
+        logger.info(
+            f"🔍 [LoanMatchingAgent.evaluate] Role: {role.upper()} | App ID: #{application_id} "
+            f"| Commission Access: {is_agent_or_admin} | Query: \"{query[:100]}\""
+        )
 
         system_prompt = f"""You are the expert **Loan Matching & Credit Underwriting Specialist Agent**.
 Your objective is to perform credit evaluation, compute loan eligibility verdicts, compare interest rates (ROI), monthly EMIs, and identify optimal partner banks.

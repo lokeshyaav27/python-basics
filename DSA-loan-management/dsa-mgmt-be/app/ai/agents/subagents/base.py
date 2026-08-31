@@ -32,7 +32,13 @@ class BaseSubAgent:
         models_to_try = self.config.candidate_models
         last_error = None
 
-        for model_name in models_to_try:
+        logger.info(
+            f"🤖 [{self.name}._call_llm] Invoking LLM | Candidates: {models_to_try} "
+            f"| Messages: {len(messages)} | Tools Attached: {len(tools) if tools else 0}"
+        )
+
+        for idx, model_name in enumerate(models_to_try, 1):
+            start_t = time.time()
             try:
                 payload: Dict[str, Any] = {
                     "model": model_name,
@@ -44,12 +50,20 @@ class BaseSubAgent:
                     payload["tools"] = tools
                     payload["tool_choice"] = "auto"
 
+                logger.debug(f"   [{self.name}._call_llm] (Attempt {idx}/{len(models_to_try)}) Calling model '{model_name}'...")
                 response = client.chat.completions.create(**payload)
+                elapsed_ms = int((time.time() - start_t) * 1000)
+                logger.info(f"   ✓ [{self.name}._call_llm] Success with '{model_name}' in {elapsed_ms}ms")
                 return response, model_name, None
             except Exception as e:
+                elapsed_ms = int((time.time() - start_t) * 1000)
                 last_error = e
-                logger.warning(f"[{self.name}] Model '{model_name}' failed: {e}. Trying next candidate from env...")
+                logger.warning(
+                    f"   ⚠️ [{self.name}._call_llm] (Attempt {idx}/{len(models_to_try)}) Model '{model_name}' failed "
+                    f"after {elapsed_ms}ms: {e}. Trying next candidate from env..."
+                )
 
+        logger.error(f"❌ [{self.name}._call_llm] All candidate models exhausted! Last error: {last_error}")
         return None, None, last_error
 
     def run_subagent_task(
@@ -64,8 +78,10 @@ class BaseSubAgent:
         Executes the sub-agent task loop with its specialized prompt and tools.
         Returns a structured dictionary with response text, citations, and tools used.
         """
+        subagent_start_t = time.time()
         client = get_ai_client()
         if not client:
+            logger.error(f"❌ [{self.name}] AI client unavailable. API key or Ollama not configured.")
             return {
                 "agentName": self.name,
                 "status": "ERROR",
@@ -73,6 +89,10 @@ class BaseSubAgent:
                 "referencedDocs": [],
                 "toolsExecuted": [],
             }
+
+        task_preview = task_instruction.replace("\n", " | ")
+        tools_names = [s.get("name", s.get("function", {}).get("name", "tool")) for s in tools_spec]
+        logger.info(f"🚀 [{self.name}] Starting Sub-Agent Task | \"{task_preview}\" | Available Tools: {tools_names}")
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -94,16 +114,20 @@ class BaseSubAgent:
         tools_executed: List[str] = []
         referenced_docs: List[str] = []
         max_turns = 3
+        last_model_used: Optional[str] = None
 
         for turn in range(1, max_turns + 1):
+            logger.info(f"👉 [{self.name}.loop] === Turn {turn}/{max_turns} ===")
             response, model_used, error = self._call_llm(
                 client=client,
                 messages=messages,
                 tools=formatted_tools,
             )
+            if model_used:
+                last_model_used = model_used
 
             if not response or not response.choices:
-                logger.error(f"[{self.name}] Turn {turn} LLM failed: {error}")
+                logger.error(f"❌ [{self.name}.loop] Turn {turn} LLM call failed completely: {error}")
                 break
 
             choice = response.choices[0]
@@ -113,6 +137,11 @@ class BaseSubAgent:
             # Case A: Sub-agent generated final summary text
             if not tool_calls:
                 final_text = msg.content or ""
+                total_elapsed_ms = int((time.time() - subagent_start_t) * 1000)
+                logger.info(
+                    f"🏁 [{self.name}.loop] Turn {turn}: Final summary text generated directly "
+                    f"(Length: {len(final_text)} chars). Returning SUCCESS in {total_elapsed_ms}ms."
+                )
                 return {
                     "agentName": self.name,
                     "status": "SUCCESS",
@@ -123,6 +152,11 @@ class BaseSubAgent:
                 }
 
             # Case B: Tool execution turn
+            logger.info(
+                f"⚙️ [{self.name}.loop] Turn {turn}: Extracted {len(tool_calls)} tool calls: "
+                f"{[tc.function.name for tc in tool_calls]}"
+            )
+
             messages.append({
                 "role": "assistant",
                 "content": msg.content or "",
@@ -139,7 +173,7 @@ class BaseSubAgent:
                 ],
             })
 
-            for tc in tool_calls:
+            for tc_idx, tc in enumerate(tool_calls, 1):
                 t_name = tc.function.name
                 try:
                     p_args = json.loads(tc.function.arguments) if isinstance(tc.function.arguments, str) else tc.function.arguments
@@ -147,6 +181,8 @@ class BaseSubAgent:
                     p_args = {}
 
                 tools_executed.append(t_name)
+                logger.info(f"   ⚡ [{self.name}.loop] ({tc_idx}/{len(tool_calls)}) Executing MCP tool '{t_name}' with args={p_args}")
+                tool_exec_t = time.time()
                 try:
                     t_res = execute_mcp_tool(
                         db=db,
@@ -168,7 +204,11 @@ class BaseSubAgent:
                                 referenced_docs.append(doc)
 
                     t_res_str = json.dumps(t_res, default=str)
+                    tool_elapsed_ms = int((time.time() - tool_exec_t) * 1000)
+                    logger.info(f"   📥 [{self.name}.loop] Tool '{t_name}' completed in {tool_elapsed_ms}ms | Total Citations: {len(referenced_docs)}")
                 except Exception as ex:
+                    tool_elapsed_ms = int((time.time() - tool_exec_t) * 1000)
+                    logger.error(f"   ❌ [{self.name}.loop] Tool '{t_name}' execution error after {tool_elapsed_ms}ms: {ex}")
                     t_res_str = json.dumps({"status": "ERROR", "error": str(ex)})
 
                 messages.append({
@@ -179,21 +219,32 @@ class BaseSubAgent:
                 })
 
         # Final synthesis if loop ended
-        final_synth_resp, final_model, _ = self._call_llm(
+        logger.info(f"✍️ [{self.name}.loop] Tool loop concluded after turns. Running final sub-agent synthesis turn (tools=None)...")
+        final_synth_resp, final_model, synth_err = self._call_llm(
             client=client,
             messages=messages,
             tools=None,
         )
         if final_synth_resp and final_synth_resp.choices:
             final_text = final_synth_resp.choices[0].message.content or ""
+            if final_model:
+                last_model_used = final_model
+            logger.info(f"✅ [{self.name}.loop] Final synthesis complete (Model: {last_model_used}, Length: {len(final_text)} chars)")
         else:
+            logger.warning(f"⚠️ [{self.name}.loop] Final synthesis turn failed: {synth_err}")
             final_text = "Analysis completed based on the retrieved application and bank underwriting records."
+
+        total_elapsed_ms = int((time.time() - subagent_start_t) * 1000)
+        logger.info(
+            f"✅ [{self.name} COMPLETE] Finished in {total_elapsed_ms}ms | Model: {last_model_used} "
+            f"| Tools Executed: {tools_executed} | Citations: {referenced_docs}"
+        )
 
         return {
             "agentName": self.name,
             "status": "SUCCESS",
             "summary": final_text,
-            "modelUsed": final_model or model_used,
+            "modelUsed": last_model_used,
             "referencedDocs": referenced_docs,
             "toolsExecuted": tools_executed,
         }

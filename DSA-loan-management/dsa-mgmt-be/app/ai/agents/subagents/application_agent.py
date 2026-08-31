@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
@@ -8,6 +9,8 @@ from app.mcp.tools import (
     GET_PORTFOLIO_KPIS_SPEC,
     GET_CONTACT_ENQUIRIES_SPEC,
 )
+
+logger = logging.getLogger("application_operations_agent")
 
 
 class ApplicationOperationsAgent(BaseSubAgent):
@@ -43,6 +46,11 @@ class ApplicationOperationsAgent(BaseSubAgent):
         Executes operations and dossier lookup.
         """
         role = (auth_user.get("role") or "customer").lower() if auth_user else "customer"
+
+        logger.info(
+            f"📊 [ApplicationOperationsAgent.manage_operations] Role: {role.upper()} "
+            f"| App ID: #{application_id} | Query: \"{query[:100]}\""
+        )
 
         system_prompt = f"""You are the **Application & Portfolio Operations Specialist Agent**.
 Your objective is to fetch loan dossiers, applicant profiles, agent assignments, portfolio performance, and contact enquiries.

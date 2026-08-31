@@ -123,7 +123,13 @@ class OrchestratorAgent:
         models_to_try = self.config.candidate_models
         last_error = None
 
-        for model_name in models_to_try:
+        logger.info(
+            f"🤖 [Orchestrator._call_llm] Invoking LLM | Candidates: {models_to_try} "
+            f"| Messages: {len(messages)} | Tools Attached: {len(tools) if tools else 0}"
+        )
+
+        for idx, model_name in enumerate(models_to_try, 1):
+            start_t = time.time()
             try:
                 payload: Dict[str, Any] = {
                     "model": model_name,
@@ -135,12 +141,20 @@ class OrchestratorAgent:
                     payload["tools"] = tools
                     payload["tool_choice"] = "auto"
 
+                logger.debug(f"   [Orchestrator._call_llm] (Attempt {idx}/{len(models_to_try)}) Calling model '{model_name}'...")
                 response = client.chat.completions.create(**payload)
+                elapsed_ms = int((time.time() - start_t) * 1000)
+                logger.info(f"   ✓ [Orchestrator._call_llm] Success with '{model_name}' in {elapsed_ms}ms")
                 return response, model_name, None
             except Exception as e:
+                elapsed_ms = int((time.time() - start_t) * 1000)
                 last_error = e
-                logger.warning(f"[Orchestrator] Model '{model_name}' failed: {e}. Trying next candidate from env...")
+                logger.warning(
+                    f"   ⚠️ [Orchestrator._call_llm] (Attempt {idx}/{len(models_to_try)}) Model '{model_name}' failed "
+                    f"after {elapsed_ms}ms: {e}. Trying next candidate from env..."
+                )
 
+        logger.error(f"❌ [Orchestrator._call_llm] All candidate models exhausted! Last error: {last_error}")
         return None, None, last_error
 
     def _build_initial_messages(
@@ -152,6 +166,12 @@ class OrchestratorAgent:
         role = (auth.get("role") or "customer").lower()
         user_name = auth.get("name") or "User"
         user_id = auth.get("userId")
+        app_ctx = request.applicationId if request.applicationId else "None provided"
+
+        logger.info(
+            f"📋 [Orchestrator.prompt] Building initial prompt for user='{user_name}' (Role: {role.upper()}, ID: {user_id}) "
+            f"| Application Context: #{app_ctx} | History Turns: {len(request.history or [])}"
+        )
 
         system_prompt = f"""You are the **Master AI Credit & Loan Orchestrator** for the DSA Loan Management Platform.
 You coordinate specialized domain sub-agents to provide accurate, underwriting-grade financial assistance.
@@ -163,7 +183,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
 
 ### User Context:
 - **Active User**: {user_name} ({role.upper()}, ID: {user_id})
-- **Application Context**: Application #{request.applicationId if request.applicationId else 'None provided'}
+- **Application Context**: Application #{app_ctx}
 
 ### Instructions:
 - For multi-part or compound questions (e.g. compare rates AND check KYC documents), call the relevant sub-agents.
@@ -175,7 +195,9 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
 
         # Append recent conversation history (latest 8 messages for multi-turn context)
         if request.history:
-            for item in request.history[-8:]:
+            history_window = request.history[-8:]
+            logger.debug(f"   [Orchestrator.prompt] Appending {len(history_window)} conversation history messages to context.")
+            for item in history_window:
                 messages.append({"role": item.role, "content": item.content})
 
         messages.append({"role": "user", "content": request.message})
@@ -190,18 +212,19 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
         auth: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Dispatches sub-task execution to the corresponding domain specialist sub-agent."""
-        logger.info(f"   🔀 [DELEGATION] Orchestrator calling sub-agent '{tool_name}' with args: {arguments}")
+        start_t = time.time()
+        logger.info(f"   🔀 [Orchestrator.delegate] Dispatching to Sub-Agent '{tool_name}' with args={arguments}")
 
         if tool_name == "ask_loan_matching_agent":
             app_id = arguments.get("application_id") or request.applicationId
-            return self.matching_agent.evaluate(
+            result = self.matching_agent.evaluate(
                 db=db,
                 query=arguments.get("task", request.message),
                 application_id=app_id,
                 auth_user=auth,
             )
         elif tool_name == "ask_document_agent":
-            return self.doc_agent.search_policies(
+            result = self.doc_agent.search_policies(
                 db=db,
                 query=arguments.get("query", request.message),
                 bank_id=arguments.get("bank_id"),
@@ -210,14 +233,24 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
             )
         elif tool_name == "ask_application_agent":
             app_id = arguments.get("application_id") or request.applicationId
-            return self.ops_agent.manage_operations(
+            result = self.ops_agent.manage_operations(
                 db=db,
                 query=arguments.get("task", request.message),
                 application_id=app_id,
                 auth_user=auth,
             )
+        else:
+            logger.warning(f"   ⚠️ [Orchestrator.delegate] Unknown sub-agent requested: '{tool_name}'")
+            result = {"status": "ERROR", "summary": f"Unknown sub-agent '{tool_name}'"}
 
-        return {"status": "ERROR", "summary": f"Unknown sub-agent '{tool_name}'"}
+        elapsed_ms = int((time.time() - start_t) * 1000)
+        docs_found = len(result.get("referencedDocs", []))
+        tools_run = result.get("toolsExecuted", [])
+        logger.info(
+            f"   📥 [Orchestrator.delegate] Sub-Agent '{tool_name}' returned status='{result.get('status')}' "
+            f"in {elapsed_ms}ms | Tools Run: {tools_run} | Citations: {docs_found}"
+        )
+        return result
 
     def _run_orchestration_loop(
         self,
@@ -234,7 +267,10 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
         final_answer = ""
         last_model_used: Optional[str] = None
 
+        logger.info(f"🔄 [Orchestrator.loop] Starting Supervisor Loop (max_turns={max_turns})")
+
         for turn in range(1, max_turns + 1):
+            logger.info(f"👉 [Orchestrator.loop] === Turn {turn}/{max_turns} ===")
             response, model_used, error = self._call_llm(
                 client=client,
                 messages=messages,
@@ -244,7 +280,7 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
                 last_model_used = model_used
 
             if not response or not response.choices:
-                logger.error(f"[Orchestrator] Turn {turn} LLM call failed: {error}")
+                logger.error(f"❌ [Orchestrator.loop] Turn {turn} LLM call failed completely: {error}")
                 final_answer = f"An error occurred while communicating with the AI Underwriter: {error}"
                 break
 
@@ -255,7 +291,16 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
             # If LLM concluded reasoning without tool calls, we have the final answer
             if not tool_calls:
                 final_answer = msg.content or ""
+                logger.info(
+                    f"🏁 [Orchestrator.loop] Turn {turn}: LLM generated final answer directly without tool calls "
+                    f"(Length: {len(final_answer)} chars). Exiting supervisor loop."
+                )
                 break
+
+            logger.info(
+                f"⚙️ [Orchestrator.loop] Turn {turn}: Extracted {len(tool_calls)} tool calls: "
+                f"{[tc.function.name for tc in tool_calls]}"
+            )
 
             # Register assistant turn with requested tool calls
             messages.append({
@@ -275,13 +320,14 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
             })
 
             # Execute sub-agent delegations and collect results
-            for tc in tool_calls:
+            for tc_idx, tc in enumerate(tool_calls, 1):
                 t_name = tc.function.name
                 try:
                     p_args = json.loads(tc.function.arguments) if isinstance(tc.function.arguments, str) else tc.function.arguments
                 except Exception:
                     p_args = {}
 
+                logger.info(f"   ⚡ [Orchestrator.loop] ({tc_idx}/{len(tool_calls)}) Executing tool '{t_name}' with ID={tc.id}")
                 all_tools_executed.append(t_name)
                 sub_result = self._delegate_to_subagent(
                     db=db,
@@ -306,8 +352,10 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
                     "content": json.dumps(sub_result.get("summary", str(sub_result)), default=str),
                 })
 
+        # If loop completed all turns without a direct textual answer, run final synthesis
         if not final_answer:
-            synth_resp, synth_model, _ = self._call_llm(
+            logger.info("✍️ [Orchestrator.loop] Supervisor tool loop concluded. Running final synthesis turn (tools=None)...")
+            synth_resp, synth_model, synth_err = self._call_llm(
                 client=client,
                 messages=messages,
                 tools=None,
@@ -316,6 +364,10 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
                 final_answer = synth_resp.choices[0].message.content or ""
                 if synth_model:
                     last_model_used = synth_model
+                logger.info(f"✅ [Orchestrator.loop] Synthesis complete (Model: {last_model_used}, Length: {len(final_answer)} chars)")
+            else:
+                logger.error(f"❌ [Orchestrator.loop] Synthesis turn failed: {synth_err}")
+                final_answer = "Analysis completed based on the retrieved application and bank underwriting records."
 
         return final_answer, all_referenced_docs, all_tools_executed, last_model_used
 
@@ -329,17 +381,19 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
         and unifies final response.
         """
         start_time = time.time()
-        #.model_dump() converts ChatAuthContext(role="agent", userId=2) $\rightarrow$ {"role": "agent", "userId": 2}.
         auth = request.authContext.model_dump() if request.authContext else {}
         role = (auth.get("role") or "customer").lower()
         user_name = auth.get("name") or "User"
         user_id = auth.get("userId")
 
-        logger.info(f"🚀 [ORCHESTRATOR] New Chat Request from {user_name} ({role.upper()} ID: {user_id})")
-        logger.info(f"   Prompt: '{request.message}'")
+        logger.info("=" * 80)
+        logger.info(f"🚀 [ORCHESTRATOR] Incoming Chat Request | User: '{user_name}' (Role: {role.upper()}, ID: {user_id})")
+        logger.info(f"   Prompt: \"{request.message}\"")
+        logger.info("=" * 80)
 
         client = get_ai_client()
         if not client:
+            logger.error("❌ [ORCHESTRATOR] AI client initialization returned None. API key or Ollama misconfigured.")
             return ChatResponse(
                 response="AI service is currently unavailable. Please verify API key configuration.",
                 referencedDocs=[],
@@ -356,7 +410,12 @@ You coordinate specialized domain sub-agents to provide accurate, underwriting-g
         )
 
         duration_ms = int((time.time() - start_time) * 1000)
-        logger.info(f"✅ [ORCHESTRATOR COMPLETE] Finished in {duration_ms}ms | Tools: {tools_used}")
+        logger.info("=" * 80)
+        logger.info(
+            f"✅ [ORCHESTRATOR COMPLETE] Request finished in {duration_ms}ms | Model: {model_used} "
+            f"| Tools Used: {tools_used} | Citations: {ref_docs}"
+        )
+        logger.info("=" * 80)
 
         return ChatResponse(
             response=final_answer,

@@ -1,7 +1,10 @@
+import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
 from app.mcp.tools import SEARCH_BANK_POLICIES_SPEC, GET_BANK_PRODUCT_CATALOG_SPEC
+
+logger = logging.getLogger("document_intelligence_agent")
 
 
 class DocumentIntelligenceAgent(BaseSubAgent):
@@ -31,6 +34,11 @@ class DocumentIntelligenceAgent(BaseSubAgent):
         """
         Executes semantic RAG search and policy extraction.
         """
+        logger.info(
+            f"📄 [DocumentIntelligenceAgent.search_policies] Query: \"{query[:100]}\" "
+            f"| Bank ID Filter: {bank_id} | Product ID Filter: {product_id}"
+        )
+
         system_prompt = """You are the **Document Intelligence & Credit Policy Specialist Agent**.
 Your objective is to answer qualitative credit policy questions using verified excerpts from partner bank documents and policy PDFs.
 
