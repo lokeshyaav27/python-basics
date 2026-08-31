@@ -268,31 +268,6 @@ class BankService:
         updated = self.bank_repo.update_policy_parameters(link, policy_parameters)
         return updated.policyParameters or policy_parameters
 
-    def reextract_policy_parameters(self, bank_id: int, product_id: int) -> Dict[str, Any]:
-        link = self.bank_repo.get_product_bank_link(bank_id, product_id)
-        if not link:
-            raise HTTPException(status_code=404, detail='Product bank link not found')
-
-        bank = self.bank_repo.get_by_id(bank_id)
-        bank_name = bank.name if bank else f"Bank #{bank_id}"
-        prod_name = link.product.name if (link.product and link.product.name) else "Loan"
-
-        docs = self.bank_repo.get_documents_by_link_id(link.id)
-        combined_text = ""
-        for d in docs:
-            file_path = get_storage_path(settings.STORAGE_BANK_DOCS_DIR) / d.documentLocation
-            if file_path.exists():
-                chunks = extract_chunks_from_file(file_path, chunk_size=2000, chunk_overlap=100)
-                combined_text += "\n\n" + "\n\n".join(c["text"] for c in chunks[:4])
-
-        extracted = extract_policy_parameters(
-            raw_text=combined_text,
-            bank_name=bank_name,
-            product_name=prod_name,
-        )
-        self.bank_repo.update_policy_parameters(link, extracted)
-        return extracted
-
     def delete_document(self, bank_id: int, product_id: int, document_id: int) -> dict:
         link = self.bank_repo.get_product_bank_link(bank_id, product_id)
         if not link:

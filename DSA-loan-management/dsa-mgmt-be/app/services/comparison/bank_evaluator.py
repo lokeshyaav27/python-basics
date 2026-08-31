@@ -243,14 +243,25 @@ def evaluate_single_bank_offer(
         base_roi = get_bank_specific_home_loan_roi(bank.name, cibil_score, bank.isPrivate, bank.isNbfc)
     
     female_rebate_pct = float(policy.get("female_rebate_pct", BANK_COMPARISON_FEMALE_REBATE_PCT)) if policy else BANK_COMPARISON_FEMALE_REBATE_PCT
+    female_fee_concession_pct = float(policy.get("female_fee_concession_pct", 0.0)) if policy else 0.0
     min_roi_floor = float(policy.get("min_roi_floor", BANK_COMPARISON_MIN_ROI_FLOOR)) if policy else BANK_COMPARISON_MIN_ROI_FLOOR
 
     if female_co_applicant:
         effective_roi = max(min_roi_floor, round(base_roi - female_rebate_pct, 2))
-        female_rebate_desc = f"{female_rebate_pct}% ROI concession applied (Effective: {effective_roi}%)"
+        benefit_parts = []
+        if female_rebate_pct > 0:
+            benefit_parts.append(f"{female_rebate_pct}% ROI concession applied (Effective: {effective_roi}%)")
+        if female_fee_concession_pct > 0:
+            benefit_parts.append(f"{female_fee_concession_pct:.0f}% Processing Fee discount applied")
+        female_rebate_desc = " & ".join(benefit_parts) if benefit_parts else "No female co-applicant concession offered by this bank"
     else:
         effective_roi = base_roi
-        female_rebate_desc = f"{female_rebate_pct}% concession available if female co-applicant is added"
+        benefit_parts = []
+        if female_rebate_pct > 0:
+            benefit_parts.append(f"{female_rebate_pct}% ROI concession")
+        if female_fee_concession_pct > 0:
+            benefit_parts.append(f"{female_fee_concession_pct:.0f}% Processing Fee discount")
+        female_rebate_desc = f"{' & '.join(benefit_parts)} available if female co-applicant is added" if benefit_parts else "No female co-applicant concession offered by this bank"
 
     # 8. Evaluate Proposed EMI & FOIR
     proposed_emi = calculate_monthly_emi(requested_amount, effective_roi, tenure_years)
@@ -323,7 +334,14 @@ def evaluate_single_bank_offer(
         proc_pct = float(policy.get("processing_fee_pct", 0.50))
         min_fee = float(policy.get("min_processing_fee", 5000.0))
         max_fee = float(policy.get("max_processing_fee", 25000.0))
-        proc_fee = f"{proc_pct:.2f}% of Loan Amount (Min ₹{min_fee:,.0f}, Max ₹{max_fee:,.0f} + GST)"
+        if female_co_applicant and female_fee_concession_pct > 0:
+            disc_factor = max(0.0, 1.0 - (female_fee_concession_pct / 100.0))
+            proc_pct_eff = proc_pct * disc_factor
+            min_fee_eff = min_fee * disc_factor
+            max_fee_eff = max_fee * disc_factor
+            proc_fee = f"{proc_pct_eff:.2f}% of Loan Amount (Min ₹{min_fee_eff:,.0f}, Max ₹{max_fee_eff:,.0f} + GST) [{female_fee_concession_pct:.0f}% Female Concession Applied]"
+        else:
+            proc_fee = f"{proc_pct:.2f}% of Loan Amount (Min ₹{min_fee:,.0f}, Max ₹{max_fee:,.0f} + GST)"
     elif bank.isNationalize:
         proc_fee = "0.35% of Loan Amount (Min ₹5,000 + GST, Max ₹15,000 + GST)"
     elif bank.isPrivate:

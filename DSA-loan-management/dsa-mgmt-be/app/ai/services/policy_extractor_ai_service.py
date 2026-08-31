@@ -44,6 +44,7 @@ def get_default_policy_parameters(bank_name: str = "", product_name: str = "") -
         "processing_fee_pct": BANK_DEFAULT_PROCESSING_FEE_PCT,
         "min_processing_fee": 5000.0,
         "max_processing_fee": 25000.0,
+        "female_fee_concession_pct": 0.0,
         "property_insurance_pct": 0.10,
         "applicant_insurance_pct": 0.50,
         "max_maturity_age_salaried": BANK_MATURITY_AGE_PRIVATE,
@@ -80,6 +81,7 @@ def extract_policy_parameters(
         return defaults
 
     # Truncate text to avoid context limits if text is huge
+    # we can furthter improve this by splitting into chunks and aggregating results, but for now we just take the first 8000 chars
     sample_text = raw_text[:8000]
 
     system_prompt = (
@@ -103,6 +105,7 @@ JSON Schema:
   "processing_fee_pct": <float, processing fee percentage, e.g. 0.50>,
   "min_processing_fee": <float, minimum processing fee in INR, e.g. 5000>,
   "max_processing_fee": <float, maximum processing fee in INR, e.g. 25000>,
+  "female_fee_concession_pct": <float, % discount/concession on processing fees for female co-applicants, e.g. 25.0, 50.0, or 0.0>,
   "property_insurance_pct": <float, property insurance % of loan amount, e.g. 0.10>,
   "applicant_insurance_pct": <float, applicant life insurance % of loan amount, e.g. 0.50>,
   "max_maturity_age_salaried": <integer, max age at loan maturity for salaried, e.g. 60>,

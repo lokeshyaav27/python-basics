@@ -249,16 +249,3 @@ async def update_bank_policy_parameters(
         message="Policy parameters approved and saved successfully",
     )
 
-
-@router.post("/{bank_id}/products/{product_id}/extract-policy")
-def reextract_bank_policy_parameters(
-    bank_id: int,
-    product_id: int,
-    current_user: CurrentUser = Depends(require_role(["admin"])),
-    bank_service: BankService = Depends(get_bank_service),
-):
-    extracted = bank_service.reextract_policy_parameters(bank_id, product_id)
-    return success_response(
-        result=extracted,
-        message="Policy parameters re-extracted via AI successfully",
-    )

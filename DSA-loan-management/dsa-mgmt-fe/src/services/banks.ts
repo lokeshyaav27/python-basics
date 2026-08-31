@@ -98,6 +98,7 @@ export interface BankPolicyParameters {
   processing_fee_pct?: number
   min_processing_fee?: number
   max_processing_fee?: number
+  female_fee_concession_pct?: number
   property_insurance_pct?: number
   applicant_insurance_pct?: number
   max_maturity_age_salaried?: number
@@ -200,13 +201,4 @@ export const savePolicyParameters = async (
   return res.data?.result ?? res.data
 }
 
-export const extractPolicyParameters = async (
-  bankId: number,
-  productId: number
-): Promise<BankPolicyParameters> => {
-  const res = await apiClient.post<ApiResponse<BankPolicyParameters>>(
-    API_ENDPOINT_NAMES.BANKS.EXTRACT_POLICY(bankId, productId)
-  )
-  return res.data?.result ?? res.data
-}
 

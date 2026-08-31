@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Modal, message, Spin, Tabs } from 'antd'
 import {
   SafetyCertificateOutlined,
-  ThunderboltOutlined,
   SaveOutlined,
   PercentageOutlined,
   DollarOutlined,
@@ -14,7 +13,6 @@ import {
   BankPolicyParameters,
   fetchPolicyParameters,
   savePolicyParameters,
-  extractPolicyParameters,
 } from '../../../services/banks'
 
 interface PolicyParametersModalProps {
@@ -41,7 +39,6 @@ export const PolicyParametersModal: React.FC<PolicyParametersModalProps> = ({
   const [params, setParams] = useState<BankPolicyParameters>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [extracting, setExtracting] = useState(false)
 
   useEffect(() => {
     if (visible) {
@@ -62,19 +59,6 @@ export const PolicyParametersModal: React.FC<PolicyParametersModalProps> = ({
       message.error(err?.response?.data?.detail || 'Failed to load policy parameters')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleReExtract = async () => {
-    setExtracting(true)
-    try {
-      const data = await extractPolicyParameters(bankId, productId)
-      setParams(data || {})
-      message.success('Policy parameters extracted from documents successfully!')
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Failed to extract policy with AI')
-    } finally {
-      setExtracting(false)
     }
   }
 
@@ -109,17 +93,6 @@ export const PolicyParametersModal: React.FC<PolicyParametersModalProps> = ({
       }
       footer={[
         <button
-          key="reextract"
-          type="button"
-          disabled={extracting || saving}
-          onClick={handleReExtract}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50 transition cursor-pointer float-left"
-          title="Re-run AI extraction against uploaded PDF documents"
-        >
-          <ThunderboltOutlined className={extracting ? 'animate-spin' : ''} />
-          {extracting ? 'Extracting via AI…' : 'Re-extract with AI'}
-        </button>,
-        <button
           key="cancel"
           type="button"
           onClick={onClose}
@@ -131,7 +104,7 @@ export const PolicyParametersModal: React.FC<PolicyParametersModalProps> = ({
         <button
           key="save"
           type="button"
-          disabled={saving || loading || extracting}
+          disabled={saving || loading}
           onClick={handleSave}
           className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 disabled:opacity-50 transition cursor-pointer"
         >
@@ -336,6 +309,25 @@ export const PolicyParametersModal: React.FC<PolicyParametersModalProps> = ({
                         placeholder="e.g. 0.50"
                         className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-500"
                       />
+                    </div>
+
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 shadow-2xs col-span-2">
+                      <label className="block text-[11px] font-bold text-emerald-800 mb-1">
+                        Female Co-Applicant Fee Concession (% Discount on Processing Fee)
+                      </label>
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        value={params.female_fee_concession_pct ?? ''}
+                        onChange={(e) => updateField('female_fee_concession_pct', parseFloat(e.target.value) || 0)}
+                        placeholder="e.g. 25.0 (25% discount) or 50.0 (50% discount)"
+                        className="w-full rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-900 outline-none focus:border-emerald-500"
+                      />
+                      <span className="text-[10px] text-emerald-600 mt-1 block">
+                        Optional percentage waiver on processing fees when a female co-applicant is included (e.g. 50% discount or 100% full waiver).
+                      </span>
                     </div>
                   </div>
                 ),
