@@ -1,0 +1,111 @@
+DSA Loan Platform — AI Example Questions
+
+1. Bank / Policy Questions — RAG
+
+Customer:
+- What are the eligibility criteria for a home loan?
+- What is the minimum CIBIL score required?
+- What documents are generally required for a home loan?
+- Does this bank allow balance transfer?
+- What are the prepayment conditions?
+- What happens if I miss an EMI?
+- Is property insurance mandatory?
+- Can I get a home loan for an under-construction property?
+- Can I get a loan for a plot plus construction?
+- What types of properties are accepted?
+
+Agent:
+- What are the home loan eligibility criteria for SBI?
+- What is the maximum LTV for this bank?
+- What are the rejection conditions?
+- What are the balance-transfer conditions for HDFC?
+- What KYC documents are required for a self-employed applicant?
+- Which documents mention the property eligibility rules?
+
+Main technology: RAG
+
+
+2. Customer-Specific Questions — MCP + Business Logic + RAG
+
+- Am I eligible for a home loan?
+- How much home loan can I approximately get?
+- Why am I not eligible for this loan?
+- What is affecting my eligibility?
+- Can I afford a ₹50 lakh home loan?
+- What tenure would be suitable for me?
+- How much down payment will I need?
+- Which banks may be suitable for my profile?
+
+Flow:
+MCP → Customer details → Loan requirements → Python eligibility calculation → RAG → Bank eligibility policy → LLM → Answer
+
+
+3. Loan Comparison — MCP + RAG
+
+- Compare SBI, HDFC and ICICI home loans for me.
+- Which bank offers the lowest rate for my profile?
+- Which bank gives me the highest eligible amount?
+- Which bank has better prepayment conditions?
+- Compare the total cost of these three loans.
+- Which loan would you recommend and why?
+- Show me the pros and cons of each option.
+
+MCP → customer + bank/product data
+RAG → bank policies
+Python → EMI/eligibility calculations
+LLM → recommendation explanation
+
+
+4. Agent Assistant — MCP + RAG
+show me the status of rohan goupta's loan application
+can you tell me which bank will be best for it and how much commission we will get
+Okay, Pls approve thsi application and forward it to SBI - add a comment - all documents are verified
+- Show me my customers who are currently in progress.
+- What is the status of Rahul's loan?
+- Why is Rahul not eligible for SBI?
+- What documents should I ask Rahul for?
+- Rahul wants ₹60 lakh for a property worth ₹70 lakh. Which banks should I check?
+
+
+5. Natural Conversation
+
+Example:
+"I earn ₹80,000 per month, have an existing EMI of ₹15,000 and need ₹50 lakh for a house. Which banks should I consider?"
+
+The AI can use:
+- Customer information → MCP
+- Bank information → MCP
+- Bank policies → RAG
+- Eligibility calculations → Python
+- Explanation → LLM
+
+End-to-end example:
+"I have a CIBIL score of 760, earn ₹1 lakh per month and need a ₹70 lakh home loan for an apartment worth ₹90 lakh. Compare my options across SBI, HDFC, ICICI and Axis."
+
+Flow:
+User → LLM → MCP + RAG → Python Business Logic → Recommendation → LLM → Customer/Agent
+
+
+5 Killer Demo Questions
+
+1. Am I eligible for a home loan?
+2. Why am I not eligible?
+3. Compare my options across multiple banks.
+4. Which loan is best for my profile and why?
+5. What is my loan/customer status and what documents are required?
+
+These demonstrate LLM + RAG + MCP + Python business logic.
+
+
+
+
+
+---------------------
+what is total commision, we earned 
+list of agents with their total number of applications 
+
+
+"For Application #88, compare all banks to find the lowest EMI, and also check what NRI guarantor KYC documents HDFC requires."
+
+
+

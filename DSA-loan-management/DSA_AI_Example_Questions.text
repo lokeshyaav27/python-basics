@@ -1,111 +1,79 @@
-DSA Loan Platform — AI Example Questions
+--------------------------------------------------------------------------------
+1. CUSTOMER ROLE (role: "customer")
+--------------------------------------------------------------------------------
+A. General Bank Policy & Loan Guidelines (RAG / DocumentIntelligenceAgent)
+   - "What are the general eligibility criteria and minimum CIBIL score required for a Home Loan?"
+   - "What KYC and income documents are required for a salaried home loan applicant?"
+   - "Can I get an SBI loan for plot purchase plus construction, and what are the stage-wise disbursement rules?"
+   - "Does HDFC Bank allow home loan balance transfer, and what are the terms?"
+   - "What are the prepayment penalties and foreclosure rules for floating rate home loans?"
+   - "What penalty charges apply if an EMI bounces or is missed?"
+   - "Is property insurance or applicant term insurance mandatory for a home loan?"
+   - "What property types are eligible for a home loan (e.g. Under-construction, Apartment, Villa)?"
 
-1. Bank / Policy Questions — RAG
+B. Personal Eligibility & Affordability (LoanMatchingAgent + MCP + Underwriting Engine)
+   - "Am I eligible for a home loan for Application #162, and what is my maximum qualified loan amount?"
+   - "Can I afford a ₹50 Lakh Home Loan with my current income, and what will be my monthly EMI?"
+   - "Why is my application not eligible, and what debt-to-income FOIR factor is affecting my approval?"
+   - "How much down payment will I need if the property value is ₹75 Lakh?"
+   - "What loan tenure is most suitable for my age and monthly income?"
 
-Customer:
-- What are the eligibility criteria for a home loan?
-- What is the minimum CIBIL score required?
-- What documents are generally required for a home loan?
-- Does this bank allow balance transfer?
-- What are the prepayment conditions?
-- What happens if I miss an EMI?
-- Is property insurance mandatory?
-- Can I get a home loan for an under-construction property?
-- Can I get a loan for a plot plus construction?
-- What types of properties are accepted?
+C. Bank Offer Comparison (LoanMatchingAgent / compare_bank_offers)
+   - "Compare SBI, HDFC, and ICICI Home Loans for Application #162. Which bank gives the lowest EMI?"
+   - "Which partner bank offers the lowest interest rate and lowest processing fees for my profile?"
+   - "Show me the pros and cons and total repayment cost across partner banks for my application."
 
-Agent:
-- What are the home loan eligibility criteria for SBI?
-- What is the maximum LTV for this bank?
-- What are the rejection conditions?
-- What are the balance-transfer conditions for HDFC?
-- What KYC documents are required for a self-employed applicant?
-- Which documents mention the property eligibility rules?
+D. Application Status & Personal Dossier (ApplicationOperationsAgent / get_loan_dossier)
+   - "What is the current status and submitted details of my loan application #162?"
+   - "What documents are still pending or required for my loan application?"
 
-Main technology: RAG
-
-
-2. Customer-Specific Questions — MCP + Business Logic + RAG
-
-- Am I eligible for a home loan?
-- How much home loan can I approximately get?
-- Why am I not eligible for this loan?
-- What is affecting my eligibility?
-- Can I afford a ₹50 lakh home loan?
-- What tenure would be suitable for me?
-- How much down payment will I need?
-- Which banks may be suitable for my profile?
-
-Flow:
-MCP → Customer details → Loan requirements → Python eligibility calculation → RAG → Bank eligibility policy → LLM → Answer
+E. Natural Conversation End-to-End Prompt:
+   - "I have a CIBIL score of 760, earn ₹1,00,000 per month, have an existing EMI of ₹15,000, and need a ₹50 Lakh loan for an apartment worth ₹70 Lakh. Compare my options across partner banks and tell me the best choice."
 
 
-3. Loan Comparison — MCP + RAG
+--------------------------------------------------------------------------------
+2. DSA AGENT ROLE (role: "agent")
+--------------------------------------------------------------------------------
+A. Applicant Credit Analysis & Underwriting (LoanMatchingAgent + ApplicationOperationsAgent)
+   - "Check loan eligibility for Application #162. Is the applicant eligible for ₹50 Lakhs, and what is their debt-to-income FOIR ratio?"
+   - "What documents should I collect from customer Rohan Gupta to resolve the underwriting remarks?"
+   - "Rahul wants ₹60 Lakh for a property appraised at ₹70 Lakh (LTV: 85.7%). Which partner banks allow this LTV limit?"
+   - "Why was Application #162 flagged as ineligible for SBI, and how can we adjust the tenure or co-applicant to qualify?"
 
-- Compare SBI, HDFC and ICICI home loans for me.
-- Which bank offers the lowest rate for my profile?
-- Which bank gives me the highest eligible amount?
-- Which bank has better prepayment conditions?
-- Compare the total cost of these three loans.
-- Which loan would you recommend and why?
-- Show me the pros and cons of each option.
+B. Multi-Bank Comparison with DSA Commissions (LoanMatchingAgent / compare_bank_offers)
+   - "For Application #162, compare all partner banks, tell me which bank gives the lowest EMI, and what is our DSA commission payout for each bank?"
+   - "Which partner bank offers the highest commercial payout percentage for a ₹40 Lakh Home Loan?"
 
-MCP → customer + bank/product data
-RAG → bank policies
-Python → EMI/eligibility calculations
-LLM → recommendation explanation
+C. Policy RAG & Underwriting Fine Print (DocumentIntelligenceAgent / search_bank_policies)
+   - "What are Axis Bank and ICICI Bank's policies regarding pre-payment penalties and LTV limits on floating rate home loans?"
+   - "What are the KYC documents and NRI guarantor clauses required by HDFC Bank for a home loan?"
+   - "What are the balance transfer and top-up loan conditions for PNB and Bajaj Housing Finance?"
+   - "What are the maximum age at maturity and minimum salary requirements for self-employed applicants across SBI and HDFC?"
 
-
-4. Agent Assistant — MCP + RAG
-show me the status of rohan goupta's loan application
-can you tell me which bank will be best for it and how much commission we will get
-Okay, Pls approve thsi application and forward it to SBI - add a comment - all documents are verified
-- Show me my customers who are currently in progress.
-- What is the status of Rahul's loan?
-- Why is Rahul not eligible for SBI?
-- What documents should I ask Rahul for?
-- Rahul wants ₹60 lakh for a property worth ₹70 lakh. Which banks should I check?
+D. Agent Pipeline & Commission Analytics (ApplicationOperationsAgent)
+   - "Show me my assigned loan applications that are currently in progress or require follow-up."
+   - "Show me the commission analytics, total disbursed volume, and earned payouts for my agent account."
+   - "Show me the contact enquiries and leads assigned to me that are currently pending follow-up."
 
 
-5. Natural Conversation
+--------------------------------------------------------------------------------
+3. PLATFORM ADMIN ROLE (role: "admin")
+--------------------------------------------------------------------------------
 
-Example:
-"I earn ₹80,000 per month, have an existing EMI of ₹15,000 and need ₹50 lakh for a house. Which banks should I consider?"
+A. Executive Analytics & Portfolio KPIs (ApplicationOperationsAgent / get_portfolio_kpis)
+   - "Give me a high-level summary of platform KPIs: total active applications, approved volume, total commission liability, and rejection rate."
+   - "What is the total commission earned across all disbursed loan applications platform-wide?"
+   - "Show me the month-to-date loan disbursement breakdown by product type (Home Loan, Car Loan, Personal Loan)."
 
-The AI can use:
-- Customer information → MCP
-- Bank information → MCP
-- Bank policies → RAG
-- Eligibility calculations → Python
-- Explanation → LLM
+B. Team Directory & Agent Roster Management (ApplicationOperationsAgent / get_agent_directory)
+   - "Show me the top 5 DSA agents by total loan disbursement volume and their active status."
+   - "List all active DSA agents along with their total assigned applications, email addresses, and phone numbers."
+   - "Show me all unassigned contact enquiries received this week and suggest which available agent in Delhi has the capacity to handle them."
 
-End-to-end example:
-"I have a CIBIL score of 760, earn ₹1 lakh per month and need a ₹70 lakh home loan for an apartment worth ₹90 lakh. Compare my options across SBI, HDFC, ICICI and Axis."
-
-Flow:
-User → LLM → MCP + RAG → Python Business Logic → Recommendation → LLM → Customer/Agent
-
-
-5 Killer Demo Questions
-
-1. Am I eligible for a home loan?
-2. Why am I not eligible?
-3. Compare my options across multiple banks.
-4. Which loan is best for my profile and why?
-5. What is my loan/customer status and what documents are required?
-
-These demonstrate LLM + RAG + MCP + Python business logic.
-
-
-
-
-
----------------------
-what is total commision, we earned 
-list of agents with their total number of applications 
-
-
-"For Application #88, compare all banks to find the lowest EMI, and also check what NRI guarantor KYC documents HDFC requires."
-
-
-
+C. Multi-Hop Compound Queries (Orchestrator: LoanMatchingAgent + DocumentIntelligenceAgent)
+   - "For Application #162, compare all partner banks for lowest EMI, show our DSA commission payout, and verify if HDFC allows female co-applicant interest rebates according to their policy document."
+   - "Evaluate credit eligibility for Application #162. If approved, list which bank offers the highest payout commission."
+   - "List all partner banks offering Car Loans along with their minimum CIBIL score and maximum tenure from the catalog."
+   - "Does Axis Bank charge a foreclosure penalty on floating rate loans, and what happens if a cheque bounces according to their fee policy?"
+   - "What are the NRI guarantor KYC requirements and POA attestation rules for HDFC Bank?"
+================================================================================
