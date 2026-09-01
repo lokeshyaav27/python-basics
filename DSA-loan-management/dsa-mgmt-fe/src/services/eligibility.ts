@@ -19,7 +19,9 @@ export interface EligibilityResult {
 
   requestedAmount?: number
   eligibleAmount?: number
+  requestedEmi?: number
   proposedEmi?: number
+  eligibleEmi?: number
   monthlyIncome?: number
   cibilScore?: number
   interestRatePct?: number

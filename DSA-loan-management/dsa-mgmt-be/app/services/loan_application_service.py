@@ -271,10 +271,10 @@ class LoanApplicationService:
             mobile=mobile,
             unique_customer_id=mobile,
             product_id=payload.productId,
-            client_general_id=client_gen_id,
-            home_loan_id=home_loan_id,
-            car_loan_id=car_loan_id,
-            personal_loan_id=personal_loan_id,
+            client_general_detail_id=client_gen_id,
+            home_loan_detail_id=home_loan_id,
+            car_loan_detail_id=car_loan_id,
+            personal_loan_detail_id=personal_loan_id,
             status=None,
         )
         return self.serialize(app)

@@ -238,7 +238,9 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
         # Financial & Underwriting Metrics
         "requestedAmount": result.get("requestedAmount", 0.0),
         "eligibleAmount": result.get("eligibleAmount", 0.0),
+        "requestedEmi": result.get("requestedEmi", result.get("proposedEmi", 0.0)),
         "proposedEmi": result.get("proposedEmi", 0.0),
+        "eligibleEmi": result.get("eligibleEmi", 0.0),
         "monthlyIncome": result.get("monthlyIncome", 0.0),
         "cibilScore": result.get("cibilScore"),
         "interestRatePct": result.get("interestRatePct", 0.0),

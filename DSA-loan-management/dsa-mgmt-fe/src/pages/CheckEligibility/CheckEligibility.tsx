@@ -9,6 +9,7 @@ import {
 } from '../../services/loanApplications'
 import { useAuth } from '../../auth/AuthProvider'
 import ApplicationDetailModal from '../../components/ApplicationDetailModal'
+import { FoirLtvExplainerSection } from './components'
 import { ROUTES } from '../../constants'
 import {
   AuditOutlined,
@@ -543,7 +544,7 @@ const CheckEligibility: React.FC = () => {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Proposed EMI</span>
               <div className="mt-2 text-2xl font-extrabold text-slate-800">
-                ₹{eligibility.proposedEmi?.toLocaleString('en-IN') || '0'}
+                ₹{(eligibility.requestedEmi || eligibility.proposedEmi || 0).toLocaleString('en-IN')}
                 <span className="text-xs font-medium text-slate-400">/mo</span>
               </div>
               <p className="mt-2 text-[11px] text-slate-400">
@@ -587,6 +588,16 @@ const CheckEligibility: React.FC = () => {
               </p>
             </div>
           </div>
+
+          {/* ── FOIR & LTV Detailed Educational & Live Calculation Breakdown ─ */}
+          <FoirLtvExplainerSection
+            eligibility={eligibility}
+            productName={eligibility.productName || currentAppObj?.productName || 'Loan'}
+            clientGeneralDetails={currentAppObj?.clientGeneralDetails}
+            homeLoanDetails={currentAppObj?.homeLoanDetails}
+            carLoanDetails={currentAppObj?.carLoanDetails}
+            personalLoanDetails={currentAppObj?.personalLoanDetails}
+          />
 
           {/* ── AI Underwriter Explanation ───── */}
           {eligibility.aiExplanation && (

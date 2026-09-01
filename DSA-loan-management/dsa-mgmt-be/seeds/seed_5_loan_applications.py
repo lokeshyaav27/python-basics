@@ -47,7 +47,7 @@ def seed_loan_applications():
         # ── Customer Data Definitions ─────────────────────────────────────────
         print("\n--- Seeding Loan Applications (Pending Review) ---")
         customers = [
-            {"name": "Nishchay Yadav", "mobile": "123123", "email": "nishchay@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
+            {"name": "Nishchay Yadav", "mobile": "1231231230", "email": "nishchay@application.com", "city": "Delhi NCR", "income": 95000, "age": 32, "gender": "Male"},
             {"name": "Rahul Sharma", "mobile": "9876543210", "email": "rahul.sharma@gmail.com", "city": "Mumbai", "income": 120000, "age": 36, "gender": "Male"},
             {"name": "Pooja Hegde", "mobile": "9822334455", "email": "pooja.h@yahoo.com", "city": "Bangalore", "income": 85000, "age": 29, "gender": "Female"},
             {"name": "Rohan Gupta", "mobile": "9811223344", "email": "rohan.gupta@outlook.com", "city": "Pune", "income": 110000, "age": 34, "gender": "Male"},
