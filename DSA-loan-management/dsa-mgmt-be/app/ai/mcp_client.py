@@ -10,17 +10,6 @@ MCP_DIR = PROJECT_ROOT / "dsa-mgmt-mcp"
 if str(MCP_DIR) not in sys.path:
     sys.path.insert(0, str(MCP_DIR))
 
-# Import handlers directly from dsa-mgmt-mcp package
-from tools.policy_search import handle_search_bank_policies
-from tools.eligibility import handle_check_loan_eligibility
-from tools.comparison import handle_compare_bank_offers
-from tools.dossier import handle_get_loan_dossier
-from tools.catalog import handle_get_bank_product_catalog
-from tools.directory import handle_get_agent_directory
-from tools.analytics import handle_get_commission_analytics, handle_get_portfolio_kpis
-from tools.enquiries import handle_get_contact_enquiries
-from auth import MCPAuthError
-
 logger = logging.getLogger("mcp_client")
 
 
@@ -316,6 +305,16 @@ def execute_mcp_tool(
     """
     Dispatches tool execution directly to the dsa-mgmt-mcp server handler with full RBAC enforcement.
     """
+    from tools.policy_search import handle_search_bank_policies
+    from tools.eligibility import handle_check_loan_eligibility
+    from tools.comparison import handle_compare_bank_offers
+    from tools.dossier import handle_get_loan_dossier
+    from tools.catalog import handle_get_bank_product_catalog
+    from tools.directory import handle_get_agent_directory
+    from tools.analytics import handle_get_commission_analytics, handle_get_portfolio_kpis
+    from tools.enquiries import handle_get_contact_enquiries
+    from auth import MCPAuthError
+
     name = (tool_name or "").strip()
     logger.info(f"⚡ [MCPClient] Executing MCP Tool '{name}' with auth_user={auth_user.get('role') if auth_user else 'None'}")
 

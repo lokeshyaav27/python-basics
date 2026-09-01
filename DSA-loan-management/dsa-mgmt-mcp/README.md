@@ -49,16 +49,60 @@ Production-grade **Model Context Protocol (MCP)** server for the DSA Loan Manage
 
 ---
 
-## 🚀 How to Run
+## 💻 Setup & Installation
 
-### 1. Stdio Mode (CLI / Claude Desktop / Cursor / Antigravity)
-```bash
-python server.py --transport stdio
+### Option 1: Dedicated Virtual Environment inside `dsa-mgmt-mcp` (Recommended)
+
+1. Open PowerShell and navigate to the directory:
+   ```powershell
+   cd C:\Users\lokeshyadav\Documents\Lokesh\Projects\learning\python-basics\DSA-loan-management\dsa-mgmt-mcp
+   ```
+
+2. Create a dedicated virtual environment:
+   ```powershell
+   python -m venv .venv
+   ```
+
+3. Activate the environment:
+   * **PowerShell:**
+     ```powershell
+     .\.venv\Scripts\Activate.ps1
+     ```
+     *(If script execution is disabled on your machine, run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once)*
+   * **Command Prompt (CMD):**
+     ```cmd
+     .\.venv\Scripts\activate.bat
+     ```
+
+4. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+### Option 2: Reusing the Backend Virtual Environment (`dsa-mgmt-be/.venv`)
+
+If you prefer to share the existing `.venv` without downloading packages again:
+
+```powershell
+cd C:\Users\lokeshyadav\Documents\Lokesh\Projects\learning\python-basics\DSA-loan-management\dsa-mgmt-mcp
+..\dsa-mgmt-be\.venv\Scripts\Activate.ps1
 ```
 
-### 2. SSE HTTP Mode (Microservice)
-```bash
+---
+
+## 🚀 Running the Server
+
+### 1. SSE HTTP Mode (Microservice on port 8001)
+```powershell
 python server.py --transport sse --host 0.0.0.0 --port 8001
+```
+*The server will listen at `http://localhost:8001/sse` and handle JSON-RPC MCP requests.*
+
+### 2. Stdio Mode (CLI / Desktop AI Clients)
+```powershell
+python server.py --transport stdio
 ```
 
 ---
@@ -78,7 +122,7 @@ Add the following to your `claude_desktop_config.json` or Antigravity IDE config
         "--transport",
         "stdio"
       ],
-      "cwd": "C:/Users/lokeshyadav/Documents/Lokesh\Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp",
+      "cwd": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp",
       "env": {
         "PYTHONPATH": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-be;C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp"
       }
@@ -89,8 +133,10 @@ Add the following to your `claude_desktop_config.json` or Antigravity IDE config
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Running Automated Tests
 
-```bash
+Run the test suite to verify token resolution, RBAC authorization, tools, and resources:
+
+```powershell
 python tests/test_mcp_server.py
 ```
