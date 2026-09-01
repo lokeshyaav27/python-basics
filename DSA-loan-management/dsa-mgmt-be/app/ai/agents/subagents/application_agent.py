@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
-from app.mcp.tools import (
+from app.ai.mcp_client import (
     GET_LOAN_DOSSIER_SPEC,
     GET_AGENT_DIRECTORY_SPEC,
     GET_COMMISSION_ANALYTICS_SPEC,

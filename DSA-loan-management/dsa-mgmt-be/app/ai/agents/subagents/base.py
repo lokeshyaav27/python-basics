@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.ai.config import ai_config
 from app.ai.client import get_ai_client
 from app.ai.agents.tool_parser import extract_tool_calls
-from app.mcp.registry import execute_mcp_tool
+from app.ai.mcp_client import execute_mcp_tool
 
 logger = logging.getLogger("ai_subagent")
 

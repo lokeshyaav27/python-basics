@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
-from app.mcp.tools import SEARCH_BANK_POLICIES_SPEC, GET_BANK_PRODUCT_CATALOG_SPEC
+from app.ai.mcp_client import SEARCH_BANK_POLICIES_SPEC, GET_BANK_PRODUCT_CATALOG_SPEC
 
 logger = logging.getLogger("document_intelligence_agent")
 

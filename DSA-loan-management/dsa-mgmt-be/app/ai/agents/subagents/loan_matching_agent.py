@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from app.ai.agents.subagents.base import BaseSubAgent
-from app.mcp.tools import COMPARE_BANK_OFFERS_SPEC, CHECK_LOAN_ELIGIBILITY_SPEC
+from app.ai.mcp_client import COMPARE_BANK_OFFERS_SPEC, CHECK_LOAN_ELIGIBILITY_SPEC
 
 logger = logging.getLogger("loan_matching_agent")
 
