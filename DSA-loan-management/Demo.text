@@ -2,22 +2,22 @@
 About DSA
 Compititors - Ruloans, Andromeda, BankSathi, many individual firms 
 
-About applicatios - Roles and their rights
-AI provider Groq and Ollama
-LLM: openai/gpt-oss-120b, qwen/qwen3.8-27b
-Focused product - home loan
-DB migration with alembic
 
-challanges faced: 
-number of mcp tools which we can say enough and which can cover all quries
-boundery/line where we can say that the application is stable as for as AI-chat support system
-MCP tool selection based on question/query - 
-rate limit issue, TPM issue
+AI provider Groq and Ollama
+LLM: openai/gpt-oss-120b, qwen/qwen3.8-27b, llama3.1:8b
+
+About applicatios - Roles and their rights - admin,agent, customer
+Focused product - home loan
 
 ================= users
 1231231230
 dsa_admin@yopmail.com
 lokesh_yadav@yopmail.com
+
+================= challanges faced
+number of mcp tools which we can say enough and which can cover all quries
+boundery/line where we can say that the application is stable as for as AI-chat support system
+rate limit issue, TPM issue
 
 ================= future
 we can have support for more than 3 products
@@ -25,4 +25,3 @@ versioning of bank documents
 accuracy can be tested with real documents
 Incluede insurance, 
 
-=========
