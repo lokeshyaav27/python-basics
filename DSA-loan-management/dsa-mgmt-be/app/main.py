@@ -1,3 +1,5 @@
+import logging
+import sys
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +11,27 @@ from app.core.config import settings
 from app.core.response import error_response
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+
+# Configure application logging to ensure INFO logs from all agents & subagents are visible in console
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[logging.StreamHandler(sys.stdout)],
+    force=True,
+)
+
+for _logger_name in [
+    "orchestrator_agent",
+    "ai_subagent",
+    "loan_matching_agent",
+    "document_intelligence_agent",
+    "application_operations_agent",
+    "ai_tool_parser",
+    "ai_chat_service",
+    "ai_client",
+]:
+    logging.getLogger(_logger_name).setLevel(logging.INFO)
 
 # Disable Swagger, ReDoc, and OpenAPI schema in production environments
 is_production = settings.ENVIRONMENT.lower() in ("production", "prod")
