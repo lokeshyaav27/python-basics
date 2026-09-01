@@ -18,6 +18,37 @@ export const CarLoanStepSection: React.FC<CarLoanStepSectionProps> = ({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+        <CurrencyInput
+          required
+          label="Loan Amount Required (₹)"
+          placeholder="e.g. 10,00,000"
+          value={carLoanDetails.loan_amount_required}
+          onChange={(val) =>
+            setCarLoanDetails({ ...carLoanDetails, loan_amount_required: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs font-bold text-indigo-700"
+        />
+
+        <div>
+          <label className="font-bold text-slate-700 block mb-1">
+            Preferred Repayment Tenure (Months) <span className="text-rose-500">*</span>
+          </label>
+          <select
+            value={carLoanDetails.preferred_tenure || '60'}
+            onChange={(e) =>
+              setCarLoanDetails({ ...carLoanDetails, preferred_tenure: e.target.value })
+            }
+            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none"
+          >
+            <option value="12">12 Months (1 Year)</option>
+            <option value="24">24 Months (2 Years)</option>
+            <option value="36">36 Months (3 Years)</option>
+            <option value="48">48 Months (4 Years)</option>
+            <option value="60">60 Months (5 Years)</option>
+            <option value="84">84 Months (7 Years)</option>
+          </select>
+        </div>
+
         <div>
           <label className="font-bold text-slate-700 block mb-1">Vehicle Condition</label>
           <select

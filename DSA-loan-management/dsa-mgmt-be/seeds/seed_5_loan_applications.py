@@ -122,6 +122,8 @@ def seed_loan_applications():
 
             if "home" in prod.name.lower():
                 hld = HomeLoanDetail(
+                    loan_amount_required=Decimal(str(plan["req_amt"])),
+                    preferred_tenure=plan["tenure"],
                     property_value=Decimal(str(int(plan["req_amt"] * 1.25))),
                     property_location=f"{cust['city']} Prime Heights",
                     propertyUsageType="Residential",
@@ -140,6 +142,8 @@ def seed_loan_applications():
 
             elif "car" in prod.name.lower():
                 cld = CarLoanDetail(
+                    loan_amount_required=Decimal(str(plan["req_amt"])),
+                    preferred_tenure=plan["tenure"],
                     new_or_used="New",
                     car_value=Decimal(str(int(plan["req_amt"] * 1.15))),
                     down_payment=Decimal(str(int(plan["req_amt"] * 0.15))),
@@ -151,6 +155,8 @@ def seed_loan_applications():
 
             elif "personal" in prod.name.lower():
                 pld = PersonalLoanDetail(
+                    loan_amount_required=Decimal(str(plan["req_amt"])),
+                    preferred_tenure=plan["tenure"],
                     loan_purpose="Home Improvement",
                     other=None,
                     required_amount=Decimal(str(plan["req_amt"])),

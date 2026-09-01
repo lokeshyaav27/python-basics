@@ -112,11 +112,29 @@ class AgentRepository:
             for app in apps:
                 st = app.status or "Lead Created"
                 status_counts[st] = status_counts.get(st, 0) + 1
-                if app.clientGeneralDetail and app.clientGeneralDetail.loan_amount_required:
+                loan_amt = 0.0
+                if app.homeLoanDetail and app.homeLoanDetail.loan_amount_required is not None:
                     try:
-                        total_volume += float(app.clientGeneralDetail.loan_amount_required)
+                        loan_amt = float(app.homeLoanDetail.loan_amount_required)
                     except (ValueError, TypeError):
-                        pass
+                        loan_amt = 0.0
+                elif app.carLoanDetail and app.carLoanDetail.loan_amount_required is not None:
+                    try:
+                        loan_amt = float(app.carLoanDetail.loan_amount_required)
+                    except (ValueError, TypeError):
+                        loan_amt = 0.0
+                elif app.personalLoanDetail and (app.personalLoanDetail.loan_amount_required is not None or app.personalLoanDetail.required_amount is not None):
+                    try:
+                        loan_amt = float(app.personalLoanDetail.loan_amount_required or app.personalLoanDetail.required_amount)
+                    except (ValueError, TypeError):
+                        loan_amt = 0.0
+                elif app.clientGeneralDetail and app.clientGeneralDetail.loan_amount_required is not None:
+                    try:
+                        loan_amt = float(app.clientGeneralDetail.loan_amount_required)
+                    except (ValueError, TypeError):
+                        loan_amt = 0.0
+
+                total_volume += loan_amt
 
             results.append({
                 "agentId": a.id,

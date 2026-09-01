@@ -26,9 +26,53 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
         </span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-        {/* 1. Property Value */}
+        {/* 1. Required Loan Amount */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">1. Property Value</label>
+          <label className="text-blue-900 block mb-1 font-semibold">1. Loan Amount Required</label>
+          {isEditing ? (
+            <CurrencyInput
+              value={homeDetails.loan_amount_required ?? ''}
+              onChange={(val) =>
+                setHomeDetails({
+                  ...homeDetails,
+                  loan_amount_required: val ? Number(val) : undefined,
+                })
+              }
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white font-bold text-blue-700"
+            />
+          ) : (
+            <span className="font-extrabold text-blue-700">{formatCurrency(homeDetails.loan_amount_required)}</span>
+          )}
+        </div>
+
+        {/* 2. Preferred Tenure */}
+        <div>
+          <label className="text-blue-900 block mb-1 font-semibold">2. Preferred Tenure</label>
+          {isEditing ? (
+            <input
+              type="number"
+              value={homeDetails.preferred_tenure ?? ''}
+              onChange={(e) =>
+                setHomeDetails({
+                  ...homeDetails,
+                  preferred_tenure: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              placeholder="e.g. 240 (months)"
+              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+            />
+          ) : (
+            <span className="font-bold text-slate-800">
+              {homeDetails.preferred_tenure
+                ? `${homeDetails.preferred_tenure} Months (${(homeDetails.preferred_tenure / 12).toFixed(1)} Yrs)`
+                : '—'}
+            </span>
+          )}
+        </div>
+
+        {/* 3. Property Value */}
+        <div>
+          <label className="text-slate-500 block mb-1 font-medium">3. Property Value</label>
           {isEditing ? (
             <CurrencyInput
               value={homeDetails.property_value ?? ''}
@@ -45,9 +89,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 2. Down Payment */}
+        {/* 4. Down Payment */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">2. Down Payment</label>
+          <label className="text-slate-500 block mb-1 font-medium">4. Down Payment</label>
           {isEditing ? (
             <CurrencyInput
               value={homeDetails.down_payment ?? ''}
@@ -64,9 +108,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 3. Property Location */}
+        {/* 5. Property Location */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">3. Property Location</label>
+          <label className="text-slate-500 block mb-1 font-medium">5. Property Location</label>
           {isEditing ? (
             <input
               value={homeDetails.property_location ?? ''}
@@ -80,9 +124,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 4. Property Usage Type */}
+        {/* 6. Property Usage Type */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">4. Property Usage</label>
+          <label className="text-slate-500 block mb-1 font-medium">6. Property Usage</label>
           {isEditing ? (
             <select
               value={homeDetails.propertyUsageType ?? 'Residential'}
@@ -99,9 +143,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 5. Property Requirement */}
+        {/* 7. Property Requirement */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">5. Property Requirement</label>
+          <label className="text-slate-500 block mb-1 font-medium">7. Property Requirement</label>
           {isEditing ? (
             <select
               value={homeDetails.propertyRequirement ?? 'Ready to Move'}
@@ -120,9 +164,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 6. Property Type */}
+        {/* 8. Property Type */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">6. Property Type</label>
+          <label className="text-slate-500 block mb-1 font-medium">8. Property Type</label>
           {isEditing ? (
             <select
               value={homeDetails.propertyType ?? 'Apartment'}
@@ -141,9 +185,9 @@ export const HomeLoanDetailsTab: React.FC<HomeLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 7. Property Ownership / Status */}
+        {/* 9. Property Ownership / Status */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">7. Property Ownership / Title</label>
+          <label className="text-slate-500 block mb-1 font-medium">9. Property Ownership / Title</label>
           {isEditing ? (
             <select
               value={homeDetails.propertyStatus ?? 'Freehold'}

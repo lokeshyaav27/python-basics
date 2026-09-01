@@ -92,49 +92,6 @@ export const GeneralFinancialFields: React.FC<GeneralFinancialFieldsProps> = ({
           <CibilBadge score={generalDetails.cibil_score} />
         )}
       </div>
-
-      {/* 10. Required Loan Amount */}
-      <div>
-        <label className="text-slate-400 block mb-1 font-medium">10. Loan Amount Required</label>
-        {isEditing ? (
-          <CurrencyInput
-            value={generalDetails.loan_amount_required ?? ''}
-            onChange={(val) =>
-              setGeneralDetails({
-                ...generalDetails,
-                loan_amount_required: val ? Number(val) : undefined,
-              })
-            }
-            inputClassName="!rounded-lg !p-2 !text-xs font-bold text-blue-700"
-          />
-        ) : (
-          <span className="font-extrabold text-blue-700">{formatCurrency(generalDetails.loan_amount_required)}</span>
-        )}
-      </div>
-
-      {/* 11. Preferred Tenure */}
-      <div>
-        <label className="text-slate-400 block mb-1 font-medium">11. Preferred Tenure</label>
-        {isEditing ? (
-          <input
-            type="number"
-            value={generalDetails.preferred_tenure ?? ''}
-            onChange={(e) =>
-              setGeneralDetails({
-                ...generalDetails,
-                preferred_tenure: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            className="w-full rounded-lg border border-slate-300 p-2 text-xs"
-          />
-        ) : (
-          <span className="font-bold text-slate-800">
-            {generalDetails.preferred_tenure
-              ? `${generalDetails.preferred_tenure} Months (${(generalDetails.preferred_tenure / 12).toFixed(1)} Yrs)`
-              : '—'}
-          </span>
-        )}
-      </div>
     </>
   )
 }

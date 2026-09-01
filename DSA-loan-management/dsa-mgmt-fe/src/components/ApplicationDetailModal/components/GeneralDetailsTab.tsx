@@ -17,7 +17,7 @@ export const GeneralDetailsTab: React.FC<GeneralDetailsTabProps> = ({
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <span>📊</span> Personal & Financial Profile (11 Captured Fields)
+          <span>📊</span> Personal & Financial Profile (9 Captured Fields)
         </h4>
         <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
           Client General Details

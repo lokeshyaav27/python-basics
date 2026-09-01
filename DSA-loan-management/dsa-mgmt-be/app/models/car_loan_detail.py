@@ -6,6 +6,8 @@ class CarLoanDetail(Base):
     __tablename__ = "car_loan_details"
 
     id = Column(Integer, primary_key=True, index=True)
+    loan_amount_required = Column(Numeric(14, 2), nullable=True)
+    preferred_tenure = Column(Integer, nullable=True)
     new_or_used = Column(String(32), nullable=True)
     car_value = Column(Numeric(14, 2), nullable=True)
     down_payment = Column(Numeric(14, 2), nullable=True)

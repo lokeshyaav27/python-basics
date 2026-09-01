@@ -25,9 +25,56 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
         </span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-        {/* 1. Loan Purpose */}
+        {/* 1. Required Loan Amount */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">1. Loan Purpose</label>
+          <label className="text-emerald-900 block mb-1 font-semibold">1. Loan Amount Required</label>
+          {isEditing ? (
+            <CurrencyInput
+              value={personalDetails.loan_amount_required ?? personalDetails.required_amount ?? ''}
+              onChange={(val) =>
+                setPersonalDetails({
+                  ...personalDetails,
+                  loan_amount_required: val ? Number(val) : undefined,
+                  required_amount: val ? Number(val) : undefined,
+                })
+              }
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white font-bold text-emerald-700"
+            />
+          ) : (
+            <span className="font-extrabold text-emerald-700">
+              {formatCurrency(personalDetails.loan_amount_required ?? personalDetails.required_amount)}
+            </span>
+          )}
+        </div>
+
+        {/* 2. Preferred Tenure */}
+        <div>
+          <label className="text-emerald-900 block mb-1 font-semibold">2. Preferred Tenure</label>
+          {isEditing ? (
+            <input
+              type="number"
+              value={personalDetails.preferred_tenure ?? ''}
+              onChange={(e) =>
+                setPersonalDetails({
+                  ...personalDetails,
+                  preferred_tenure: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              placeholder="e.g. 36 (months)"
+              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+            />
+          ) : (
+            <span className="font-bold text-slate-800">
+              {personalDetails.preferred_tenure
+                ? `${personalDetails.preferred_tenure} Months (${(personalDetails.preferred_tenure / 12).toFixed(1)} Yrs)`
+                : '—'}
+            </span>
+          )}
+        </div>
+
+        {/* 3. Loan Purpose */}
+        <div>
+          <label className="text-slate-500 block mb-1 font-medium">3. Loan Purpose</label>
           {isEditing ? (
             <select
               value={personalDetails.loan_purpose ?? 'Other'}
@@ -50,9 +97,9 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 2. Other Remarks */}
+        {/* 4. Other Remarks */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">2. Purpose Notes</label>
+          <label className="text-slate-500 block mb-1 font-medium">4. Purpose Notes</label>
           {isEditing ? (
             <input
               type="text"
@@ -67,30 +114,9 @@ export const PersonalLoanDetailsTab: React.FC<PersonalLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 3. Required Amount */}
+        {/* 5. Existing Obligations */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">3. Required Amount</label>
-          {isEditing ? (
-            <CurrencyInput
-              value={personalDetails.required_amount ?? ''}
-              onChange={(val) =>
-                setPersonalDetails({
-                  ...personalDetails,
-                  required_amount: val ? Number(val) : undefined,
-                })
-              }
-              inputClassName="!rounded-lg !p-2 !text-xs bg-white font-bold text-emerald-700"
-            />
-          ) : (
-            <span className="font-extrabold text-emerald-700">
-              {formatCurrency(personalDetails.required_amount)}
-            </span>
-          )}
-        </div>
-
-        {/* 4. Existing Obligations */}
-        <div>
-          <label className="text-slate-500 block mb-1 font-medium">4. Existing Obligations / EMIs</label>
+          <label className="text-slate-500 block mb-1 font-medium">5. Existing Obligations / EMIs</label>
           {isEditing ? (
             <CurrencyInput
               value={personalDetails.existing_obligations ?? ''}

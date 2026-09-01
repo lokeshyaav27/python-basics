@@ -83,6 +83,8 @@ class LoanApplicationRepository:
 
     def create_home_loan_detail(self, data: Dict[str, Any]) -> HomeLoanDetail:
         record = HomeLoanDetail(
+            loan_amount_required=data.get("loan_amount_required"),
+            preferred_tenure=data.get("preferred_tenure"),
             property_value=data.get("property_value"),
             property_location=data.get("property_location"),
             propertyUsageType=data.get("propertyUsageType"),
@@ -104,6 +106,8 @@ class LoanApplicationRepository:
         self, instance: HomeLoanDetail, data: Dict[str, Any]
     ) -> HomeLoanDetail:
         for field in [
+            "loan_amount_required",
+            "preferred_tenure",
             "property_value",
             "property_location",
             "propertyUsageType",
@@ -125,6 +129,8 @@ class LoanApplicationRepository:
 
     def create_car_loan_detail(self, data: Dict[str, Any]) -> CarLoanDetail:
         record = CarLoanDetail(
+            loan_amount_required=data.get("loan_amount_required"),
+            preferred_tenure=data.get("preferred_tenure"),
             new_or_used=data.get("new_or_used"),
             car_value=data.get("car_value"),
             down_payment=data.get("down_payment"),
@@ -138,7 +144,14 @@ class LoanApplicationRepository:
     def update_car_loan_detail(
         self, instance: CarLoanDetail, data: Dict[str, Any]
     ) -> CarLoanDetail:
-        for field in ["new_or_used", "car_value", "down_payment", "vehicle_age"]:
+        for field in [
+            "loan_amount_required",
+            "preferred_tenure",
+            "new_or_used",
+            "car_value",
+            "down_payment",
+            "vehicle_age",
+        ]:
             if field in data:
                 setattr(instance, field, data[field])
         self.db.add(instance)
@@ -147,10 +160,13 @@ class LoanApplicationRepository:
         return instance
 
     def create_personal_loan_detail(self, data: Dict[str, Any]) -> PersonalLoanDetail:
+        req_val = data.get("loan_amount_required") if data.get("loan_amount_required") is not None else data.get("required_amount")
         record = PersonalLoanDetail(
+            loan_amount_required=req_val,
+            preferred_tenure=data.get("preferred_tenure"),
             loan_purpose=data.get("loan_purpose"),
             other=data.get("other"),
-            required_amount=data.get("required_amount"),
+            required_amount=req_val,
             existing_obligations=data.get("existing_obligations"),
         )
         self.db.add(record)
@@ -161,9 +177,21 @@ class LoanApplicationRepository:
     def update_personal_loan_detail(
         self, instance: PersonalLoanDetail, data: Dict[str, Any]
     ) -> PersonalLoanDetail:
-        for field in ["loan_purpose", "other", "required_amount", "existing_obligations"]:
+        for field in [
+            "loan_amount_required",
+            "preferred_tenure",
+            "loan_purpose",
+            "other",
+            "required_amount",
+            "existing_obligations",
+        ]:
             if field in data:
                 setattr(instance, field, data[field])
+        if "loan_amount_required" in data and "required_amount" not in data:
+            instance.required_amount = data["loan_amount_required"]
+        elif "required_amount" in data and "loan_amount_required" not in data:
+            instance.loan_amount_required = data["required_amount"]
+
         self.db.add(instance)
         self.db.commit()
         self.db.refresh(instance)
@@ -178,14 +206,14 @@ class LoanApplicationRepository:
         product_id: Optional[int] = None,
         agent_id: Optional[int] = None,
         bank_id: Optional[int] = None,
-        status: str = "Lead Created",
+        home_loan_detail_id: Optional[int] = None,
+        car_loan_detail_id: Optional[int] = None,
+        personal_loan_detail_id: Optional[int] = None,
+        client_general_detail_id: Optional[int] = None,
         description: Optional[str] = None,
-        client_general_id: Optional[int] = None,
-        home_loan_id: Optional[int] = None,
-        car_loan_id: Optional[int] = None,
-        personal_loan_id: Optional[int] = None,
+        status: Optional[str] = None,
     ) -> LoanApplication:
-        app = LoanApplication(
+        record = LoanApplication(
             name=name,
             email=email,
             mobile=mobile,
@@ -193,18 +221,18 @@ class LoanApplicationRepository:
             productId=product_id,
             agentId=agent_id,
             bankId=bank_id,
-            status=status,
+            homeLoanDetailId=home_loan_detail_id,
+            carLoanDetailId=car_loan_detail_id,
+            personalLoanDetailId=personal_loan_detail_id,
+            clientGeneralDetailTableId=client_general_detail_id,
             description=description,
-            clientGeneralDetailTableId=client_general_id,
-            homeLoanDetailId=home_loan_id,
-            carLoanDetailId=car_loan_id,
-            personalLoanDetailId=personal_loan_id,
+            status=status,
             isActive=True,
         )
-        self.db.add(app)
+        self.db.add(record)
         self.db.commit()
-        self.db.refresh(app)
-        return app
+        self.db.refresh(record)
+        return record
 
     def save(self, app: LoanApplication) -> LoanApplication:
         self.db.add(app)
@@ -218,6 +246,49 @@ class LoanApplicationRepository:
         self.db.commit()
         return app
 
+    def list_by_role(
+        self,
+        role: str,
+        user_id: Optional[int] = None,
+        agent_id: Optional[int] = None,
+        unique_customer_id: Optional[str] = None,
+        mobile: Optional[str] = None,
+        include_inactive: bool = False,
+    ) -> List[LoanApplication]:
+        query = self.db.query(LoanApplication)
+        if not include_inactive:
+            query = query.filter(LoanApplication.isActive != False)
+
+        if role == "agent" and user_id is not None:
+            query = query.filter(LoanApplication.agentId == user_id)
+        elif role == "customer":
+            ident_filters = []
+            if unique_customer_id:
+                ident_filters.append(LoanApplication.uniqueCustomerId == unique_customer_id)
+            if mobile:
+                ident_filters.append(LoanApplication.mobile == mobile)
+            if user_id:
+                ident_filters.append(LoanApplication.id == user_id)
+            if ident_filters:
+                query = query.filter(or_(*ident_filters))
+            else:
+                return []
+        elif role == "admin" and agent_id is not None:
+            query = query.filter(LoanApplication.agentId == agent_id)
+
+        return query.order_by(LoanApplication.id.desc()).all()
+
+    def update_application(
+        self, instance: LoanApplication, data: Dict[str, Any]
+    ) -> LoanApplication:
+        for field in ["name", "email", "mobile", "productId", "agentId", "bankId", "status", "description", "isActive"]:
+            if field in data:
+                setattr(instance, field, data[field])
+        self.db.add(instance)
+        self.db.commit()
+        self.db.refresh(instance)
+        return instance
+
     def get_commission_analytics(
         self,
         agent_id: Optional[int] = None,
@@ -225,15 +296,7 @@ class LoanApplicationRepository:
         product_id: Optional[int] = None,
         status: Optional[str] = None,
     ) -> Dict[str, Any]:
-        from app.models.product_bank_link import ProductBankLink
-        from app.models.bank import Bank
-        from app.models.product import Product
-
-        # Pre-cache product-bank commissions
-        links = self.db.query(ProductBankLink).filter(ProductBankLink.isActive == True).all()
-        link_comm_map = {(l.bankId, l.productId): float(l.commission or 0.0) for l in links}
-
-
+        """Calculates portfolio and DSA commission summaries across applications."""
         query = self.db.query(LoanApplication).filter(LoanApplication.isActive != False)
         if agent_id is not None:
             query = query.filter(LoanApplication.agentId == agent_id)
@@ -244,7 +307,12 @@ class LoanApplicationRepository:
         if status and status.lower() != "all":
             query = query.filter(LoanApplication.status.ilike(f"%{status}%"))
 
-        apps = query.order_by(LoanApplication.id.desc()).all()
+        apps = query.all()
+        links = self.db.query(ProductBankLink).filter(ProductBankLink.isActive != False).all()
+        link_comm_map: Dict[Tuple[int, int], float] = {
+            (l.bankId, l.productId): float(l.commission) if l.commission is not None else 1.0
+            for l in links
+        }
 
         total_disbursed_commission = 0.0
         total_pipeline_commission = 0.0
@@ -257,14 +325,24 @@ class LoanApplicationRepository:
         for app in apps:
             cgd = app.clientGeneralDetail
             loan_amt = 0.0
-            if cgd and cgd.loan_amount_required:
+            if app.homeLoanDetail and app.homeLoanDetail.loan_amount_required is not None:
                 try:
-                    loan_amt = float(cgd.loan_amount_required)
+                    loan_amt = float(app.homeLoanDetail.loan_amount_required)
                 except (ValueError, TypeError):
                     loan_amt = 0.0
-            elif app.personalLoanDetail and app.personalLoanDetail.required_amount:
+            elif app.carLoanDetail and app.carLoanDetail.loan_amount_required is not None:
                 try:
-                    loan_amt = float(app.personalLoanDetail.required_amount)
+                    loan_amt = float(app.carLoanDetail.loan_amount_required)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            elif app.personalLoanDetail and (app.personalLoanDetail.loan_amount_required is not None or app.personalLoanDetail.required_amount is not None):
+                try:
+                    loan_amt = float(app.personalLoanDetail.loan_amount_required or app.personalLoanDetail.required_amount)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            elif cgd and cgd.loan_amount_required is not None:
+                try:
+                    loan_amt = float(cgd.loan_amount_required)
                 except (ValueError, TypeError):
                     loan_amt = 0.0
 
@@ -358,11 +436,29 @@ class LoanApplicationRepository:
             elif a.mobile:
                 unique_customers.add(a.mobile)
 
-            if a.clientGeneralDetail and a.clientGeneralDetail.loan_amount_required:
+            loan_amt = 0.0
+            if a.homeLoanDetail and a.homeLoanDetail.loan_amount_required is not None:
                 try:
-                    total_requested += float(a.clientGeneralDetail.loan_amount_required)
+                    loan_amt = float(a.homeLoanDetail.loan_amount_required)
                 except (ValueError, TypeError):
-                    pass
+                    loan_amt = 0.0
+            elif a.carLoanDetail and a.carLoanDetail.loan_amount_required is not None:
+                try:
+                    loan_amt = float(a.carLoanDetail.loan_amount_required)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            elif a.personalLoanDetail and (a.personalLoanDetail.loan_amount_required is not None or a.personalLoanDetail.required_amount is not None):
+                try:
+                    loan_amt = float(a.personalLoanDetail.loan_amount_required or a.personalLoanDetail.required_amount)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            elif a.clientGeneralDetail and a.clientGeneralDetail.loan_amount_required is not None:
+                try:
+                    loan_amt = float(a.clientGeneralDetail.loan_amount_required)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+
+            total_requested += loan_amt
 
         avg_amount = round(total_requested / total_count, 2) if total_count > 0 else 0.0
 

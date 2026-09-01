@@ -48,6 +48,8 @@ def serialize_loan_application(app: LoanApplication, hide_commission: bool = Fal
 
     if hld:
         result["homeLoanDetails"] = {
+            "loanAmountRequired": float(hld.loan_amount_required) if hld.loan_amount_required is not None else None,
+            "preferredTenure": hld.preferred_tenure,
             "propertyValue": float(hld.property_value) if hld.property_value is not None else None,
             "propertyLocation": hld.property_location,
             "propertyUsageType": hld.propertyUsageType,
@@ -62,6 +64,8 @@ def serialize_loan_application(app: LoanApplication, hide_commission: bool = Fal
 
     if cld:
         result["carLoanDetails"] = {
+            "loanAmountRequired": float(cld.loan_amount_required) if cld.loan_amount_required is not None else None,
+            "preferredTenure": cld.preferred_tenure,
             "carValue": float(cld.car_value) if cld.car_value is not None else None,
             "downPayment": float(cld.down_payment) if cld.down_payment is not None else None,
             "newOrUsed": cld.new_or_used,
@@ -70,8 +74,10 @@ def serialize_loan_application(app: LoanApplication, hide_commission: bool = Fal
 
     if pld:
         result["personalLoanDetails"] = {
+            "loanAmountRequired": float(pld.loan_amount_required) if pld.loan_amount_required is not None else (float(pld.required_amount) if pld.required_amount is not None else None),
+            "preferredTenure": pld.preferred_tenure,
             "loanPurpose": pld.loan_purpose,
-            "requiredAmount": float(pld.required_amount) if pld.required_amount is not None else None,
+            "requiredAmount": float(pld.required_amount) if pld.required_amount is not None else (float(pld.loan_amount_required) if pld.loan_amount_required is not None else None),
             "existingObligations": float(pld.existing_obligations) if pld.existing_obligations is not None else None,
         }
 

@@ -34,11 +34,10 @@ const ChatWithAI: React.FC = () => {
 
   // Fetch available applications for mention list
   const { data: applications = [] } = useQuery<LoanApplication[]>({
-    queryKey: ['chat-applications-list', user?.role, user?.id],
+    queryKey: ['chat-applications-list', user?.role, user?.id, user?.mobile, user?.uniqueCustomerId],
     queryFn: () => {
       if (user?.role === 'customer') {
-        const identifier = user.mobile || user.email || user.name || ''
-        return fetchCustomerLoanApplications(identifier)
+        return fetchLoanApplications(undefined, user.mobile || undefined)
       }
       return fetchLoanApplications(user?.role === 'agent' ? user.id : undefined)
     },

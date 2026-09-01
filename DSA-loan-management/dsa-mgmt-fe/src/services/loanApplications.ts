@@ -18,6 +18,8 @@ export type ClientGeneralDetailsData = {
 }
 
 export type HomeLoanDetailsData = {
+  loan_amount_required?: number | null
+  preferred_tenure?: number | null
   property_value?: number | null
   property_location?: string | null
   propertyUsageType?: string | null
@@ -32,6 +34,8 @@ export type HomeLoanDetailsData = {
 }
 
 export type CarLoanDetailsData = {
+  loan_amount_required?: number | null
+  preferred_tenure?: number | null
   new_or_used?: string | null
   car_value?: number | null
   down_payment?: number | null
@@ -39,6 +43,8 @@ export type CarLoanDetailsData = {
 }
 
 export type PersonalLoanDetailsData = {
+  loan_amount_required?: number | null
+  preferred_tenure?: number | null
   loan_purpose?: string | null
   other?: string | null
   required_amount?: number | null

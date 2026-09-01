@@ -172,11 +172,28 @@ def evaluate_single_bank_offer(
     existing_emi = float(cgd.existing_emi if cgd and cgd.existing_emi else 0.0)
     monthly_obligation = float(cgd.monthly_obligation if cgd and cgd.monthly_obligation else 0.0)
     
+    req_amt_prod = 0.0
+    pref_tenure_prod = 0
+    if is_home_loan and application.homeLoanDetail:
+        if application.homeLoanDetail.loan_amount_required is not None:
+            req_amt_prod = float(application.homeLoanDetail.loan_amount_required)
+        if application.homeLoanDetail.preferred_tenure is not None:
+            pref_tenure_prod = int(application.homeLoanDetail.preferred_tenure)
+    elif is_car_loan and application.carLoanDetail:
+        if application.carLoanDetail.loan_amount_required is not None:
+            req_amt_prod = float(application.carLoanDetail.loan_amount_required)
+        if application.carLoanDetail.preferred_tenure is not None:
+            pref_tenure_prod = int(application.carLoanDetail.preferred_tenure)
+    elif application.personalLoanDetail:
+        req_val = application.personalLoanDetail.loan_amount_required if application.personalLoanDetail.loan_amount_required is not None else application.personalLoanDetail.required_amount
+        if req_val is not None:
+            req_amt_prod = float(req_val)
+        if application.personalLoanDetail.preferred_tenure is not None:
+            pref_tenure_prod = int(application.personalLoanDetail.preferred_tenure)
+
     req_amt_general = float(cgd.loan_amount_required if cgd and cgd.loan_amount_required else 0.0)
-    requested_amount = req_amt_general if req_amt_general > 0 else (
-        float(application.personalLoanDetail.required_amount) if application.personalLoanDetail and application.personalLoanDetail.required_amount else 0.0
-    )
-    preferred_tenure = int(cgd.preferred_tenure if cgd and cgd.preferred_tenure else 0)
+    requested_amount = req_amt_prod if req_amt_prod > 0 else req_amt_general
+    preferred_tenure = pref_tenure_prod if pref_tenure_prod > 0 else int(cgd.preferred_tenure if cgd and cgd.preferred_tenure else 0)
 
     # Extract Product Details
     female_co_applicant = False

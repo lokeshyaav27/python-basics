@@ -20,6 +20,37 @@ export const HomeLoanStepSection: React.FC<HomeLoanStepSectionProps> = ({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
         <CurrencyInput
           required
+          label="Loan Amount Required (₹)"
+          placeholder="e.g. 40,00,000"
+          value={homeLoanDetails.loan_amount_required}
+          onChange={(val) =>
+            setHomeLoanDetails({ ...homeLoanDetails, loan_amount_required: val })
+          }
+          inputClassName="!rounded-xl !p-3 !text-xs font-bold text-blue-700"
+        />
+
+        <div>
+          <label className="font-bold text-slate-700 block mb-1">
+            Preferred Repayment Tenure (Months) <span className="text-rose-500">*</span>
+          </label>
+          <select
+            value={homeLoanDetails.preferred_tenure || '240'}
+            onChange={(e) =>
+              setHomeLoanDetails({ ...homeLoanDetails, preferred_tenure: e.target.value })
+            }
+            className="w-full rounded-xl border border-slate-300 p-3 text-xs bg-white outline-none"
+          >
+            <option value="60">60 Months (5 Years)</option>
+            <option value="120">120 Months (10 Years)</option>
+            <option value="180">180 Months (15 Years)</option>
+            <option value="240">240 Months (20 Years)</option>
+            <option value="300">300 Months (25 Years)</option>
+            <option value="360">360 Months (30 Years)</option>
+          </select>
+        </div>
+
+        <CurrencyInput
+          required
           label="Property Market Value (₹)"
           placeholder="e.g. 50,00,000"
           value={homeLoanDetails.property_value}

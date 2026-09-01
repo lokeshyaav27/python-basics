@@ -25,9 +25,53 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
         </span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-        {/* 1. Vehicle Type */}
+        {/* 1. Required Loan Amount */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">1. Vehicle Condition</label>
+          <label className="text-indigo-900 block mb-1 font-semibold">1. Loan Amount Required</label>
+          {isEditing ? (
+            <CurrencyInput
+              value={carDetails.loan_amount_required ?? ''}
+              onChange={(val) =>
+                setCarDetails({
+                  ...carDetails,
+                  loan_amount_required: val ? Number(val) : undefined,
+                })
+              }
+              inputClassName="!rounded-lg !p-2 !text-xs bg-white font-bold text-indigo-700"
+            />
+          ) : (
+            <span className="font-extrabold text-indigo-700">{formatCurrency(carDetails.loan_amount_required)}</span>
+          )}
+        </div>
+
+        {/* 2. Preferred Tenure */}
+        <div>
+          <label className="text-indigo-900 block mb-1 font-semibold">2. Preferred Tenure</label>
+          {isEditing ? (
+            <input
+              type="number"
+              value={carDetails.preferred_tenure ?? ''}
+              onChange={(e) =>
+                setCarDetails({
+                  ...carDetails,
+                  preferred_tenure: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              placeholder="e.g. 60 (months)"
+              className="w-full rounded-lg border border-slate-300 p-2 text-xs bg-white"
+            />
+          ) : (
+            <span className="font-bold text-slate-800">
+              {carDetails.preferred_tenure
+                ? `${carDetails.preferred_tenure} Months (${(carDetails.preferred_tenure / 12).toFixed(1)} Yrs)`
+                : '—'}
+            </span>
+          )}
+        </div>
+
+        {/* 3. Vehicle Type */}
+        <div>
+          <label className="text-slate-500 block mb-1 font-medium">3. Vehicle Condition</label>
           {isEditing ? (
             <select
               value={carDetails.new_or_used ?? 'New'}
@@ -42,9 +86,9 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 2. Car Value */}
+        {/* 4. Car Value */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">2. Vehicle Value / Quotation</label>
+          <label className="text-slate-500 block mb-1 font-medium">4. Vehicle Value / Quotation</label>
           {isEditing ? (
             <CurrencyInput
               value={carDetails.car_value ?? ''}
@@ -61,9 +105,9 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 3. Down Payment */}
+        {/* 5. Down Payment */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">3. Down Payment</label>
+          <label className="text-slate-500 block mb-1 font-medium">5. Down Payment</label>
           {isEditing ? (
             <CurrencyInput
               value={carDetails.down_payment ?? ''}
@@ -80,9 +124,9 @@ export const CarLoanDetailsTab: React.FC<CarLoanDetailsTabProps> = ({
           )}
         </div>
 
-        {/* 4. Vehicle Age */}
+        {/* 6. Vehicle Age */}
         <div>
-          <label className="text-slate-500 block mb-1 font-medium">4. Vehicle Age</label>
+          <label className="text-slate-500 block mb-1 font-medium">6. Vehicle Age</label>
           {isEditing ? (
             <input
               type="number"

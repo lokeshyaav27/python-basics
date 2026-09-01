@@ -43,9 +43,27 @@ def compare_banks_for_application(
             "banks": [],
         }
 
-    req_amt = float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else (
-        float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
-    )
+    req_amt = 0.0
+    if app.homeLoanDetail and app.homeLoanDetail.loan_amount_required is not None:
+        try:
+            req_amt = float(app.homeLoanDetail.loan_amount_required)
+        except (ValueError, TypeError):
+            req_amt = 0.0
+    elif app.carLoanDetail and app.carLoanDetail.loan_amount_required is not None:
+        try:
+            req_amt = float(app.carLoanDetail.loan_amount_required)
+        except (ValueError, TypeError):
+            req_amt = 0.0
+    elif app.personalLoanDetail and (app.personalLoanDetail.loan_amount_required is not None or app.personalLoanDetail.required_amount is not None):
+        try:
+            req_amt = float(app.personalLoanDetail.loan_amount_required or app.personalLoanDetail.required_amount)
+        except (ValueError, TypeError):
+            req_amt = 0.0
+    elif cgd and cgd.loan_amount_required is not None:
+        try:
+            req_amt = float(cgd.loan_amount_required)
+        except (ValueError, TypeError):
+            req_amt = 0.0
 
     if req_amt <= 0:
         return {

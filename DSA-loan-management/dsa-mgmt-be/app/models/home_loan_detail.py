@@ -6,6 +6,8 @@ class HomeLoanDetail(Base):
     __tablename__ = "home_loan_details"
 
     id = Column(Integer, primary_key=True, index=True)
+    loan_amount_required = Column(Numeric(14, 2), nullable=True)
+    preferred_tenure = Column(Integer, nullable=True)
     property_value = Column(Numeric(14, 2), nullable=True)
     property_location = Column(String(255), nullable=True)
     propertyUsageType = Column("property_usage_type", String(64), nullable=True)

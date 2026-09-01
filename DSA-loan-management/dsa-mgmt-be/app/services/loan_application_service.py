@@ -32,16 +32,41 @@ class LoanApplicationService:
 
         cgd = app.clientGeneralDetail
         loan_amt = 0.0
-        if cgd and cgd.loan_amount_required is not None:
+        pref_tenure = None
+
+        if app.homeLoanDetail:
+            if app.homeLoanDetail.loan_amount_required is not None:
+                try:
+                    loan_amt = float(app.homeLoanDetail.loan_amount_required)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            if app.homeLoanDetail.preferred_tenure is not None:
+                pref_tenure = app.homeLoanDetail.preferred_tenure
+        elif app.carLoanDetail:
+            if app.carLoanDetail.loan_amount_required is not None:
+                try:
+                    loan_amt = float(app.carLoanDetail.loan_amount_required)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            if app.carLoanDetail.preferred_tenure is not None:
+                pref_tenure = app.carLoanDetail.preferred_tenure
+        elif app.personalLoanDetail:
+            req_val = app.personalLoanDetail.loan_amount_required if app.personalLoanDetail.loan_amount_required is not None else app.personalLoanDetail.required_amount
+            if req_val is not None:
+                try:
+                    loan_amt = float(req_val)
+                except (ValueError, TypeError):
+                    loan_amt = 0.0
+            if app.personalLoanDetail.preferred_tenure is not None:
+                pref_tenure = app.personalLoanDetail.preferred_tenure
+
+        if loan_amt == 0.0 and cgd and cgd.loan_amount_required is not None:
             try:
                 loan_amt = float(cgd.loan_amount_required)
             except (ValueError, TypeError):
                 loan_amt = 0.0
-        elif app.personalLoanDetail and app.personalLoanDetail.required_amount is not None:
-            try:
-                loan_amt = float(app.personalLoanDetail.required_amount)
-            except (ValueError, TypeError):
-                loan_amt = 0.0
+        if pref_tenure is None and cgd and cgd.preferred_tenure is not None:
+            pref_tenure = cgd.preferred_tenure
 
         comm_pct = None
         comm_received = None
@@ -86,6 +111,7 @@ class LoanApplicationService:
             "productName": app.product.name if app.product else None,
             "productImage": app.product.image if app.product else None,
             "loanAmountRequired": loan_amt,
+            "preferredTenure": pref_tenure,
             "commissionRatePct": comm_pct,
             "commissionReceived": comm_received,
             "commissionEstimated": comm_estimated,
@@ -108,6 +134,8 @@ class LoanApplicationService:
                 "isSalaried": app.clientGeneralDetail.isSalaried,
             } if app.clientGeneralDetail else None,
             "homeLoanDetails": {
+                "loan_amount_required": float(app.homeLoanDetail.loan_amount_required) if app.homeLoanDetail.loan_amount_required is not None else None,
+                "preferred_tenure": app.homeLoanDetail.preferred_tenure,
                 "property_value": float(app.homeLoanDetail.property_value) if app.homeLoanDetail.property_value is not None else None,
                 "property_location": app.homeLoanDetail.property_location,
                 "propertyUsageType": app.homeLoanDetail.propertyUsageType,
@@ -121,15 +149,19 @@ class LoanApplicationService:
                 "applicantInsurance": app.homeLoanDetail.applicantInsurance,
             } if app.homeLoanDetail else None,
             "carLoanDetails": {
+                "loan_amount_required": float(app.carLoanDetail.loan_amount_required) if app.carLoanDetail.loan_amount_required is not None else None,
+                "preferred_tenure": app.carLoanDetail.preferred_tenure,
                 "new_or_used": app.carLoanDetail.new_or_used,
                 "car_value": float(app.carLoanDetail.car_value) if app.carLoanDetail.car_value is not None else None,
                 "down_payment": float(app.carLoanDetail.down_payment) if app.carLoanDetail.down_payment is not None else None,
                 "vehicle_age": app.carLoanDetail.vehicle_age,
             } if app.carLoanDetail else None,
             "personalLoanDetails": {
+                "loan_amount_required": float(app.personalLoanDetail.loan_amount_required) if app.personalLoanDetail.loan_amount_required is not None else (float(app.personalLoanDetail.required_amount) if app.personalLoanDetail.required_amount is not None else None),
+                "preferred_tenure": app.personalLoanDetail.preferred_tenure,
                 "loan_purpose": app.personalLoanDetail.loan_purpose,
                 "other": app.personalLoanDetail.other,
-                "required_amount": float(app.personalLoanDetail.required_amount) if app.personalLoanDetail.required_amount is not None else None,
+                "required_amount": float(app.personalLoanDetail.required_amount) if app.personalLoanDetail.required_amount is not None else (float(app.personalLoanDetail.loan_amount_required) if app.personalLoanDetail.loan_amount_required is not None else None),
                 "existing_obligations": float(app.personalLoanDetail.existing_obligations) if app.personalLoanDetail.existing_obligations is not None else None,
             } if app.personalLoanDetail else None,
             "status": app.status,
@@ -357,19 +389,30 @@ class LoanApplicationService:
             return False, "Customer personal and financial details have not been filled."
 
         cgd = app.clientGeneralDetail
-        if not cgd.name or cgd.age is None or not cgd.gender or not cgd.location or cgd.monthly_income is None or cgd.loan_amount_required is None or cgd.preferred_tenure is None:
+        if not cgd.name or cgd.age is None or not cgd.gender or not cgd.location or cgd.monthly_income is None:
             return False, "Customer personal/financial profile is incomplete. Please complete all fields."
 
         pname = (app.product.name or "").lower() if app.product else ""
         if "home" in pname:
             if not app.homeLoanDetail or app.homeLoanDetail.property_value is None or not app.homeLoanDetail.property_location:
                 return False, "Home loan property details have not been completed."
+            if app.homeLoanDetail.loan_amount_required is None and cgd.loan_amount_required is None:
+                return False, "Home loan required amount has not been specified."
+            if app.homeLoanDetail.preferred_tenure is None and cgd.preferred_tenure is None:
+                return False, "Home loan preferred tenure has not been specified."
         elif "car" in pname:
             if not app.carLoanDetail or app.carLoanDetail.car_value is None or not app.carLoanDetail.new_or_used:
                 return False, "Car loan vehicle details have not been completed."
+            if app.carLoanDetail.loan_amount_required is None and cgd.loan_amount_required is None:
+                return False, "Car loan required amount has not been specified."
+            if app.carLoanDetail.preferred_tenure is None and cgd.preferred_tenure is None:
+                return False, "Car loan preferred tenure has not been specified."
         elif "personal" in pname:
-            if not app.personalLoanDetail or app.personalLoanDetail.required_amount is None or not app.personalLoanDetail.loan_purpose:
+            pld = app.personalLoanDetail
+            if not pld or (pld.required_amount is None and pld.loan_amount_required is None and cgd.loan_amount_required is None) or not pld.loan_purpose:
                 return False, "Personal loan purpose and amount details have not been completed."
+            if pld.preferred_tenure is None and cgd.preferred_tenure is None:
+                return False, "Personal loan preferred tenure has not been specified."
 
         return True, ""
 

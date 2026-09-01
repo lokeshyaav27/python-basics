@@ -49,13 +49,6 @@ def check_applicant_completeness(app: LoanApplication) -> Tuple[bool, List[str],
             missing.append("Gross Monthly Income")
         if cgd.cibil_score is None:
             missing.append("CIBIL Credit Score")
-        if cgd.loan_amount_required is None or float(cgd.loan_amount_required) <= 0:
-            # Check if required amount is present in product detail
-            p_amt = float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
-            if p_amt <= 0:
-                missing.append("Requested Loan Amount")
-        if cgd.preferred_tenure is None or int(cgd.preferred_tenure) <= 0:
-            missing.append("Preferred Loan Tenure")
 
     # 3. Product-Specific Details Validation
     if prod_type == "home_loan":
@@ -65,6 +58,12 @@ def check_applicant_completeness(app: LoanApplication) -> Tuple[bool, List[str],
         else:
             if hld.property_value is None or float(hld.property_value) <= 0:
                 missing.append("Property Estimated Value")
+            req_amt_hl = float(hld.loan_amount_required) if hld.loan_amount_required is not None else (float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else 0.0)
+            if req_amt_hl <= 0:
+                missing.append("Required Loan Amount")
+            tenure_hl = hld.preferred_tenure if hld.preferred_tenure is not None else (cgd.preferred_tenure if cgd else None)
+            if tenure_hl is None or tenure_hl <= 0:
+                missing.append("Preferred Loan Tenure")
     elif prod_type == "car_loan":
         cld = app.carLoanDetail
         if not cld:
@@ -74,10 +73,20 @@ def check_applicant_completeness(app: LoanApplication) -> Tuple[bool, List[str],
                 missing.append("Vehicle Valuation / Quotation Price")
             if not cld.new_or_used:
                 missing.append("Vehicle Condition (New / Used)")
+            req_amt_cl = float(cld.loan_amount_required) if cld.loan_amount_required is not None else (float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else 0.0)
+            if req_amt_cl <= 0:
+                missing.append("Required Loan Amount")
+            tenure_cl = cld.preferred_tenure if cld.preferred_tenure is not None else (cgd.preferred_tenure if cgd else None)
+            if tenure_cl is None or tenure_cl <= 0:
+                missing.append("Preferred Loan Tenure")
     elif prod_type == "personal_loan":
         pld = app.personalLoanDetail
-        # Personal loan only needs purpose optionally or required_amount if not in general
-        pass
+        req_amt_pl = float(pld.loan_amount_required or pld.required_amount) if pld and (pld.loan_amount_required is not None or pld.required_amount is not None) else (float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else 0.0)
+        if req_amt_pl <= 0:
+            missing.append("Required Loan Amount")
+        tenure_pl = pld.preferred_tenure if pld and pld.preferred_tenure is not None else (cgd.preferred_tenure if cgd else None)
+        if tenure_pl is None or tenure_pl <= 0:
+            missing.append("Preferred Loan Tenure")
 
     is_complete = len(missing) == 0
     return is_complete, missing, prod_type
@@ -106,10 +115,42 @@ def evaluate_loan_application(db: Session, application_id: int) -> Dict[str, Any
     existing_e = float(cgd.existing_emi) if cgd and cgd.existing_emi else 0.0
     monthly_ob = float(cgd.monthly_obligation) if cgd and cgd.monthly_obligation else 0.0
     cibil_val = int(cgd.cibil_score) if cgd and cgd.cibil_score else None
-    req_amt = float(cgd.loan_amount_required) if cgd and cgd.loan_amount_required else (
-        float(app.personalLoanDetail.required_amount) if app.personalLoanDetail and app.personalLoanDetail.required_amount else 0.0
-    )
-    pref_tenure = int(cgd.preferred_tenure) if cgd and cgd.preferred_tenure else None
+
+    req_amt = 0.0
+    pref_tenure = None
+    if app.homeLoanDetail:
+        if app.homeLoanDetail.loan_amount_required is not None:
+            try:
+                req_amt = float(app.homeLoanDetail.loan_amount_required)
+            except (ValueError, TypeError):
+                req_amt = 0.0
+        if app.homeLoanDetail.preferred_tenure is not None:
+            pref_tenure = app.homeLoanDetail.preferred_tenure
+    elif app.carLoanDetail:
+        if app.carLoanDetail.loan_amount_required is not None:
+            try:
+                req_amt = float(app.carLoanDetail.loan_amount_required)
+            except (ValueError, TypeError):
+                req_amt = 0.0
+        if app.carLoanDetail.preferred_tenure is not None:
+            pref_tenure = app.carLoanDetail.preferred_tenure
+    elif app.personalLoanDetail:
+        p_val = app.personalLoanDetail.loan_amount_required if app.personalLoanDetail.loan_amount_required is not None else app.personalLoanDetail.required_amount
+        if p_val is not None:
+            try:
+                req_amt = float(p_val)
+            except (ValueError, TypeError):
+                req_amt = 0.0
+        if app.personalLoanDetail.preferred_tenure is not None:
+            pref_tenure = app.personalLoanDetail.preferred_tenure
+
+    if req_amt == 0.0 and cgd and cgd.loan_amount_required is not None:
+        try:
+            req_amt = float(cgd.loan_amount_required)
+        except (ValueError, TypeError):
+            req_amt = 0.0
+    if pref_tenure is None and cgd and cgd.preferred_tenure is not None:
+        pref_tenure = cgd.preferred_tenure
 
     applicant_dict = {
         "name": (cgd.name if cgd and cgd.name else app.name) or "Applicant",

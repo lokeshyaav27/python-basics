@@ -34,6 +34,8 @@ export const useApplyLoanForm = (products: any[], user: any) => {
   })
 
   const [homeLoanDetails, setHomeLoanDetails] = useState({
+    loan_amount_required: '',
+    preferred_tenure: '240',
     property_value: '',
     property_location: '',
     propertyUsageType: 'Residential',
@@ -48,6 +50,8 @@ export const useApplyLoanForm = (products: any[], user: any) => {
   })
 
   const [carLoanDetails, setCarLoanDetails] = useState({
+    loan_amount_required: '',
+    preferred_tenure: '60',
     new_or_used: 'New',
     car_value: '',
     down_payment: '',
@@ -55,6 +59,8 @@ export const useApplyLoanForm = (products: any[], user: any) => {
   })
 
   const [personalLoanDetails, setPersonalLoanDetails] = useState({
+    loan_amount_required: '',
+    preferred_tenure: '36',
     loan_purpose: 'Home Improvement',
     other: '',
     required_amount: '',
@@ -98,17 +104,13 @@ export const useApplyLoanForm = (products: any[], user: any) => {
       setSuccessModal({ open: true, applicationId: createdApp.id })
     },
     onError: (err: any) => {
-      setErrorMessage(
-        err?.response?.data?.detail ||
-          err.message ||
-          'Failed to submit loan application. Please try again.'
-      )
+      message.error(err?.response?.data?.detail || 'Failed to submit loan application')
     },
   })
 
   const handleStep1Next = () => {
     if (!selectedProductId) {
-      setErrorMessage('Please select a loan product to proceed.')
+      setErrorMessage('Please select a loan product.')
       return
     }
     setErrorMessage('')
@@ -137,10 +139,6 @@ export const useApplyLoanForm = (products: any[], user: any) => {
       setErrorMessage('Please enter a valid monthly net income.')
       return
     }
-    if (!financialInfo.loan_amount_required || Number(financialInfo.loan_amount_required) <= 0) {
-      setErrorMessage('Please specify your required loan amount.')
-      return
-    }
     setErrorMessage('')
     setStep(4)
   }
@@ -152,6 +150,24 @@ export const useApplyLoanForm = (products: any[], user: any) => {
     if (!selectedProductId) {
       setErrorMessage('Product not selected')
       return
+    }
+
+    if (isHomeLoan) {
+      if (!homeLoanDetails.loan_amount_required || Number(homeLoanDetails.loan_amount_required) <= 0) {
+        setErrorMessage('Please specify your required loan amount for the Home Loan.')
+        return
+      }
+    } else if (isCarLoan) {
+      if (!carLoanDetails.loan_amount_required || Number(carLoanDetails.loan_amount_required) <= 0) {
+        setErrorMessage('Please specify your required loan amount for the Car Loan.')
+        return
+      }
+    } else if (isPersonalLoan) {
+      const pAmt = personalLoanDetails.loan_amount_required || personalLoanDetails.required_amount
+      if (!pAmt || Number(pAmt) <= 0) {
+        setErrorMessage('Please specify your required loan amount for the Personal Loan.')
+        return
+      }
     }
 
     const payload = {
@@ -171,15 +187,15 @@ export const useApplyLoanForm = (products: any[], user: any) => {
           : 0,
         existing_emi: financialInfo.existing_emi ? Number(financialInfo.existing_emi) : 0,
         cibil_score: financialInfo.cibil_score ? Number(financialInfo.cibil_score) : null,
-        loan_amount_required: financialInfo.loan_amount_required
-          ? Number(financialInfo.loan_amount_required)
-          : null,
-        preferred_tenure: financialInfo.preferred_tenure
-          ? Number(financialInfo.preferred_tenure)
-          : null,
       },
       homeLoanDetails: isHomeLoan
         ? {
+            loan_amount_required: homeLoanDetails.loan_amount_required
+              ? Number(homeLoanDetails.loan_amount_required)
+              : null,
+            preferred_tenure: homeLoanDetails.preferred_tenure
+              ? Number(homeLoanDetails.preferred_tenure)
+              : null,
             property_value: homeLoanDetails.property_value
               ? Number(homeLoanDetails.property_value)
               : null,
@@ -199,6 +215,12 @@ export const useApplyLoanForm = (products: any[], user: any) => {
         : undefined,
       carLoanDetails: isCarLoan
         ? {
+            loan_amount_required: carLoanDetails.loan_amount_required
+              ? Number(carLoanDetails.loan_amount_required)
+              : null,
+            preferred_tenure: carLoanDetails.preferred_tenure
+              ? Number(carLoanDetails.preferred_tenure)
+              : null,
             new_or_used: carLoanDetails.new_or_used,
             car_value: carLoanDetails.car_value ? Number(carLoanDetails.car_value) : null,
             down_payment: carLoanDetails.down_payment
@@ -211,13 +233,17 @@ export const useApplyLoanForm = (products: any[], user: any) => {
         : undefined,
       personalLoanDetails: isPersonalLoan
         ? {
+            loan_amount_required: personalLoanDetails.loan_amount_required
+              ? Number(personalLoanDetails.loan_amount_required)
+              : (personalLoanDetails.required_amount ? Number(personalLoanDetails.required_amount) : null),
+            preferred_tenure: personalLoanDetails.preferred_tenure
+              ? Number(personalLoanDetails.preferred_tenure)
+              : null,
             loan_purpose: personalLoanDetails.loan_purpose,
             other: personalLoanDetails.other,
             required_amount: personalLoanDetails.required_amount
               ? Number(personalLoanDetails.required_amount)
-              : financialInfo.loan_amount_required
-              ? Number(financialInfo.loan_amount_required)
-              : null,
+              : (personalLoanDetails.loan_amount_required ? Number(personalLoanDetails.loan_amount_required) : null),
             existing_obligations: personalLoanDetails.existing_obligations
               ? Number(personalLoanDetails.existing_obligations)
               : null,
