@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "dsa-loan-management": {
+      "command": "python",
+      "args": [
+        "-m",
+        "server",
+        "--transport",
+        "stdio"
+      ],
+      "cwd": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp",
+      "env": {
+        "PYTHONPATH": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-be;C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp",
+        "MCP_SERVER_NAME": "dsa-loan-management-mcp"
+      }
+    }
+  }
+}
