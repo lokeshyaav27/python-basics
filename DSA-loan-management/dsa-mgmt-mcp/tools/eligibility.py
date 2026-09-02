@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
-from db import get_db_session
-from auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership, MCPAuthError
+from db.session import get_db_session
+from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership, MCPAuthError
 from app.models.loan_application import LoanApplication
 from app.services.eligibility.engine import evaluate_loan_application
 

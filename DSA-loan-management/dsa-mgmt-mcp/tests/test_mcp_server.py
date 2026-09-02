@@ -7,8 +7,8 @@ import jwt
 CURRENT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(CURRENT_DIR))
 
-from config import mcp_config
-from auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership, MCPAuthError
+from core.config import mcp_config
+from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership, MCPAuthError
 from tools.catalog import handle_get_bank_product_catalog
 from tools.policy_search import handle_search_bank_policies
 from tools.directory import handle_get_agent_directory

@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
-from db import get_db_session
-from auth import resolve_auth_user, enforce_tool_rbac
+from db.session import get_db_session
+from core.auth import resolve_auth_user, enforce_tool_rbac
 from rag.vector_search import perform_policy_vector_search
 
 

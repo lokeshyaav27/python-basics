@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
-from db import get_db_session
-from auth import resolve_auth_user, enforce_tool_rbac, MCPAuthError
+from db.session import get_db_session
+from core.auth import resolve_auth_user, enforce_tool_rbac, MCPAuthError
 from app.repositories.contact_repository import ContactRepository
 
 
@@ -13,7 +13,7 @@ def handle_get_contact_enquiries(
 ) -> Dict[str, Any]:
     """
     Fetches customer lead enquiries submitted through the public website contact form.
-    Allows filtering by status ('New', 'In-Progress', 'Resolved', 'all') and loan type ('Home Loan', 'Car Loan', 'Personal Loan').
+    Allows filtering by status ('New', 'In-Progress', 'Resolved', 'all') and loan type.
     Restricted to Admin and Agent roles.
     """
     user = resolve_auth_user(auth_token=auth_token, auth_context=auth_context)

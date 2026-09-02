@@ -21,8 +21,8 @@ try:
 except ImportError:
     from mcp.server.fastmcp import FastMCP as MCPServer
 
-from config import mcp_config
-from auth import resolve_auth_user, enforce_tool_rbac
+from core.config import mcp_config
+from core.auth import resolve_auth_user, enforce_tool_rbac
 from tools.policy_search import handle_search_bank_policies
 from tools.eligibility import handle_check_loan_eligibility
 from tools.comparison import handle_compare_bank_offers

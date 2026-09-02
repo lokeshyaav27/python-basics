@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional
-from db import get_db_session
-from auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
+from db.session import get_db_session
+from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
 from app.models.loan_application import LoanApplication
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank import Bank
@@ -15,9 +15,9 @@ def handle_compare_bank_offers(
     auth_context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
-    Generates a multi-bank comparative evaluation matrix across all partner banks for a specific loan application.
+    Generates a multi-bank comparative evaluation matrix across partner banks for a specific loan application.
     Evaluates interest rates (ROI), maximum eligible loan amount, monthly EMI, total interest payable,
-    processing fees, insurance requirements, and internal DSA payout commissions (visible only to Agent/Admin).
+    processing fees, insurance requirements, and internal DSA payout commissions.
     """
     user = resolve_auth_user(auth_token=auth_token, auth_context=auth_context)
     enforce_tool_rbac("compare_bank_offers", user)

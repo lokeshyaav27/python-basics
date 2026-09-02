@@ -1,7 +1,7 @@
 import jwt
 import logging
 from typing import Dict, Any, Optional, Set
-from config import mcp_config
+from core.config import mcp_config
 
 logger = logging.getLogger("mcp_auth")
 

@@ -1,6 +1,6 @@
 import json
 from typing import Dict, Any
-from db import get_db_session
+from db.session import get_db_session
 from app.models.bank import Bank
 from app.models.product import Product
 from app.models.product_bank_link import ProductBankLink

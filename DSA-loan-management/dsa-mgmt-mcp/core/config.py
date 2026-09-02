@@ -3,18 +3,18 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Ensure parent and dsa-mgmt-be are available in sys.path
-CURRENT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = CURRENT_DIR.parent
+# Path resolutions
+MCP_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = MCP_ROOT.parent
 BE_DIR = PROJECT_ROOT / "dsa-mgmt-be"
 
 if str(BE_DIR) not in sys.path:
     sys.path.insert(0, str(BE_DIR))
-if str(CURRENT_DIR) not in sys.path:
-    sys.path.insert(0, str(CURRENT_DIR))
+if str(MCP_ROOT) not in sys.path:
+    sys.path.insert(0, str(MCP_ROOT))
 
 # Load .env: prioritize local dsa-mgmt-mcp/.env, fallback to dsa-mgmt-be/.env
-local_env = CURRENT_DIR / ".env"
+local_env = MCP_ROOT / ".env"
 be_env = BE_DIR / ".env"
 
 if local_env.exists():
