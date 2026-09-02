@@ -46,5 +46,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60 * 24 * 7)  # 7 days
 
+    # Model Context Protocol (MCP) Server Configuration
+    MCP_SERVER_URL: str = Field(default="http://localhost:8001/sse")
+    MCP_TRANSPORT: str = Field(default="direct")  # 'direct' for in-process or 'sse' for remote microservice
+
 
 settings = Settings()

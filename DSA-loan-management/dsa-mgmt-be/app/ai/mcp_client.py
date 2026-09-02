@@ -10,6 +10,8 @@ MCP_DIR = PROJECT_ROOT / "dsa-mgmt-mcp"
 if str(MCP_DIR) not in sys.path:
     sys.path.insert(0, str(MCP_DIR))
 
+from app.core.config import settings
+
 logger = logging.getLogger("mcp_client")
 
 
@@ -313,10 +315,13 @@ def execute_mcp_tool(
     from tools.directory import handle_get_agent_directory
     from tools.analytics import handle_get_commission_analytics, handle_get_portfolio_kpis
     from tools.enquiries import handle_get_contact_enquiries
-    from auth import MCPAuthError
+    from core.auth import MCPAuthError
 
     name = (tool_name or "").strip()
-    logger.info(f"⚡ [MCPClient] Executing MCP Tool '{name}' with auth_user={auth_user.get('role') if auth_user else 'None'}")
+    logger.info(
+        f"⚡ [MCPClient] Executing Tool '{name}' | Transport: {settings.MCP_TRANSPORT} ({settings.MCP_SERVER_URL}) "
+        f"| Role: {auth_user.get('role') if auth_user else 'None'}"
+    )
 
     try:
         if name == "search_bank_policies":
