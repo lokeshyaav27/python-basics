@@ -113,49 +113,297 @@ dsa-mgmt-mcp/
 
 ## 3. End-to-End Code Flow
 
-Here is the exact step-by-step journey of an MCP request:
+### 🏛️ The MCP Architectural Lifecycle
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Host as AI Host (dsa-mgmt-be / Inspector)
-    participant Server as server.py (FastMCP)
-    participant Auth as core/auth.py (Security)
-    participant Tool as tools/eligibility.py (Handler)
-    participant DB as db/session.py (PostgreSQL)
+Whenever an AI Client, IDE, or Backend Sub-Agent sends an instruction to the MCP Server, it flows through a strict, predictable chain of layers:
 
-    Note over Host,Server: 1. Handshake Phase
-    Host->>Server: HTTP GET /sse
-    Server-->>Host: 200 OK (text/event-stream) with session endpoint
-
-    Note over Host,Server: 2. Execution Phase
-    Host->>Server: HTTP POST /messages/?session_id=...<br/>{"jsonrpc":"2.0","method":"tools/call","params":{"name":"check_loan_eligibility","arguments":{"application_id":18,"auth_token":"Bearer eyJ..."}}}
-    
-    Server->>Tool: handle_check_loan_eligibility(18, auth_token)
-    Tool->>Auth: resolve_auth_user(auth_token)
-    Auth-->>Tool: auth_user = {role: "agent", userId: 3}
-    
-    Tool->>Auth: enforce_tool_rbac("check_loan_eligibility", auth_user)
-    Auth-->>Tool: RBAC Granted (200 OK)
-
-    Tool->>DB: get_db_session() -> query LoanApplication #18
-    DB-->>Tool: Return Application + Salary + Existing EMIs
-    
-    Tool->>Auth: enforce_record_ownership(auth_user, target_app)
-    Auth-->>Tool: Ownership Verified
-
-    Tool->>Tool: Calculate FOIR (42.5%), LTV (75%), Max Loan Amount (₹45,00,000)
-    Tool-->>Server: Return Underwriting Decision Dict
-    Server-->>Host: Stream JSON-RPC result over SSE connection
+```
+[1. AI Client / Host (Claude, Cursor, Antigravity, or dsa-mgmt-be)]
+        │  Sends JSON-RPC 2.0 Request (e.g. tools/call check_loan_eligibility)
+        ▼
+[2. Transport Layer: server.py (FastMCP)]
+        │  SSE Network Transport (HTTP GET /sse + POST /messages?session_id=...)
+        ▼
+[3. Tool Dispatch Layer: tools/<feature>.py]
+        │  Passes input arguments & JWT auth_token to handler function
+        ▼
+[4. Authentication & Role Resolution: core/auth.py]
+        │  Decodes JWT token (resolve_auth_user) -> extracts userId, role, mobile
+        ▼
+[5. RBAC Permission Enforcement: core/auth.py]
+        │  Checks if role (customer/agent/admin) is authorized (enforce_tool_rbac)
+        ▼
+[6. Database Session Layer: db/session.py]
+        │  Opens managed SQLAlchemy session (get_db_session) & queries PostgreSQL
+        ▼
+[7. Data Ownership Authorization: core/auth.py]
+        │  Verifies customer / agent ownership (enforce_record_ownership)
+        ▼
+[8. Calculation & Vector Search Engine: app/services/ or rag/vector_search.py]
+        │  Executes deterministic FOIR/LTV math or pgvector cosine similarity search
+        ▼
+[9. Data Serialization: core/serializer.py]
+        │  Converts ORM models & calculation results into clean Python dictionaries
+        ▼
+[10. FastMCP Server: server.py]
+        │  Wraps data into standardized JSON-RPC 2.0 response format
+        ▼
+[11. SSE Streaming Response delivered to AI Client]
 ```
 
-### Explanation of the Steps:
-1. **Connection**: Client initiates an HTTP GET request to `/sse`. The server opens a persistent Server-Sent Events stream and assigns a unique `session_id`.
-2. **Dispatch**: Client posts a JSON-RPC 2.0 `tools/call` message.
-3. **Authentication**: `core/auth.py` decodes the JWT access token and extracts `userId`, `role`, and customer identity.
-4. **RBAC Verification**: Ensures the user's role has permission to execute the requested tool.
-5. **Data Retrieval & Ownership**: Queries PostgreSQL via `db/session.py` and verifies ownership (borrowers can only view their own loans; agents only view assigned loans).
-6. **Execution & Response**: Executes mathematical formulas or vector searches and returns structured JSON to the client.
+---
+
+### 🔍 Detailed Step-by-Step Textual Flows by Example
+
+---
+
+### 🔹 Example 1: Credit Underwriting Calculation Tool (`check_loan_eligibility`)
+
+This tool calculates FOIR, LTV, EMI, and maximum eligible loan amount for an applicant.
+
+```
+Step 1: AI Client Request
+   └─ Client sends JSON-RPC 2.0 over SSE POST:
+      - method: "tools/call"
+      - params:
+          name: "check_loan_eligibility"
+          arguments:
+             application_id: 18
+             auth_token: "Bearer eyJhbGciOiJIUz..."
+
+Step 2: Server Entrypoint & Route Matching
+   └─ File: server.py
+      └─ FastMCP receives "tools/call" for registered tool "check_loan_eligibility".
+      └─ Forwards execution to handle_check_loan_eligibility(application_id=18, auth_token=...).
+
+Step 3: Tool Handler Invocation
+   └─ File: tools/eligibility.py
+      └─ Function: handle_check_loan_eligibility(application_id, auth_token, auth_context)
+
+Step 4: JWT Token Decoding & Identity Resolution
+   └─ File: core/auth.py
+      └─ Function: resolve_auth_user(auth_token=auth_token)
+      └─ Decodes signed JWT using JWT_SECRET_KEY & JWT_ALGORITHM (HS256).
+      └─ Extracts: { "userId": 3, "role": "agent", "name": "Rajesh Kumar", "mobile": "9876543210" }
+
+Step 5: Role-Based Access Control (RBAC) Verification
+   └─ File: core/auth.py
+      └─ Function: enforce_tool_rbac("check_loan_eligibility", auth_user)
+      └─ Verifies that "check_loan_eligibility" is in AGENT_PERMITTED_TOOLS.
+      └─ ✅ Access Granted.
+
+Step 6: Database Session & Record Lookup
+   └─ File: db/session.py
+      └─ Function: get_db_session() opens managed PostgreSQL session.
+   └─ File: tools/eligibility.py
+      └─ Queries: db.query(LoanApplication).filter(LoanApplication.id == 18).first()
+      └─ Loads LoanApplication along with linked clientGeneralDetail, homeLoanDetail, and bank.
+
+Step 7: Record-Level Ownership Authorization
+   └─ File: core/auth.py
+      └─ Function: enforce_record_ownership(auth_user, target_app=app)
+      └─ Checks if the agent (userId=3) is assigned to this loan application (app.agentId == 3).
+      └─ ✅ Ownership Verified.
+
+Step 8: Underwriting Engine Execution
+   └─ File: dsa-mgmt-be/app/services/eligibility/engine.py
+      └─ Function: evaluate_loan_application(db, application_id=18)
+      ├─ Reads monthly income: ₹1,50,000, existing obligations: ₹25,000.
+      ├─ Calculates Net Disposable Income: ₹1,25,000.
+      ├─ Applies Bank FOIR Threshold (55% max debt-to-income):
+      │    Max Total EMI = ₹1,50,000 * 0.55 = ₹82,500
+      │    Max New EMI = ₹82,500 - ₹25,000 = ₹57,500
+      ├─ Calculates Maximum Eligible Loan Amount based on ROI (8.50%) and 20-year tenure:
+      │    Max Loan = ₹65,24,000
+      ├─ Applies LTV Threshold (80% of Property Value ₹70,00,000 = ₹56,00,000).
+      └─ Final Approved Amount: ₹56,00,000 (LTV-constrained).
+
+Step 9: Result Packaging
+   └─ File: tools/eligibility.py
+      └─ Returns structured dictionary containing FOIR, LTV, EMIs, and positive factors.
+
+Step 10: JSON-RPC Streaming Delivery
+   └─ File: server.py
+      └─ Wraps result into JSON-RPC 2.0 format:
+         {
+           "jsonrpc": "2.0",
+           "id": 1,
+           "result": {
+             "content": [
+               {
+                 "type": "text",
+                 "text": "{\"status\":\"APPROVED\",\"maxEligibleAmount\":5600000,\"foirPct\":42.5,...}"
+               }
+             ]
+           }
+         }
+      └─ Streams back over the persistent SSE connection to the AI Client.
+```
+
+---
+
+### 🔹 Example 2: Semantic Bank Policy Vector Search Tool (`search_bank_policies`)
+
+This tool performs RAG semantic vector similarity search over partner bank policy PDFs.
+
+```
+Step 1: AI Client Request
+   └─ Client sends:
+      - method: "tools/call"
+      - params:
+          name: "search_bank_policies"
+          arguments:
+             query: "HDFC minimum monthly salary and NRI guarantor rules"
+             bank_id: 94
+             top_k: 3
+
+Step 2: Server Routing & Dispatch
+   └─ File: server.py
+      └─ Dispatches to handle_search_bank_policies(query=..., bank_id=94, top_k=3).
+
+Step 3: RBAC Check
+   └─ File: core/auth.py
+      └─ Function: enforce_tool_rbac("search_bank_policies", auth_user)
+      └─ Public/Customer/Agent/Admin all permitted. ✅
+
+Step 4: Vector Search Engine Invocation
+   └─ File: rag/vector_search.py
+      └─ Function: perform_policy_vector_search(db, query, bank_id=94, top_k=3)
+
+Step 5: Query Vector Embedding
+   └─ File: rag/vector_search.py
+      └─ Loads SentenceTransformer("all-MiniLM-L6-v2").
+      └─ Encodes query text into a 384-dimensional dense vector:
+         query_vector = [0.042, -0.128, 0.095, ...]
+
+Step 6: pgvector Cosine Similarity SQL Query
+   └─ File: rag/vector_search.py
+      └─ Executes raw SQL query via PostgreSQL pgvector extension:
+         SELECT document_id, bank_id, product_id, page_number, chunk_text,
+                1 - (embedding <=> :query_embedding) AS similarity
+         FROM bank_document_chunks
+         WHERE bank_id = 94
+         ORDER BY embedding <=> :query_embedding ASC
+         LIMIT 3;
+
+Step 7: Result Ranking & Metadata Extraction
+   └─ File: rag/vector_search.py
+      └─ Filters chunks matching threshold (> 0.35 similarity).
+      └─ Retrieves bank name ("HDFC Bank") and document filename.
+
+Step 8: Response Envelope
+   └─ File: tools/policy_search.py
+      └─ Returns structured dictionary:
+         {
+           "query": "HDFC minimum monthly salary and NRI guarantor rules",
+           "bankId": 94,
+           "totalFound": 3,
+           "policyExcerpts": [
+              {
+                "page": 4,
+                "similarity": 0.88,
+                "text": "For NRI applicants, a resident Indian co-applicant/guarantor is mandatory..."
+              }
+           ]
+         }
+```
+
+---
+
+### 🔹 Example 3: Multi-Bank Loan Offer Comparison Matrix (`compare_bank_offers`)
+
+This tool compares rates, EMIs, and fees across partner banks, with role-based commission masking.
+
+```
+Step 1: AI Client Request
+   └─ Client sends:
+      - name: "compare_bank_offers"
+      - arguments: { "application_id": 18, "auth_token": "Bearer <Customer or Agent JWT>" }
+
+Step 2: Server Routing & Dispatch
+   └─ File: server.py -> calls handle_compare_bank_offers(application_id=18, ...)
+
+Step 3: Identity & Role Resolution
+   └─ File: core/auth.py -> extracts role: "customer" or "agent".
+
+Step 4: Ownership Check
+   └─ File: core/auth.py -> verifies caller owns or is assigned to Application #18.
+
+Step 5: Multi-Bank Comparison Engine
+   └─ File: dsa-mgmt-be/app/services/comparison/engine.py
+      └─ Function: compare_banks_for_application(db, application_id=18, ...)
+      ├─ Fetches active partner banks offering Home Loans (SBI, HDFC, ICICI, Axis).
+      ├─ For each bank, checks policy parameters (min CIBIL, FOIR limit, age criteria).
+      ├─ Computes monthly EMI, total interest, processing fees, and insurance costs.
+      └─ Evaluates internal DSA payout commission slab for each bank.
+
+Step 6: Role-Based Data Masking
+   └─ File: tools/comparison.py
+      ├─ IF caller is "customer":
+      │    └─ Omit "dsaCommissionPct" and "dsaCommissionPayoutAmt" from every bank offer.
+      └─ IF caller is "agent" or "admin":
+           └─ Include full DSA commission payouts (e.g. SBI: 0.50% = ₹28,000, HDFC: 0.75% = ₹42,000).
+
+Step 7: Response Delivery
+   └─ File: server.py -> Streams finalized comparison matrix back over SSE.
+```
+
+---
+
+### 🔹 Example 4: Reading a Live MCP Resource (`dsa://catalog/banks`)
+
+This flow shows how an AI host directly reads background reference data via standard MCP URI.
+
+```
+Step 1: AI Host Request
+   └─ Client sends JSON-RPC 2.0:
+      - method: "resources/read"
+      - params: { "uri": "dsa://catalog/banks" }
+
+Step 2: Server Resource Router
+   └─ File: server.py
+      └─ Matches URI pattern "@mcp.resource('dsa://catalog/banks')".
+      └─ Invokes get_bank_catalog_resource() from resources/bank_catalog.py.
+
+Step 3: Database Query
+   └─ File: resources/bank_catalog.py
+      └─ Opens session via db/session.py.
+      └─ Executes: db.query(Bank).filter(Bank.isActive != False).all()
+
+Step 4: JSON Formatting
+   └─ File: resources/bank_catalog.py
+      └─ Serializes bank list into structured JSON string.
+
+Step 5: Streaming Delivery
+   └─ File: server.py -> Returns resource contents wrapped in JSON-RPC envelope.
+```
+
+---
+
+### 🔹 Example 5: Rendering an MCP Prompt Template (`underwriting_review`)
+
+This flow demonstrates how standardized prompts are dynamically injected with loan context for the LLM.
+
+```
+Step 1: AI Host Request
+   └─ Client sends:
+      - method: "prompts/get"
+      - params:
+          name: "underwriting_review"
+          arguments: { "application_id": 18 }
+
+Step 2: Server Prompt Router
+   └─ File: server.py
+      └─ Matches "@mcp.prompt('underwriting_review')".
+      └─ Invokes get_underwriting_review_prompt(18) from prompts/underwriting.py.
+
+Step 3: Context Assembly
+   └─ File: prompts/underwriting.py
+      └─ Queries Application #18, applicant financials, CIBIL score, and FOIR calculations.
+      └─ Fills in the standardized credit underwriting prompt template.
+
+Step 4: Prompt Return
+   └─ File: server.py -> Returns full prompt string ready for LLM inference.
 
 ---
 
