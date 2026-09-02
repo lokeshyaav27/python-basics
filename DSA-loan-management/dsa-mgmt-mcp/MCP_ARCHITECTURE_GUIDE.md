@@ -113,42 +113,55 @@ dsa-mgmt-mcp/
 
 ## 3. End-to-End Code Flow
 
-### 🏛️ The MCP Architectural Lifecycle
+### 🏛️ General Architectural Lifecycle (Layer-by-Layer Steps)
 
-Whenever an AI Client, IDE, or Backend Sub-Agent sends an instruction to the MCP Server, it flows through a strict, predictable chain of layers:
+Whenever an AI Client (Claude Desktop, Cursor, Antigravity, or `dsa-mgmt-be`) invokes an MCP Tool or Resource, the execution passes through these sequential textual steps:
 
 ```
-[1. AI Client / Host (Claude, Cursor, Antigravity, or dsa-mgmt-be)]
-        │  Sends JSON-RPC 2.0 Request (e.g. tools/call check_loan_eligibility)
-        ▼
-[2. Transport Layer: server.py (FastMCP)]
-        │  SSE Network Transport (HTTP GET /sse + POST /messages?session_id=...)
-        ▼
-[3. Tool Dispatch Layer: tools/<feature>.py]
-        │  Passes input arguments & JWT auth_token to handler function
-        ▼
-[4. Authentication & Role Resolution: core/auth.py]
-        │  Decodes JWT token (resolve_auth_user) -> extracts userId, role, mobile
-        ▼
-[5. RBAC Permission Enforcement: core/auth.py]
-        │  Checks if role (customer/agent/admin) is authorized (enforce_tool_rbac)
-        ▼
-[6. Database Session Layer: db/session.py]
-        │  Opens managed SQLAlchemy session (get_db_session) & queries PostgreSQL
-        ▼
-[7. Data Ownership Authorization: core/auth.py]
-        │  Verifies customer / agent ownership (enforce_record_ownership)
-        ▼
-[8. Calculation & Vector Search Engine: app/services/ or rag/vector_search.py]
-        │  Executes deterministic FOIR/LTV math or pgvector cosine similarity search
-        ▼
-[9. Data Serialization: core/serializer.py]
-        │  Converts ORM models & calculation results into clean Python dictionaries
-        ▼
-[10. FastMCP Server: server.py]
-        │  Wraps data into standardized JSON-RPC 2.0 response format
-        ▼
-[11. SSE Streaming Response delivered to AI Client]
+Step 1: AI Client Dispatches Request
+   └─ Client sends a JSON-RPC 2.0 message over HTTP/SSE:
+      {"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "<tool_name>", "arguments": {...}}}
+
+Step 2: SSE Network Transport
+   └─ File: server.py
+   └─ FastMCP receives the SSE message on port 8001 and parses the requested tool or resource name.
+
+Step 3: Tool Dispatch Layer
+   └─ File: tools/<feature>.py (e.g. tools/eligibility.py, tools/policy_search.py, tools/comparison.py)
+   └─ Handler function is called with the unpacked JSON arguments and the JWT auth_token.
+
+Step 4: JWT Authentication & Role Resolution
+   └─ File: core/auth.py
+   └─ Function: resolve_auth_user(auth_token=...)
+   └─ Decodes the JWT Bearer token using JWT_SECRET_KEY (HS256) and extracts user role (customer, agent, admin) and userId.
+
+Step 5: Role-Based Access Control (RBAC)
+   └─ File: core/auth.py
+   └─ Function: enforce_tool_rbac(tool_name, auth_user)
+   └─ Checks if the caller's role is permitted to run this tool. If unauthorized, immediately raises MCPAuthError (HTTP 403).
+
+Step 6: Database Session Management
+   └─ File: db/session.py
+   └─ Function: get_db_session()
+   └─ Opens a dedicated, managed PostgreSQL session via SQLAlchemy SessionLocal and passes it to the handler.
+
+Step 7: Data-Level Ownership Verification
+   └─ File: core/auth.py
+   └─ Function: enforce_record_ownership(auth_user, target_app)
+   └─ Verifies that customers only access their own records and agents only access assigned leads.
+
+Step 8: Calculation & Search Engine Execution
+   └─ Files: app/services/eligibility/engine.py, app/services/comparison/engine.py, or rag/vector_search.py
+   └─ Executes mathematical underwriting logic, multi-bank EMI comparisons, or pgvector cosine similarity search.
+
+Step 9: Data Serialization
+   └─ File: core/serializer.py
+   └─ Function: serialize_loan_application()
+   └─ Serializes ORM model instances and calculated metrics into standard JSON-compatible Python dictionaries.
+
+Step 10: JSON-RPC Streaming Delivery
+   └─ File: server.py
+   └─ FastMCP packages the result into a standardized JSON-RPC 2.0 response and streams it back to the client over SSE.
 ```
 
 ---
