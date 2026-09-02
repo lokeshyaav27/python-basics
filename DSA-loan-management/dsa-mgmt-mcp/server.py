@@ -311,23 +311,23 @@ def main():
     parser = argparse.ArgumentParser(description="DSA Loan Management MCP Server")
     parser.add_argument(
         "--transport",
-        choices=["stdio", "sse", "streamable-http"],
-        default="stdio",
-        help="Transport protocol (default: stdio)",
+        choices=["sse", "stdio", "streamable-http"],
+        default="sse",
+        help="Transport protocol (default: sse)",
     )
     parser.add_argument("--host", default=mcp_config.HOST, help=f"Host (default: {mcp_config.HOST})")
     parser.add_argument("--port", type=int, default=mcp_config.PORT, help=f"Port (default: {mcp_config.PORT})")
 
     args = parser.parse_args()
 
-    logger.info(f"Starting {mcp_config.SERVER_NAME} v{mcp_config.SERVER_VERSION} on transport '{args.transport}'...")
+    logger.info(f"Starting {mcp_config.SERVER_NAME} v{mcp_config.SERVER_VERSION} on transport '{args.transport}' at {args.host}:{args.port}...")
 
-    if args.transport == "stdio":
+    if args.transport == "sse":
+        mcp.run(transport="sse", host=args.host, port=args.port)
+    elif args.transport == "stdio":
         mcp.run(transport="stdio")
-    elif args.transport == "sse":
-        mcp.run(transport="sse")
     elif args.transport == "streamable-http":
-        mcp.run(transport="streamable-http")
+        mcp.run(transport="streamable-http", host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

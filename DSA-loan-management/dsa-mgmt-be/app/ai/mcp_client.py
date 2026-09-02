@@ -1,3 +1,6 @@
+import asyncio
+import concurrent.futures
+import json
 import logging
 import sys
 from pathlib import Path
@@ -297,16 +300,63 @@ def _parse_bool(val: Any, default: bool = False) -> bool:
     return default
 
 
-def execute_mcp_tool(
+def _run_async_in_thread(coro):
+    """Executes an async coroutine cleanly in a dedicated thread avoiding loop collisions."""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(lambda: asyncio.run(coro))
+        return future.result(timeout=45)
+
+
+async def _execute_via_sse(
+    server_url: str,
+    tool_name: str,
+    arguments: Dict[str, Any],
+    auth_token: Optional[str] = None,
+    auth_user: Optional[Dict[str, Any]] = None,
+) -> Any:
+    """Connects to remote MCP Server over SSE transport and executes tool."""
+    from mcp import ClientSession
+    from mcp.client.sse import sse_client
+    from app.core.security import create_access_token
+
+    tool_args = dict(arguments or {})
+    if auth_token and "auth_token" not in tool_args:
+        tool_args["auth_token"] = auth_token
+    elif auth_user and "auth_token" not in tool_args:
+        try:
+            token = create_access_token(data={
+                "userId": auth_user.get("userId"),
+                "role": auth_user.get("role", "customer"),
+                "name": auth_user.get("name", "User"),
+            })
+            tool_args["auth_token"] = token
+        except Exception:
+            pass
+
+    async with sse_client(server_url) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            result = await session.call_tool(tool_name, tool_args)
+            if getattr(result, "isError", False):
+                err_text = " ".join(c.text for c in result.content if hasattr(c, "text"))
+                return {"status": "ERROR", "error": err_text}
+
+            for content in result.content:
+                if hasattr(content, "text"):
+                    try:
+                        return json.loads(content.text)
+                    except Exception:
+                        return content.text
+            return {"status": "SUCCESS", "result": result}
+
+
+def _execute_direct(
     tool_name: str,
     arguments: Dict[str, Any],
     auth_user: Optional[Dict[str, Any]] = None,
     auth_token: Optional[str] = None,
-    db: Optional[Any] = None,
 ) -> Any:
-    """
-    Dispatches tool execution directly to the dsa-mgmt-mcp server handler with full RBAC enforcement.
-    """
+    """Direct in-process handler fallback."""
     from tools.policy_search import handle_search_bank_policies
     from tools.eligibility import handle_check_loan_eligibility
     from tools.comparison import handle_compare_bank_offers
@@ -315,99 +365,128 @@ def execute_mcp_tool(
     from tools.directory import handle_get_agent_directory
     from tools.analytics import handle_get_commission_analytics, handle_get_portfolio_kpis
     from tools.enquiries import handle_get_contact_enquiries
+
+    name = tool_name
+    if name == "search_bank_policies":
+        return handle_search_bank_policies(
+            query=arguments.get("query", ""),
+            bank_id=_parse_int(arguments.get("bank_id")),
+            product_id=_parse_int(arguments.get("product_id")),
+            top_k=_parse_int(arguments.get("top_k")) or 3,
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "check_loan_eligibility":
+        app_id = _parse_int(arguments.get("application_id")) or 0
+        return handle_check_loan_eligibility(
+            application_id=app_id,
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "compare_bank_offers":
+        app_id = _parse_int(arguments.get("application_id")) or 0
+        return handle_compare_bank_offers(
+            application_id=app_id,
+            bank_ids=arguments.get("bank_ids"),
+            user_role=arguments.get("user_role"),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_loan_dossier":
+        return handle_get_loan_dossier(
+            application_id=_parse_int(arguments.get("application_id")),
+            customer_id=arguments.get("customer_id"),
+            agent_id=_parse_int(arguments.get("agent_id")),
+            customer_identifier=arguments.get("customer_identifier"),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_bank_product_catalog":
+        return handle_get_bank_product_catalog(
+            product_id=_parse_int(arguments.get("product_id")),
+            bank_id=_parse_int(arguments.get("bank_id")),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_agent_directory":
+        return handle_get_agent_directory(
+            agent_id=_parse_int(arguments.get("agent_id")),
+            include_inactive=_parse_bool(arguments.get("include_inactive"), False),
+            with_workload_metrics=_parse_bool(arguments.get("with_workload_metrics"), True),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_commission_analytics":
+        return handle_get_commission_analytics(
+            agent_id=_parse_int(arguments.get("agent_id")),
+            bank_id=_parse_int(arguments.get("bank_id")),
+            product_id=_parse_int(arguments.get("product_id")),
+            status=arguments.get("status"),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_portfolio_kpis":
+        return handle_get_portfolio_kpis(
+            product_type=arguments.get("product_type"),
+            agent_id=_parse_int(arguments.get("agent_id")),
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    elif name == "get_contact_enquiries":
+        return handle_get_contact_enquiries(
+            status=arguments.get("status"),
+            loan_type=arguments.get("loan_type"),
+            limit=_parse_int(arguments.get("limit")) or 20,
+            auth_token=auth_token,
+            auth_context=auth_user,
+        )
+
+    else:
+        raise ValueError(f"MCP Tool '{name}' is not recognized.")
+
+
+def execute_mcp_tool(
+    tool_name: str,
+    arguments: Dict[str, Any],
+    auth_user: Optional[Dict[str, Any]] = None,
+    auth_token: Optional[str] = None,
+    db: Optional[Any] = None,
+) -> Any:
+    """
+    Dispatches tool execution to the MCP Server over SSE transport, with graceful fallback.
+    """
     from core.auth import MCPAuthError
 
     name = (tool_name or "").strip()
+    transport = (settings.MCP_TRANSPORT or "sse").lower()
     logger.info(
-        f"⚡ [MCPClient] Executing Tool '{name}' | Transport: {settings.MCP_TRANSPORT} ({settings.MCP_SERVER_URL}) "
+        f"⚡ [MCPClient] Executing Tool '{name}' | Transport: {transport.upper()} ({settings.MCP_SERVER_URL}) "
         f"| Role: {auth_user.get('role') if auth_user else 'None'}"
     )
 
     try:
-        if name == "search_bank_policies":
-            return handle_search_bank_policies(
-                query=arguments.get("query", ""),
-                bank_id=_parse_int(arguments.get("bank_id")),
-                product_id=_parse_int(arguments.get("product_id")),
-                top_k=_parse_int(arguments.get("top_k")) or 3,
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
+        if transport == "sse":
+            try:
+                return _run_async_in_thread(_execute_via_sse(
+                    server_url=settings.MCP_SERVER_URL,
+                    tool_name=name,
+                    arguments=arguments,
+                    auth_token=auth_token,
+                    auth_user=auth_user,
+                ))
+            except Exception as sse_err:
+                logger.warning(f"⚠️ [MCPClient] Remote SSE call failed ({sse_err}). Falling back to local in-process handler...")
+                return _execute_direct(name, arguments, auth_user, auth_token)
 
-        elif name == "check_loan_eligibility":
-            app_id = _parse_int(arguments.get("application_id")) or 0
-            return handle_check_loan_eligibility(
-                application_id=app_id,
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "compare_bank_offers":
-            app_id = _parse_int(arguments.get("application_id")) or 0
-            return handle_compare_bank_offers(
-                application_id=app_id,
-                bank_ids=arguments.get("bank_ids"),
-                user_role=arguments.get("user_role"),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_loan_dossier":
-            return handle_get_loan_dossier(
-                application_id=_parse_int(arguments.get("application_id")),
-                customer_id=arguments.get("customer_id"),
-                agent_id=_parse_int(arguments.get("agent_id")),
-                customer_identifier=arguments.get("customer_identifier"),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_bank_product_catalog":
-            return handle_get_bank_product_catalog(
-                product_id=_parse_int(arguments.get("product_id")),
-                bank_id=_parse_int(arguments.get("bank_id")),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_agent_directory":
-            return handle_get_agent_directory(
-                agent_id=_parse_int(arguments.get("agent_id")),
-                include_inactive=_parse_bool(arguments.get("include_inactive"), False),
-                with_workload_metrics=_parse_bool(arguments.get("with_workload_metrics"), True),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_commission_analytics":
-            return handle_get_commission_analytics(
-                agent_id=_parse_int(arguments.get("agent_id")),
-                bank_id=_parse_int(arguments.get("bank_id")),
-                product_id=_parse_int(arguments.get("product_id")),
-                status=arguments.get("status"),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_portfolio_kpis":
-            return handle_get_portfolio_kpis(
-                product_type=arguments.get("product_type"),
-                agent_id=_parse_int(arguments.get("agent_id")),
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        elif name == "get_contact_enquiries":
-            return handle_get_contact_enquiries(
-                status=arguments.get("status"),
-                loan_type=arguments.get("loan_type"),
-                limit=_parse_int(arguments.get("limit")) or 20,
-                auth_token=auth_token,
-                auth_context=auth_user,
-            )
-
-        else:
-            raise ValueError(f"MCP Tool '{name}' is not recognized.")
+        return _execute_direct(name, arguments, auth_user, auth_token)
 
     except MCPAuthError as e:
         logger.warning(f"🔒 [MCPClient] Authorization failed for '{name}': {e.message}")

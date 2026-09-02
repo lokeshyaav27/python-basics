@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # Model Context Protocol (MCP) Server Configuration
     MCP_SERVER_URL: str = Field(default="http://localhost:8001/sse")
-    MCP_TRANSPORT: str = Field(default="direct")  # 'direct' for in-process or 'sse' for remote microservice
+    MCP_TRANSPORT: str = Field(default="sse")  # 'sse' for remote MCP microservice, 'direct' for local in-process
 
 
 settings = Settings()
