@@ -2,14 +2,17 @@
 
 Robust FastAPI and PostgreSQL backend powering the **DSA (Direct Selling Agent) Loan Management Platform**. Handles product and bank catalogs, agent administration, customer loan applications, secure file storage, contact inquiries, and RAG-based vector search for bank policy documents.
 
+Core models, underwriting math engines, and database repositories are powered by the shared [`dsa-common`](../dsa-common) package.
+
 ---
 
 ## 📋 Features
 
 - **FastAPI Framework**: High performance async-ready RESTful APIs with auto-generated OpenAPI documentation.
+- **Shared Core Domain (`dsa-common`)**: Unified models, underwriting formulas, and database repositories shared with the MCP server.
 - **SQLAlchemy ORM & PostgreSQL**: Relational data modeling for products, banks, agents, commissions, and multi-category loan applications (Home, Car, Personal).
 - **pgvector Vector Database**: Embeddings and semantic document search for bank policy guidelines (RAG integration).
-- **Alembic Database Migrations**: Version-controlled, reproducible database schema management.
+- **Alembic Database Migrations**: Version-controlled, reproducible database schema management driven directly by `dsa_common.models.Base`.
 - **Automated Full Database Seeder**: Single-command database population with demo products, banks, agents, applications, and synchronized static assets.
 - **Static Asset Serving**: Built-in endpoints for product images, bank logos, agent profile photos, and uploaded loan documents.
 
@@ -48,10 +51,11 @@ cd DSA-loan-management/dsa-mgmt-be
   source .venv/bin/activate
   ```
 
-### 3. Install dependencies
+### 3. Install dependencies & `dsa-common` package
 ```bash
 pip install -r requirements.txt
 ```
+*(This automatically installs `dsa-common` in editable mode `-e ../dsa-common` along with FastAPI and database drivers).*
 
 ### 4. Configure Environment Variables
 Copy `.env.example` to `.env` and configure your database connection string:
@@ -74,168 +78,33 @@ DATABASE_URL=postgresql://postgres:admin@localhost:5432/dsa-mgmt
 
 ## 🗄️ Database Migrations (Alembic)
 
-Database schema versioning and incremental table migrations in this platform are managed using **[Alembic](https://alembic.sqlalchemy.org/)**.
+Database schema versioning and incremental table migrations are managed using **[Alembic](https://alembic.sqlalchemy.org/)** pointed directly at `dsa_common.models.Base.metadata`.
 
----
-
-### 1. Alembic vs Database Seeder: What's the Difference?
-
-| Feature | Alembic Migrations (`alembic upgrade head`) | Database Seeder (`seed_full_database.py`) |
-|---|---|---|
-| **Primary Purpose** | **Schema Version Control (DDL)** | **Data & Asset Provisioning (DML)** |
-| **Creates Tables?** | ✅ Yes (via tracked Python migration files) | ✅ Yes (via SQLAlchemy `Base.metadata.create_all`) |
-| **Does Seeder use Alembic?** | ❌ No (Seeder does **not** use Alembic) | ✅ Direct SQLAlchemy ORM |
-| **Alters / Migrates Columns?** | ✅ Yes (tracks historical revisions & rollback) | ❌ No (re-creates tables) |
-| **Inserts Demo Data?** | ❌ No (creates clean, empty schema structure) | ✅ Yes (products, banks, agents, loan leads) |
-| **Copies Files & Static Images?** | ❌ No | ✅ Yes (product images, bank logos, user photos) |
-| **Indexes pgvector Embeddings?** | ❌ No | ✅ Yes (generates vectors from policy PDFs) |
-| **Best Used In** | **Production & CI/CD Deployment Pipelines** | **Local Development & QA Testing** |
-
----
-
-### 2. How to Initialize the Database Using Alembic Only (No Demo Data)
-
-If you are setting up a production or clean staging database where you want the exact schema structure **without any demo records**:
-
-#### Step 1: Create the Target Database
-Before connecting to the database, create it in PostgreSQL:
-
-- **Via PostgreSQL CLI (`psql`) or pgAdmin:**
-  ```sql
-  CREATE DATABASE "dsa-mgmt";
-  ```
-- **Or via Python Auto-Creation Utility:**
-  ```bash
-  python -c "from app.db.db_utils import ensure_database_exists; ensure_database_exists()"
-  ```
-
-#### Step 2: Connect and Enable the `pgvector` Extension
-Connect to the newly created database and enable vector similarity search:
-```sql
-\c "dsa-mgmt"
-CREATE EXTENSION IF NOT EXISTS vector;
-```
-
-#### Step 3: Generate the Baseline Migration File
-Run Alembic's auto-generator. Alembic inspects your SQLAlchemy models (`app/models/*.py`), compares them against the empty PostgreSQL database, and creates a revision script in `alembic/versions/`:
-```bash
-alembic revision --autogenerate -m "Initial schema setup"
-```
-
-#### Step 4: Apply the Migration
-Apply all pending migrations to bring the database schema to the latest version:
-```bash
-alembic upgrade head
-```
-PostgreSQL will now have all 10 application tables created along with the `alembic_version` tracking table.
-
----
-
-### 3. Common Alembic Migration Commands
-
-> Ensure your virtual environment is active (or prefix commands with `.venv\Scripts\python.exe -m alembic` on Windows).
-
-#### 1. Generate an Incremental Migration
-Whenever you add, modify, or delete columns/tables in `app/models/`:
-```bash
-alembic revision --autogenerate -m "describe_your_changes_here"
-```
-*(Example: `alembic revision --autogenerate -m "add_cibil_score_to_general_details"`)*
-
-#### 2. Apply Migrations to the Database
-Apply all unapplied migrations to the latest revision:
+### 1. Apply Existing Migrations
 ```bash
 alembic upgrade head
 ```
 
-#### 3. Roll Back Migrations
-- **Revert the most recent migration:**
-  ```bash
-  alembic downgrade -1
-  ```
-- **Revert all migrations back to an empty database:**
-  ```bash
-  alembic downgrade base
-  ```
-
-#### 4. Inspect Migration Status & History
-- **View current database schema revision:**
-  ```bash
-  alembic current
-  ```
-- **View chronological history log:**
-  ```bash
-  alembic history --verbose
-  ```
+### 2. Generate New Migrations (When adding/modifying models in `dsa-common`)
+```bash
+alembic revision --autogenerate -m "describe_your_changes"
+alembic upgrade head
+```
 
 ---
 
 ## 🌱 Database Seeders
 
-The platform uses a **modular seeder architecture** located under the `seeds/` directory, managed by a master orchestrator (`seed_full_database.py`). 
+The platform includes modular database seeders:
 
-Instead of a single monolithic script, the database seeding has been broken down into **5 small, independent seeders**. In `seed_full_database.py`, each seeder step is invoked as an isolated function call, allowing you to easily **comment out or disable any step** that is not needed for your current environment.
-
----
-
-### 1. Master Seeder Orchestrator (`seed_full_database.py`)
-
-You can run the full database seeding workflow all-at-once:
-
-#### Windows (PowerShell):
-```powershell
-.venv\Scripts\Activate.ps1
-python seed_full_database.py
-```
-
-#### Windows (Command Prompt):
-```cmd
-.venv\Scripts\python.exe seed_full_database.py
-```
-
-#### macOS / Linux:
 ```bash
-source .venv/bin/activate
+# Run full seeding workflow (Admin, Products, Banks, Agents, Embeddings & Loans)
 python seed_full_database.py
 ```
 
-#### 💡 Customizing / Disabling Specific Seed Steps
-If you only need certain tables seeded (e.g. only Admin and Products/Banks without demo loan applications), simply open `seed_full_database.py` and **comment out** the unwanted function calls:
-
-```python
-# 1. Seed Only One Admin User
-admin = seed_admin()
-
-# 2. Seed Products & Banks
-products, banks = seed_products_banks()
-
-# 3. Seed Agents (Comment out if not needed)
-# agents = seed_agents()
-
-# 4. Seed Product-Bank Mapping & Vector Embeddings (Comment out if not needed)
-# links = seed_product_bank_mapping()
-
-# 5. Seed Loan Applications (Comment out if not needed)
-# apps = seed_loan_applications()
-```
-
 ---
 
-### 2. Run Individual Modular Seeders Directly
-
-Each seeder script in the `seeds/` directory is completely standalone and can be executed individually from the command line:
-
-| Step | Script | Description & Static Assets Handled | Standalone Command |
-| :---: | :--- | :--- | :--- |
-| **1** | `seeds/seed_1_admin.py` | **Default Admin Only**: Seeds 1 primary admin (`dsa_admin@yopmail.com`) and copies `user-01.png`. | `python seeds/seed_1_admin.py` |
-| **2** | `seeds/seed_2_products_banks.py` | **Products & Banks**: Seeds 3 Products (Home, Car, Personal) & 7 Institutions (5 Banks + 2 NBFCs), copying product images and bank logos. | `python seeds/seed_2_products_banks.py` |
-| **3** | `seeds/seed_3_agents.py` | **DSA Agents**: Seeds 6 regular DSA Agents + 1 secondary admin with encrypted passwords, copying `user-02.png` to `user-08.png`. | `python seeds/seed_3_agents.py` |
-| **4** | `seeds/seed_4_product_bank_mapping.py` | **Product-Bank Mapping & Vectors**: Maps products to banks with commissions and indexes bank policy PDFs into `pgvector`. | `python seeds/seed_4_product_bank_mapping.py` |
-| **5** | `seeds/seed_5_loan_applications.py` | **Loan Applications**: Seeds 18 realistic applications across 8 unique customers in *Pending Review* status with linked financial details. | `python seeds/seed_5_loan_applications.py` |
-
----
-
-## 🏃 Running the Application
+## 🏃 Running the Backend Server
 
 Start the FastAPI development server with hot-reload:
 
@@ -254,53 +123,26 @@ Once running, access the interactive API docs:
 
 ```text
 dsa-mgmt-be/
-├── alembic/                  # Alembic migration environment and versions
-│   ├── versions/             # Auto-generated revision migration files
-│   └── env.py                # Alembic runtime execution configuration
-├── alembic.ini               # Alembic settings configuration file
+├── alembic/                  # Alembic migration environment and version files
+├── alembic.ini               # Alembic configuration
 ├── app/
 │   ├── api/
 │   │   └── routers/          # FastAPI Route handlers (auth, products, banks, loans, etc.)
 │   ├── core/
 │   │   ├── config.py         # Application settings and environment variables
+│   │   ├── constants.py      # Re-exports from dsa_common.constants
 │   │   └── security.py       # JWT creation, PBKDF2 hashing, and role auth dependencies
 │   ├── db/
+│   │   ├── db_utils.py       # Auto database creation utility
 │   │   └── session.py        # SQLAlchemy engine and SessionLocal setup
-│   ├── models/               # SQLAlchemy ORM models
 │   ├── schemas/              # Pydantic validation and serialization schemas
-│   ├── services/             # Underwriting, MCP tools, pgvector RAG, and Groq chat services
+│   ├── services/             # Application services (comparison_service, product_service, etc.)
+│   ├── ai/                   # AI Orchestrator, Sub-agents & MCP client connection
 │   └── main.py               # FastAPI application entrypoint & static mounts
 ├── dsa-file-storage/         # Static storage directory for uploads and seeded assets
-│   ├── agent-photos/
-│   ├── bank-documents/
-│   ├── bank-logo-images/
-│   └── product-images/
 ├── seeds/                    # Modular database seeders
-│   ├── seed_1_admin.py               # 1. Primary admin seeder
-│   ├── seed_2_products_banks.py      # 2. Products and banks seeder
-│   ├── seed_3_agents.py              # 3. DSA agents seeder
-│   ├── seed_4_product_bank_mapping.py# 4. Product-bank links & RAG vector indexer
-│   └── seed_5_loan_applications.py   # 5. Customer loan applications seeder
-├── alembic/                  # Database migration scripts and versions
 ├── seed_full_database.py     # Master database seeding orchestrator
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Python dependencies (includes -e ../dsa-common)
 ├── .env.example              # Sample environment variables template
-└── README.md                 # Project documentation
+└── README.md                 # Backend documentation
 ```
-
----
-
-## 📡 API Endpoints Overview
-
-| Endpoint Prefix | Description | Auth Requirement |
-| :--- | :--- | :--- |
-| `/api/auth` | Agent/Admin login, Customer OTP verification, and profile lookup | Public / Bearer Token |
-| `/api/products` | Loan product catalog (Home, Car, Personal loans) | Public (Read) / Admin (Write) |
-| `/api/banks` | Partner banks & NBFCs, product mapping, document upload | Public (Read) / Admin (Write) |
-| `/api/agents` | Agent creation, management, status toggles, and assignments | Admin / Agent (Profile) |
-| `/api/loan-applications` | Loan application submission, workflow status, and customer tracking | Scoped Role Auth |
-| `/api/contact` | Public contact and loan consultation inquiries | Public (Post) / Admin (Manage) |
-| `/api/comparison` | Multi-bank loan comparison with CIBIL-to-ROI and DSA commissions | Admin / Agent / Customer |
-| `/api/eligibility` | Multi-factor underwriting calculator & natural language explanations | Admin / Agent / Customer |
-| `/api/chat` | AI Underwriter Conversational Assistant powered by Groq LLM | Admin / Agent / Customer |
-| `/static/...` | File storage and static asset serving | Public |

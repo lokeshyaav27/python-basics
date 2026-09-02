@@ -2,18 +2,21 @@
 
 Production-grade **Model Context Protocol (MCP)** server for the DSA Loan Management Platform, implementing the open MCP specification using the official Python SDK.
 
+Core models, underwriting math engines, and database repositories are powered by the shared [`dsa-common`](../dsa-common) package.
+
 > 📖 **Full Architectural Guide**: See [MCP_ARCHITECTURE_GUIDE.md](./MCP_ARCHITECTURE_GUIDE.md) for sequence diagrams, client connection steps, and visual inspection using `npx @modelcontextprotocol/inspector`.
 
 ---
 
 ## 🏛️ Architecture & Highlights
 
-* **Protocol Support**: Standard JSON-RPC 2.0 over `stdio`, `sse`, or `streamable-http`.
-* **Universal Compatibility**: Connects seamlessly with **Antigravity**, **Cursor**, **Claude Desktop**, and backend agent microservices.
+* **Protocol Support**: Standard JSON-RPC 2.0 over `sse` (HTTP stream) or `stdio` (CLI/Desktop).
+* **Shared Core Domain (`dsa-common`)**: Uses identical database models, repositories, and underwriting logic as the main backend.
+* **Universal Compatibility**: Connects seamlessly with **Antigravity**, **Cursor**, **Claude Desktop**, and backend AI agent microservices.
 * **Authentication & RBAC**:
   * Accepts signed JWT tokens (`Bearer <jwt>`) or structured auth contexts.
   * Enforces Role-Based Access Control (**Customer**, **Agent**, **Admin**).
-  * Data-level ownership checks (Borrowers can only inspect their own loan records; Agents only see their assigned leads).
+  * Data-level ownership checks (Borrowers only inspect their own loan records; Agents only see their assigned leads).
 * **RAG Semantic Search**: Cosine similarity vector search over bank credit policy guidelines using `pgvector` & `sentence-transformers`.
 * **Dynamic Resources**: Exposes live bank catalogs and policy documents via standard `dsa://` URI schemes.
 * **Prompt Templates**: Provides standardized credit underwriting and multi-bank comparison prompts.
@@ -36,101 +39,58 @@ Production-grade **Model Context Protocol (MCP)** server for the DSA Loan Manage
 
 ---
 
-## 📂 Live MCP Resources
-
-* `dsa://catalog/banks` - Live JSON catalog of all active partner banks and institution profiles.
-* `dsa://catalog/products` - Live catalog of active loan products (Home, Car, Personal Loan).
-* `dsa://policies/{bank_id}` - Indexed credit policy documentation metadata for a specific bank.
-
----
-
-## 📝 Prompt Templates
-
-* `underwriting_review` - Standardized prompt for comprehensive borrower credit assessment and risk analysis.
-* `compare_bank_offers` - Multi-bank rate comparison prompt for personalized borrower advisory.
-
----
-
 ## 💻 Setup & Installation
 
-### Option 1: Dedicated Virtual Environment inside `dsa-mgmt-mcp` (Recommended)
+### 1. Navigate to the MCP server directory
+```bash
+cd DSA-loan-management/dsa-mgmt-mcp
+```
 
-1. Open PowerShell and navigate to the directory:
-   ```powershell
-   cd C:\Users\lokeshyadav\Documents\Lokesh\Projects\learning\python-basics\DSA-loan-management\dsa-mgmt-mcp
-   ```
+### 2. Create and activate a virtual environment
 
-2. Create a dedicated virtual environment:
-   ```powershell
-   python -m venv .venv
-   ```
+- **Windows (PowerShell):**
+  ```powershell
+  python -m venv .venv
+  .venv\Scripts\Activate.ps1
+  ```
+- **Windows (Command Prompt):**
+  ```cmd
+  python -m venv .venv
+  .venv\Scripts\activate.bat
+  ```
+- **macOS / Linux:**
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  ```
 
-3. Activate the environment:
-   * **PowerShell:**
-     ```powershell
-     .\.venv\Scripts\Activate.ps1
-     ```
-     *(If script execution is disabled on your machine, run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once)*
-   * **Command Prompt (CMD):**
-     ```cmd
-     .\.venv\Scripts\activate.bat
-     ```
+*(Alternatively, you can reuse the backend virtual environment by running `..\dsa-mgmt-be\.venv\Scripts\Activate.ps1`)*
 
-4. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. Install dependencies & `dsa-common`
+```bash
+pip install -r requirements.txt
+```
+*(This automatically installs `dsa-common` in editable mode `-e ../dsa-common` along with MCP SDK, FastMCP, and pgvector).*
 
----
-
-### Option 2: Reusing the Backend Virtual Environment (`dsa-mgmt-be/.venv`)
-
-If you prefer to share the existing `.venv` without downloading packages again:
-
-```powershell
-cd C:\Users\lokeshyadav\Documents\Lokesh\Projects\learning\python-basics\DSA-loan-management\dsa-mgmt-mcp
-..\dsa-mgmt-be\.venv\Scripts\Activate.ps1
+### 4. Configure Environment Variables
+Copy `.env.example` to `.env`:
+```bash
+copy .env.example .env
 ```
 
 ---
 
 ## 🚀 Running the Server
 
-### 1. SSE HTTP Mode (Microservice on port 8001)
-```powershell
+### 1. SSE HTTP Mode (Microservice on port 8001 - Recommended)
+```bash
 python server.py --transport sse --host 0.0.0.0 --port 8001
 ```
-*The server will listen at `http://localhost:8001/sse` and handle JSON-RPC MCP requests.*
+*The server will listen at `http://localhost:8001/sse` and handle JSON-RPC MCP requests from backend AI agents.*
 
 ### 2. Stdio Mode (CLI / Desktop AI Clients)
-```powershell
+```bash
 python server.py --transport stdio
-```
-
----
-
-## ⚙️ Connecting to Claude Desktop / Cursor / Antigravity
-
-Add the following to your `claude_desktop_config.json` or Antigravity IDE configuration:
-
-```json
-{
-  "mcpServers": {
-    "dsa-loan-management": {
-      "command": "python",
-      "args": [
-        "-m",
-        "server",
-        "--transport",
-        "stdio"
-      ],
-      "cwd": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp",
-      "env": {
-        "PYTHONPATH": "C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-be;C:/Users/lokeshyadav/Documents/Lokesh/Projects/learning/python-basics/DSA-loan-management/dsa-mgmt-mcp"
-      }
-    }
-  }
-}
 ```
 
 ---
@@ -139,6 +99,6 @@ Add the following to your `claude_desktop_config.json` or Antigravity IDE config
 
 Run the test suite to verify token resolution, RBAC authorization, tools, and resources:
 
-```powershell
+```bash
 python tests/test_mcp_server.py
 ```
