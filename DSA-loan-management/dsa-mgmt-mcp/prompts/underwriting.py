@@ -1,7 +1,13 @@
+import logging
+
+logger = logging.getLogger("mcp_prompts.underwriting")
+
+
 def get_underwriting_review_prompt(application_id: int) -> str:
     """
     Standardized prompt template for credit underwriting review and borrower risk assessment.
     """
+    logger.info(f"📝 [Prompt: underwriting_review] Generating underwriting prompt for Application #{application_id}")
     return f"""You are a Senior DSA Credit Underwriting Specialist.
 Review Loan Application #{application_id} and provide a comprehensive credit assessment:
 

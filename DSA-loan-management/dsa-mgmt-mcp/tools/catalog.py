@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Any, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac
@@ -5,6 +6,8 @@ from app.models.bank import Bank
 from app.models.product import Product
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank_document import BankDocument
+
+logger = logging.getLogger("mcp_tools.catalog")
 
 
 def handle_get_bank_product_catalog(
@@ -19,17 +22,22 @@ def handle_get_bank_product_catalog(
     (2) a bank's detailed profile and commission structure (pass bank_id), or
     (3) all active loan products and partner lending institutions.
     """
+    logger.info(f"🔹 [get_bank_product_catalog] Request with ProductId={product_id}, BankId={bank_id}")
+
     user = resolve_auth_user(auth_token=auth_token, auth_context=auth_context)
     enforce_tool_rbac("get_bank_product_catalog", user)
 
     role = user.get("role", "customer")
     show_comm = role in ["admin", "agent"]
+    logger.debug(f"ℹ️ [get_bank_product_catalog] Caller Role='{role}' | Show Commissions: {show_comm}")
 
     with get_db_session() as db:
         # Case 1: Specific Bank Profile & Commission Slab Lookup
         if bank_id is not None and int(bank_id) > 0:
+            logger.debug(f"🔍 [get_bank_product_catalog] Looking up Bank #{bank_id}")
             bank = db.query(Bank).filter(Bank.id == int(bank_id)).first()
             if not bank:
+                logger.error(f"❌ [get_bank_product_catalog] Bank #{bank_id} not found.")
                 raise ValueError(f"Bank #{bank_id} not found.")
 
             links = db.query(ProductBankLink).filter(ProductBankLink.bankId == int(bank_id)).all()
@@ -43,6 +51,7 @@ def handle_get_bank_product_catalog(
                     item["dsaCommissionPct"] = float(l.commission) if l.commission is not None else None
                 products_offered.append(item)
 
+            logger.info(f"✅ [get_bank_product_catalog] Bank '{bank.name}' offers {len(products_offered)} loan products.")
             return {
                 "catalogType": "single_bank",
                 "bankId": bank.id,
@@ -55,6 +64,7 @@ def handle_get_bank_product_catalog(
 
         # Case 2: Banks by Specific Product
         if product_id is not None and int(product_id) > 0:
+            logger.debug(f"🔍 [get_bank_product_catalog] Querying partner banks offering Product #{product_id}")
             product = db.query(Product).filter(Product.id == int(product_id)).first()
             links = (
                 db.query(ProductBankLink, Bank)
@@ -80,6 +90,7 @@ def handle_get_bank_product_catalog(
                     item["policyParameters"] = link.policyParameters
                 banks_list.append(item)
 
+            logger.info(f"✅ [get_bank_product_catalog] Product '{product.name if product else product_id}' offered by {len(banks_list)} banks.")
             return {
                 "catalogType": "product_banks",
                 "productId": product_id,
@@ -89,9 +100,11 @@ def handle_get_bank_product_catalog(
             }
 
         # Case 3: Complete Platform Catalog (All Products & Banks)
+        logger.debug("🔍 [get_bank_product_catalog] Fetching complete platform product and bank catalog...")
         products = db.query(Product).filter(Product.isActive != False).order_by(Product.id.asc()).all()
         banks = db.query(Bank).filter(Bank.isActive != False).order_by(Bank.id.asc()).all()
 
+        logger.info(f"✅ [get_bank_product_catalog] Full catalog returned: {len(products)} products, {len(banks)} active banks.")
         return {
             "catalogType": "full_catalog",
             "totalProducts": len(products),

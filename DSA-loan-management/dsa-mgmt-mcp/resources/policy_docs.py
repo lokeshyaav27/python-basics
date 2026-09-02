@@ -1,9 +1,12 @@
 import json
+import logging
 from typing import Dict, Any
 from db.session import get_db_session
 from app.models.bank import Bank
 from app.models.bank_document import BankDocument
 from app.models.product_bank_link import ProductBankLink
+
+logger = logging.getLogger("mcp_resources.policy_docs")
 
 
 def get_bank_policy_resource(bank_id: int) -> str:
@@ -11,9 +14,11 @@ def get_bank_policy_resource(bank_id: int) -> str:
     Returns indexed policy documents and guidelines for a given partner bank.
     URI: dsa://policies/{bank_id}
     """
+    logger.info(f"📦 [Resource: dsa://policies/{bank_id}] Fetching policy document library for Bank #{bank_id}")
     with get_db_session() as db:
         bank = db.query(Bank).filter(Bank.id == bank_id).first()
         if not bank:
+            logger.warning(f"📦 [Resource: dsa://policies/{bank_id}] ❌ Bank #{bank_id} not found.")
             return json.dumps({"error": f"Bank #{bank_id} not found."})
 
         links = db.query(ProductBankLink).filter(ProductBankLink.bankId == bank_id).all()
@@ -38,6 +43,7 @@ def get_bank_policy_resource(bank_id: int) -> str:
             for d in docs
         ]
 
+        logger.info(f"✅ [Resource: dsa://policies/{bank_id}] Streamed {len(doc_data)} policy documents for '{bank.name}'.")
         return json.dumps({
             "resource": f"dsa://policies/{bank_id}",
             "bankId": bank.id,

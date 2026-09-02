@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -71,13 +72,17 @@ def search_bank_policies(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Semantic vector search for bank credit policies."""
-    return handle_search_bank_policies(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: search_bank_policies] Start | Query: '{query}'")
+    result = handle_search_bank_policies(
         query=query,
         bank_id=bank_id,
         product_id=product_id,
         top_k=top_k,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: search_bank_policies] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -93,10 +98,14 @@ def check_loan_eligibility(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Credit underwriting calculation."""
-    return handle_check_loan_eligibility(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: check_loan_eligibility] Start | Application #{application_id}")
+    result = handle_check_loan_eligibility(
         application_id=application_id,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: check_loan_eligibility] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -114,12 +123,16 @@ def compare_bank_offers(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Multi-bank rate & EMI quote comparison."""
-    return handle_compare_bank_offers(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: compare_bank_offers] Start | Application #{application_id}")
+    result = handle_compare_bank_offers(
         application_id=application_id,
         bank_ids=bank_ids,
         user_role=user_role,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: compare_bank_offers] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -140,13 +153,17 @@ def get_loan_dossier(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Unified loan application and customer dossier fetcher."""
-    return handle_get_loan_dossier(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_loan_dossier] Start | AppId={application_id}, CustId={customer_id}, AgentId={agent_id}")
+    result = handle_get_loan_dossier(
         application_id=application_id,
         customer_id=customer_id,
         agent_id=agent_id,
         customer_identifier=customer_identifier,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_loan_dossier] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -164,11 +181,15 @@ def get_bank_product_catalog(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Bank and product catalog."""
-    return handle_get_bank_product_catalog(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_bank_product_catalog] Start | ProductId={product_id}, BankId={bank_id}")
+    result = handle_get_bank_product_catalog(
         product_id=product_id,
         bank_id=bank_id,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_bank_product_catalog] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -187,12 +208,16 @@ def get_agent_directory(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Agent directory and team workload (Admin only)."""
-    return handle_get_agent_directory(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_agent_directory] Start | AgentId={agent_id}")
+    result = handle_get_agent_directory(
         agent_id=agent_id,
         include_inactive=include_inactive,
         with_workload_metrics=with_workload_metrics,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_agent_directory] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -213,13 +238,17 @@ def get_commission_analytics(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: DSA commission and revenue analytics."""
-    return handle_get_commission_analytics(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_commission_analytics] Start | AgentId={agent_id}, BankId={bank_id}")
+    result = handle_get_commission_analytics(
         agent_id=agent_id,
         bank_id=bank_id,
         product_id=product_id,
         status=status,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_commission_analytics] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -235,11 +264,15 @@ def get_portfolio_kpis(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Portfolio KPIs and status distribution."""
-    return handle_get_portfolio_kpis(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_portfolio_kpis] Start | ProductType={product_type}, AgentId={agent_id}")
+    result = handle_get_portfolio_kpis(
         product_type=product_type,
         agent_id=agent_id,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_portfolio_kpis] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 @mcp.tool(
@@ -257,12 +290,16 @@ def get_contact_enquiries(
     auth_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """MCP Tool: Customer contact leads and enquiries."""
-    return handle_get_contact_enquiries(
+    t0 = time.perf_counter()
+    logger.info(f"⚡ [RPC tools/call: get_contact_enquiries] Start | Status={status}, Limit={limit}")
+    result = handle_get_contact_enquiries(
         status=status,
         loan_type=loan_type,
         limit=limit,
         auth_token=auth_token,
     )
+    logger.info(f"⚡ [RPC tools/call: get_contact_enquiries] Completed in {(time.perf_counter() - t0)*1000:.1f}ms")
+    return result
 
 
 # ============================================================================
@@ -272,18 +309,21 @@ def get_contact_enquiries(
 @mcp.resource("dsa://catalog/banks")
 def resource_bank_catalog() -> str:
     """Live JSON catalog of active partner banks."""
+    logger.info("📦 [RPC resources/read: dsa://catalog/banks]")
     return get_bank_catalog_resource()
 
 
 @mcp.resource("dsa://catalog/products")
 def resource_product_catalog() -> str:
     """Live JSON catalog of active loan products."""
+    logger.info("📦 [RPC resources/read: dsa://catalog/products]")
     return get_product_catalog_resource()
 
 
 @mcp.resource("dsa://policies/{bank_id}")
 def resource_bank_policies(bank_id: int) -> str:
     """Indexed policy documents and guidelines for a specific bank."""
+    logger.info(f"📦 [RPC resources/read: dsa://policies/{bank_id}]")
     return get_bank_policy_resource(int(bank_id))
 
 
@@ -294,12 +334,14 @@ def resource_bank_policies(bank_id: int) -> str:
 @mcp.prompt("underwriting_review")
 def prompt_underwriting(application_id: int) -> str:
     """Standardized credit underwriting prompt template."""
+    logger.info(f"📝 [RPC prompts/get: underwriting_review] App #{application_id}")
     return get_underwriting_review_prompt(int(application_id))
 
 
 @mcp.prompt("compare_bank_offers")
 def prompt_rate_comparison(application_id: int, bank_names: Optional[str] = None) -> str:
     """Multi-bank rate comparison prompt template."""
+    logger.info(f"📝 [RPC prompts/get: compare_bank_offers] App #{application_id}")
     return get_rate_comparison_prompt(int(application_id), bank_names=bank_names)
 
 
@@ -320,7 +362,7 @@ def main():
 
     args = parser.parse_args()
 
-    logger.info(f"Starting {mcp_config.SERVER_NAME} v{mcp_config.SERVER_VERSION} on transport '{args.transport}' at {args.host}:{args.port}...")
+    logger.info(f"🚀 Starting {mcp_config.SERVER_NAME} v{mcp_config.SERVER_VERSION} on transport '{args.transport}' at {args.host}:{args.port}...")
 
     if args.transport == "sse":
         mcp.run(transport="sse", host=args.host, port=args.port)

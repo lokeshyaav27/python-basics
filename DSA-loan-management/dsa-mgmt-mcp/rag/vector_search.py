@@ -6,7 +6,7 @@ from app.models.bank import Bank
 from app.models.product import Product
 from app.rag import rag_service
 
-logger = logging.getLogger("mcp_vector_search")
+logger = logging.getLogger("mcp_rag.vector_search")
 
 
 def resolve_bank_and_product(
@@ -23,6 +23,7 @@ def resolve_bank_and_product(
     matched_bank_name = None
 
     q_lower = query_text.lower()
+    logger.debug(f"🔍 [Vector Search Resolver] Resolving bank/product entities for query: '{query_text}'")
 
     if resolved_bank_id is None:
         active_banks = db.query(Bank).filter(Bank.isActive != False).all()
@@ -51,9 +52,11 @@ def resolve_bank_and_product(
         if len(matched_banks) == 1:
             resolved_bank_id = matched_banks[0].id
             matched_bank_name = matched_banks[0].name
+            logger.debug(f"🔍 [Vector Search Resolver] Single bank matched: '{matched_bank_name}' (ID {resolved_bank_id})")
         elif len(matched_banks) > 1:
             resolved_bank_id = None
             matched_bank_name = ", ".join(b.name for b in matched_banks)
+            logger.debug(f"🔍 [Vector Search Resolver] Multi-bank query detected: '{matched_bank_name}'")
 
     if resolved_product_id is None:
         active_products = db.query(Product).filter(Product.isActive != False).all()
@@ -61,6 +64,7 @@ def resolve_bank_and_product(
             p_name_lower = p.name.lower()
             if p_name_lower in q_lower or (p_name_lower.replace(" loan", "") in q_lower):
                 resolved_product_id = p.id
+                logger.debug(f"🔍 [Vector Search Resolver] Product matched: '{p.name}' (ID {p.id})")
                 break
 
     return resolved_bank_id, resolved_product_id, matched_bank_name
@@ -86,6 +90,11 @@ def perform_policy_vector_search(
     is_multi_bank = res_bank_id is None or (matched_bank and "," in matched_bank)
     limit = min(top_k or (6 if is_multi_bank else 3), 8 if is_multi_bank else 4)
 
+    logger.info(
+        f"⚡ [pgvector Search] Query='{query}' | Filter BankId={res_bank_id} ({matched_bank or 'All'}) "
+        f"| ProductId={res_prod_id} | TopK={limit}"
+    )
+
     matches = rag_service.search_relevant_chunks(
         db=db,
         query_text=query,
@@ -94,18 +103,22 @@ def perform_policy_vector_search(
         top_k=limit,
     )
 
+    logger.debug(f"⚡ [pgvector Search] Retrieved {len(matches)} raw vector matches from PostgreSQL.")
+
     compact_excerpts = []
     for m in matches:
         text_snippet = (m.get("chunkText") or "").strip()
         if len(text_snippet) > 350:
             text_snippet = text_snippet[:350] + "..."
+        score = round(float(m.get("similarityScore", 0)), 4) if m.get("similarityScore") is not None else None
         compact_excerpts.append({
             "bankName": m.get("bankName"),
             "documentName": m.get("documentName"),
             "pageNumber": m.get("pageNumber") or 1,
             "policyExcerpt": text_snippet,
-            "similarityScore": round(float(m.get("similarityScore", 0)), 4) if m.get("similarityScore") is not None else None,
+            "similarityScore": score,
         })
+        logger.debug(f"   📄 Match: [{m.get('bankName')}] Doc: '{m.get('documentName')}' Pg {m.get('pageNumber')} | Score: {score}")
 
     return {
         "query": query,

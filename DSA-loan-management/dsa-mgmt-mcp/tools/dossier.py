@@ -1,8 +1,11 @@
+import logging
 from typing import Dict, Any, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
 from core.serializer import serialize_loan_application
 from app.models.loan_application import LoanApplication
+
+logger = logging.getLogger("mcp_tools.dossier")
 
 
 def handle_get_loan_dossier(
@@ -20,6 +23,11 @@ def handle_get_loan_dossier(
     (3) an agent's assigned active loan pipeline (pass agent_id), or
     (4) general loans matching a search query (pass customer_identifier).
     """
+    logger.info(
+        f"🔹 [get_loan_dossier] Lookup params: AppId={application_id}, CustId={customer_id}, "
+        f"AgentId={agent_id}, Search='{customer_identifier}'"
+    )
+
     user = resolve_auth_user(auth_token=auth_token, auth_context=auth_context)
     enforce_tool_rbac("get_loan_dossier", user)
 
@@ -31,8 +39,10 @@ def handle_get_loan_dossier(
     with get_db_session() as db:
         # Case 1: Specific Application Lookup
         if application_id is not None and int(application_id) > 0:
+            logger.debug(f"🔍 [get_loan_dossier] Fetching single Application #{application_id}")
             app = db.query(LoanApplication).filter(LoanApplication.id == int(application_id)).first()
             if not app:
+                logger.error(f"❌ [get_loan_dossier] Application #{application_id} not found.")
                 raise ValueError(f"Loan application #{application_id} not found.")
 
             enforce_record_ownership(
@@ -41,13 +51,16 @@ def handle_get_loan_dossier(
                 target_agent_id=app.agentId,
                 target_app=app,
             )
+            serialized = serialize_loan_application(app, hide_commission=hide_comm)
+            logger.info(f"✅ [get_loan_dossier] Retrieved App #{app.id} for borrower '{app.name}'")
             return {
                 "queryType": "single_application",
-                "application": serialize_loan_application(app, hide_commission=hide_comm),
+                "application": serialized,
             }
 
         # Case 2: Agent Assigned Applications Pipeline
         if agent_id is not None and int(agent_id) > 0:
+            logger.debug(f"🔍 [get_loan_dossier] Fetching pipeline for Agent #{agent_id}")
             enforce_record_ownership(auth_user=user, target_agent_id=int(agent_id))
             apps = (
                 db.query(LoanApplication)
@@ -56,6 +69,7 @@ def handle_get_loan_dossier(
                 .all()
             )
             loans = [serialize_loan_application(a, hide_commission=hide_comm) for a in apps]
+            logger.info(f"✅ [get_loan_dossier] Found {len(loans)} applications assigned to Agent #{agent_id}")
             return {
                 "queryType": "agent_pipeline",
                 "agentId": agent_id,
@@ -66,6 +80,7 @@ def handle_get_loan_dossier(
         # Case 3: Customer History & Profile Lookup
         search_cust = (customer_id or "").strip()
         if search_cust:
+            logger.debug(f"🔍 [get_loan_dossier] Fetching loan history for Customer '{search_cust}'")
             enforce_record_ownership(auth_user=user, target_customer_id=search_cust)
             query = db.query(LoanApplication).filter(
                 (LoanApplication.uniqueCustomerId == search_cust)
@@ -76,6 +91,7 @@ def handle_get_loan_dossier(
 
             apps = query.order_by(LoanApplication.id.desc()).all()
             loans = [serialize_loan_application(a, hide_commission=hide_comm) for a in apps]
+            logger.info(f"✅ [get_loan_dossier] Found {len(loans)} applications in history for Customer '{search_cust}'")
             return {
                 "queryType": "customer_history",
                 "customerId": search_cust,
@@ -86,6 +102,7 @@ def handle_get_loan_dossier(
         # Case 4: General Search
         if customer_identifier:
             term = f"%{customer_identifier.strip()}%"
+            logger.debug(f"🔍 [get_loan_dossier] Performing text search for '{customer_identifier}'")
             query = db.query(LoanApplication).filter(
                 (LoanApplication.name.ilike(term))
                 | (LoanApplication.email.ilike(term))
@@ -102,6 +119,7 @@ def handle_get_loan_dossier(
 
             apps = query.order_by(LoanApplication.id.desc()).limit(10).all()
             loans = [serialize_loan_application(a, hide_commission=hide_comm) for a in apps]
+            logger.info(f"✅ [get_loan_dossier] Search '{customer_identifier}' matched {len(loans)} applications.")
             return {
                 "queryType": "search_results",
                 "searchTerm": customer_identifier,
@@ -109,4 +127,5 @@ def handle_get_loan_dossier(
                 "applications": loans,
             }
 
+        logger.warning("❌ [get_loan_dossier] Missing required query parameters.")
         raise ValueError("Please provide an application_id, customer_id, agent_id, or customer_identifier.")

@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Any, List, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
@@ -5,6 +6,8 @@ from app.models.loan_application import LoanApplication
 from app.models.product_bank_link import ProductBankLink
 from app.models.bank import Bank
 from app.services.comparison.engine import compare_banks_for_application
+
+logger = logging.getLogger("mcp_tools.comparison")
 
 
 def handle_compare_bank_offers(
@@ -19,12 +22,16 @@ def handle_compare_bank_offers(
     Evaluates interest rates (ROI), maximum eligible loan amount, monthly EMI, total interest payable,
     processing fees, insurance requirements, and internal DSA payout commissions.
     """
+    logger.info(f"🔹 [compare_bank_offers] Request for Application #{application_id} | Specific BankIds: {bank_ids}")
+
     user = resolve_auth_user(auth_token=auth_token, auth_context=auth_context)
     enforce_tool_rbac("compare_bank_offers", user)
 
     with get_db_session() as db:
+        logger.debug(f"🔍 [compare_bank_offers] Querying LoanApplication #{application_id}")
         app = db.query(LoanApplication).filter(LoanApplication.id == application_id).first()
         if not app:
+            logger.error(f"❌ [compare_bank_offers] Loan application #{application_id} not found.")
             raise ValueError(f"Loan application #{application_id} not found.")
 
         enforce_record_ownership(
@@ -36,6 +43,7 @@ def handle_compare_bank_offers(
 
         selected_bank_ids = bank_ids or []
         if not selected_bank_ids:
+            logger.debug(f"🔍 [compare_bank_offers] Discovering partner banks offering Product #{app.productId}...")
             links = (
                 db.query(ProductBankLink)
                 .filter(ProductBankLink.productId == app.productId, ProductBankLink.isActive != False)
@@ -50,6 +58,8 @@ def handle_compare_bank_offers(
             selected_bank_ids = [b.id for b in all_active_banks]
 
         role = user_role or user.get("role", "customer")
+        logger.info(f"🏦 [compare_bank_offers] Evaluating {len(selected_bank_ids)} banks: {selected_bank_ids} for Role='{role}'")
+
         raw_result = compare_banks_for_application(
             db=db,
             application_id=application_id,
@@ -84,7 +94,9 @@ def handle_compare_bank_offers(
                 bank_entry["dsaCommissionPayoutAmt"] = comm_amt
 
             compact_banks.append(bank_entry)
+            logger.debug(f"   🏦 Bank: [{bank_entry['bankName']}] Status: {bank_entry['status']} | ROI: {bank_entry['interestRatePct']}% | EMI: ₹{bank_entry['monthlyEmi']}")
 
+        logger.info(f"✅ [compare_bank_offers] Comparison complete: {len(compact_banks)} banks evaluated.")
         return {
             "applicationId": raw_result.get("applicationId"),
             "customerName": raw_result.get("customerName"),

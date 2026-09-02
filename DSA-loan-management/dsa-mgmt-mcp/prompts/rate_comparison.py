@@ -1,10 +1,14 @@
-from typing import Optional, List
+import logging
+from typing import Optional
+
+logger = logging.getLogger("mcp_prompts.rate_comparison")
 
 
 def get_rate_comparison_prompt(application_id: int, bank_names: Optional[str] = None) -> str:
     """
     Standardized prompt template for multi-bank interest rate & EMI comparisons.
     """
+    logger.info(f"📝 [Prompt: compare_bank_offers] Generating rate comparison prompt for App #{application_id} (Filter: {bank_names or 'All'})")
     bank_clause = f" specifically focusing on {bank_names}" if bank_names else " across all active partner lenders"
     return f"""You are a Lead Financial Loan Advisor for DSA Loan Management.
 Synthesize a transparent, comparative analysis for Loan Application #{application_id}{bank_clause}:
