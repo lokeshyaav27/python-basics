@@ -1,7 +1,5 @@
 import logging
 from typing import Optional, Any
-from groq import Groq
-from openai import OpenAI
 from app.core.config import settings
 
 logger = logging.getLogger("ai_client")
@@ -16,17 +14,25 @@ def get_ai_client() -> Optional[Any]:
     if _ai_client_instance is None:
         if settings.USE_OLLAMA:
             try:
+                from openai import OpenAI
                 base_url = settings.OLLAMA_BASE_URL or "http://localhost:11434/v1"
                 logger.info(f"Initializing local Ollama AI client at base_url='{base_url}'")
                 _ai_client_instance = OpenAI(base_url=base_url, api_key="ollama")
+            except ImportError:
+                logger.error("The 'openai' package is required when USE_OLLAMA=True. Please install openai.")
+                return None
             except Exception as e:
                 logger.error(f"Failed to initialize Ollama client: {e}")
                 return None
         else:
             if settings.GROQ_API_KEY:
                 try:
+                    from groq import Groq
                     logger.info("Initializing Groq Cloud AI client")
                     _ai_client_instance = Groq(api_key=settings.GROQ_API_KEY)
+                except ImportError:
+                    logger.error("The 'groq' package is required for Groq Cloud. Please install groq.")
+                    return None
                 except Exception as e:
                     logger.error(f"Failed to initialize Groq client: {e}")
                     return None

@@ -8,10 +8,6 @@ from app.repositories.bank_repository import BankRepository
 from app.schemas.bank import BankRead
 from app.rag import rag_service
 from app.rag.text_extractor import extract_chunks_from_file
-from app.ai.services.policy_extractor_ai_service import (
-    extract_policy_parameters,
-    get_default_policy_parameters,
-)
 from app.core.config import settings
 from app.core.storage import (
     get_storage_path,
