@@ -14,10 +14,14 @@ if str(BE_DIR) not in sys.path:
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
-# Load .env from dsa-mgmt-be or local directory
-env_path = BE_DIR / ".env"
-if env_path.exists():
-    load_dotenv(dotenv_path=env_path)
+# Load .env: prioritize local dsa-mgmt-mcp/.env, fallback to dsa-mgmt-be/.env
+local_env = CURRENT_DIR / ".env"
+be_env = BE_DIR / ".env"
+
+if local_env.exists():
+    load_dotenv(dotenv_path=local_env)
+elif be_env.exists():
+    load_dotenv(dotenv_path=be_env)
 else:
     load_dotenv()
 
