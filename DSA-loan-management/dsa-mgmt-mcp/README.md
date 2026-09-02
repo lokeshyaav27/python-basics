@@ -2,6 +2,8 @@
 
 Production-grade **Model Context Protocol (MCP)** server for the DSA Loan Management Platform, implementing the open MCP specification using the official Python SDK.
 
+> 📖 **Full Architectural Guide**: See [MCP_ARCHITECTURE_GUIDE.md](./MCP_ARCHITECTURE_GUIDE.md) for sequence diagrams, client connection steps, and visual inspection using `npx @modelcontextprotocol/inspector`.
+
 ---
 
 ## 🏛️ Architecture & Highlights
