@@ -158,7 +158,6 @@ def seed_loan_applications():
                     loan_amount_required=Decimal(str(plan["req_amt"])),
                     preferred_tenure=plan["tenure"],
                     loan_purpose="Home Improvement",
-                    other=None,
                     required_amount=Decimal(str(plan["req_amt"])),
                     existing_obligations=Decimal("15000.00"),
                 )
@@ -175,11 +174,11 @@ def seed_loan_applications():
                 productId=prod.id,
                 agentId=assigned_agent.id,
                 bankId=None,
-                clientGeneralDetailTableId=cgd.id,
+                clientGeneralDetailId=cgd.id,
                 homeLoanDetailId=home_id,
                 carLoanDetailId=car_id,
                 personalLoanDetailId=personal_id,
-                status=None,
+                status="Pending Review",
                 description=None,
                 isActive=True,
             )
