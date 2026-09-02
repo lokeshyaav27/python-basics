@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 from dotenv import load_dotenv
 
 # Ensure parent and dsa-mgmt-be are available in sys.path
@@ -29,24 +28,38 @@ else:
 class MCPConfig:
     """Central configuration for DSA Model Context Protocol (MCP) Server."""
 
+    # Server Settings
     SERVER_NAME: str = os.getenv("MCP_SERVER_NAME", "dsa-loan-management-mcp")
     SERVER_VERSION: str = "1.0.0"
     HOST: str = os.getenv("MCP_HOST", "0.0.0.0")
     PORT: int = int(os.getenv("MCP_PORT", "8001"))
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
-    # Database
+    # Database Configuration (matches dsa-mgmt-be)
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/dsa_db",
+        "postgresql://postgres:admin@localhost:5432/dsa-mgmt",
     )
 
-    # JWT Authentication & RBAC
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "dsa-super-secret-jwt-key-change-in-prod-2025")
+    # JWT Authentication & RBAC (matches dsa-mgmt-be)
+    JWT_SECRET_KEY: str = os.getenv(
+        "JWT_SECRET_KEY",
+        "dsa-loan-mgmt-jwt-secret-key-2026-secure-auth",
+    )
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))
 
-    # RAG Vector Search
-    EMBEDDING_MODEL: str = os.getenv("RAG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
-    STORAGE_DIR: Path = Path(os.getenv("FILE_STORAGE_DIR", str(BE_DIR / "dsa-file-storage")))
+    # File Storage Directories
+    STORAGE_BASE_DIR: str = os.getenv("STORAGE_BASE_DIR", "dsa-file-storage")
+    STORAGE_BANK_DOCS_DIR: str = os.getenv("STORAGE_BANK_DOCS_DIR", "bank-documents")
+    STORAGE_DIR: Path = Path(os.getenv("FILE_STORAGE_DIR", str(BE_DIR / STORAGE_BASE_DIR)))
+
+    # RAG Vector Search Configuration
+    RAG_EMBEDDING_MODEL: str = os.getenv("RAG_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    RAG_CHUNK_SIZE: int = int(os.getenv("RAG_CHUNK_SIZE", "1000"))
+    RAG_CHUNK_OVERLAP: int = int(os.getenv("RAG_CHUNK_OVERLAP", "150"))
+    RAG_DEFAULT_TOP_K: int = int(os.getenv("RAG_DEFAULT_TOP_K", "4"))
+    RAG_SIMILARITY_THRESHOLD: float = float(os.getenv("RAG_SIMILARITY_THRESHOLD", "0.35"))
 
 
 mcp_config = MCPConfig()
