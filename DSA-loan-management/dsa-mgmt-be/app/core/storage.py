@@ -3,7 +3,6 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional, Tuple
 from uuid import uuid4
-from PIL import Image
 from fastapi import HTTPException, UploadFile
 from app.core.config import settings
 
@@ -33,6 +32,14 @@ def validate_and_save_image(
     Validates image file size, integrity, and optional aspect ratio, then saves it to disk.
     Returns the generated unique filename.
     """
+    try:
+        from PIL import Image
+    except ImportError:
+        raise HTTPException(
+            status_code=500,
+            detail="Pillow library is required for image processing. Please install Pillow.",
+        )
+
     contents = file.file.read()
     size_limit = max_size_mb * 1024 * 1024
     if len(contents) > size_limit:

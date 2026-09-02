@@ -10,3 +10,4 @@ pyjwt>=2.8.0
 sentence-transformers
 PyMuPDF
 pgvector
+Pillow>=10.0.0

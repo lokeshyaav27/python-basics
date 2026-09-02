@@ -1,6 +1,9 @@
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-import fitz  # PyMuPDF
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz  # Fallback for older PyMuPDF versions
 from app.rag.config import rag_config
 
 
