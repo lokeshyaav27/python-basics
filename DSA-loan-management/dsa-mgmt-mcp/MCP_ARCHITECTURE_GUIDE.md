@@ -59,54 +59,35 @@ flowchart LR
 
 ## 2. Project Structure & Module Organization
 
-`dsa-mgmt-mcp` is structured with clean separation of concerns:
+The platform uses a shared core package architecture (`dsa-common`) to eliminate code duplication while keeping microservices completely decoupled:
 
 ```
-dsa-mgmt-mcp/
-├── core/                           # Core infrastructure & security
-│   ├── __init__.py
-│   ├── config.py                   # Central settings, environment variables
-│   ├── auth.py                     # JWT validation, role resolution, RBAC rules
-│   └── serializer.py               # Loan application data serialization
+DSA-loan-management/
+├── dsa-common/                        # 📦 Shared Single Source of Truth
+│   ├── pyproject.toml                 # Package definition (pip install -e ../dsa-common)
+│   └── dsa_common/
+│       ├── constants.py               # Underwriting limits, FOIR/LTV caps, CIBIL tiers
+│       ├── models/                    # Single source for all SQLAlchemy ORM models
+│       ├── services/                  # Underwriting & multi-bank comparison engines
+│       └── repositories/              # Shared data queries, analytics & KPI calculations
 │
-├── db/                             # Database access layer
-│   ├── __init__.py
-│   └── session.py                  # SQLAlchemy engine & SessionLocal context manager
+├── dsa-mgmt-be/                       # 🌐 FastAPI Main Backend Service (:8000)
+│   ├── requirements.txt               # Includes -e ../dsa-common
+│   └── app/
+│       ├── api/                       # REST API endpoints
+│       └── ai/                        # AI Chat orchestrator & sub-agents
 │
-├── rag/                            # Retrieval-Augmented Generation
-│   ├── __init__.py
-│   └── vector_search.py            # pgvector semantic credit policy search
-│
-├── tools/                          # Standardized MCP Tools (@mcp.tool)
-│   ├── __init__.py
-│   ├── eligibility.py              # check_loan_eligibility
-│   ├── policy_search.py            # search_bank_policies
-│   ├── comparison.py               # compare_bank_offers
-│   ├── dossier.py                  # get_loan_dossier
-│   ├── catalog.py                  # get_bank_product_catalog
-│   ├── directory.py                # get_agent_directory (Admin only)
-│   ├── analytics.py                # get_commission_analytics, get_portfolio_kpis
-│   └── enquiries.py                # get_contact_enquiries
-│
-├── resources/                      # Standardized MCP Resources (@mcp.resource)
-│   ├── __init__.py
-│   ├── bank_catalog.py             # dsa://catalog/banks, dsa://catalog/products
-│   └── policy_docs.py              # dsa://policies/{bank_id}
-│
-├── prompts/                        # Standardized MCP Prompts (@mcp.prompt)
-│   ├── __init__.py
-│   ├── underwriting.py             # underwriting_review
-│   └── rate_comparison.py          # compare_bank_offers
-│
-├── tests/
-│   └── test_mcp_server.py          # Automated unit test suite
-│
-├── server.py                       # Main FastMCP application entrypoint
-├── requirements.txt                # Python dependencies
-├── .env                            # Local configuration
-├── .env.example                    # Template configuration
-├── mcp_config.json                 # Desktop & IDE host configuration
-└── README.md                       # Quickstart documentation
+└── dsa-mgmt-mcp/                      # 🤖 Standalone Model Context Protocol Server (:8001)
+    ├── requirements.txt               # Includes -e ../dsa-common
+    ├── core/                          # Security, JWT auth, RBAC & serializers
+    ├── db/                            # DB session context manager
+    ├── rag/                           # Embeddings & pgvector semantic policy search
+    ├── tools/                         # 8 Production-grade MCP tools
+    ├── resources/                     # Live JSON resources (catalog, policy docs)
+    ├── prompts/                       # Guided prompt templates
+    ├── tests/                         # Automated unit test suite
+    ├── server.py                      # FastMCP Application Entrypoint
+    └── mcp_config.json                # MCP Host configuration (Claude / Cursor / IDE)
 ```
 
 ---

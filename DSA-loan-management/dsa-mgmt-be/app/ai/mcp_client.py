@@ -6,13 +6,6 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-# Ensure dsa-mgmt-mcp is discoverable
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-MCP_DIR = PROJECT_ROOT / "dsa-mgmt-mcp"
-
-if str(MCP_DIR) not in sys.path:
-    sys.path.insert(0, str(MCP_DIR))
-
 from app.core.config import settings
 
 logger = logging.getLogger("mcp_client")

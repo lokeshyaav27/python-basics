@@ -7,18 +7,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import text
 from app.db.session import SessionLocal, engine
-from app.models.base import Base
-from app.models.product import Product
-from app.models.bank import Bank
-from app.models.product_bank_link import ProductBankLink
-from app.models.bank_document import BankDocument
-from app.models.agent import Agent
-from app.models.client_general_detail import ClientGeneralDetail
-from app.models.home_loan_detail import HomeLoanDetail
-from app.models.car_loan_detail import CarLoanDetail
-from app.models.personal_loan_detail import PersonalLoanDetail
-from app.models.loan_application import LoanApplication
-from app.models.contact_enquiry import ContactEnquiry
+from dsa_common.models import Base
+from dsa_common.models import Product
+from dsa_common.models import Bank
+from dsa_common.models import ProductBankLink
+from dsa_common.models import BankDocument
+from dsa_common.models import Agent
+from dsa_common.models import ClientGeneralDetail
+from dsa_common.models import HomeLoanDetail
+from dsa_common.models import CarLoanDetail
+from dsa_common.models import PersonalLoanDetail
+from dsa_common.models import LoanApplication
+from dsa_common.models import ContactEnquiry
 from app.db.db_utils import ensure_database_exists
 
 # Import modular seeders

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
 
 from app.db.session import get_db
-from app.models.ai_issue_report import AIIssueReport
+from dsa_common.models import AIIssueReport
 from app.schemas.ai_issue import (
     ReportIssueRequest,
     ReportIssueResponse,

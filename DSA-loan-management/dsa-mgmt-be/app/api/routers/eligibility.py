@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.repositories.loan_application_repository import LoanApplicationRepository
+from dsa_common.repositories import LoanApplicationRepository
 from app.services.eligibility_service import EligibilityService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response

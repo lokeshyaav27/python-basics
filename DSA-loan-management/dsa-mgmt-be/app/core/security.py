@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.db.session import SessionLocal, get_db
-from app.models.agent import Agent
-from app.models.loan_application import LoanApplication
+from dsa_common.models import Agent
+from dsa_common.models import LoanApplication
 
 security = HTTPBearer(auto_error=False)
 

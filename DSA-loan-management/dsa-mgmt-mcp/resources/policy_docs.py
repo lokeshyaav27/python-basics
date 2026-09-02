@@ -2,9 +2,7 @@ import json
 import logging
 from typing import Dict, Any
 from db.session import get_db_session
-from app.models.bank import Bank
-from app.models.bank_document import BankDocument
-from app.models.product_bank_link import ProductBankLink
+from dsa_common.models import Bank, BankDocument, ProductBankLink
 
 logger = logging.getLogger("mcp_resources.policy_docs")
 
@@ -36,9 +34,9 @@ def get_bank_policy_resource(bank_id: int) -> str:
             {
                 "id": d.id,
                 "documentName": d.documentName,
-                "documentType": d.documentType,
-                "fileSize": d.fileSize,
-                "uploadDate": d.uploadDate.isoformat() if d.uploadDate else None,
+                "documentType": getattr(d, "documentType", "PDF"),
+                "fileSize": getattr(d, "fileSize", None),
+                "uploadDate": d.createdAt.isoformat() if d.createdAt else None,
             }
             for d in docs
         ]

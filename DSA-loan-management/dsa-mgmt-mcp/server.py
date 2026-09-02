@@ -7,13 +7,9 @@ import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-# Ensure path resolution
+# Ensure local path resolution
 CURRENT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = CURRENT_DIR.parent
-BE_DIR = PROJECT_ROOT / "dsa-mgmt-be"
 
-if str(BE_DIR) not in sys.path:
-    sys.path.insert(0, str(BE_DIR))
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 

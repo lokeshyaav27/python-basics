@@ -11,11 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sqlalchemy import text
 from app.db.session import SessionLocal, engine
 from app.db.db_utils import ensure_database_exists
-from app.models.base import Base
-from app.models.product import Product
-from app.models.bank import Bank
-from app.models.product_bank_link import ProductBankLink
-from app.models.bank_document import BankDocument
+from dsa_common.models import Base
+from dsa_common.models import Product
+from dsa_common.models import Bank
+from dsa_common.models import ProductBankLink
+from dsa_common.models import BankDocument
 from app.rag import rag_service
 from app.ai.services.policy_extractor_ai_service import get_default_policy_parameters
 

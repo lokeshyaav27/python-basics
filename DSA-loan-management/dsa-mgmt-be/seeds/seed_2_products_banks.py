@@ -8,9 +8,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.session import SessionLocal, engine
 from app.db.db_utils import ensure_database_exists
-from app.models.base import Base
-from app.models.product import Product
-from app.models.bank import Bank
+from dsa_common.models import Base
+from dsa_common.models import Product
+from dsa_common.models import Bank
 
 
 def copy_products_banks_static_assets():

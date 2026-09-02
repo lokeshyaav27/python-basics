@@ -9,14 +9,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.db.session import SessionLocal, engine
 from app.db.db_utils import ensure_database_exists
-from app.models.base import Base
-from app.models.product import Product
-from app.models.agent import Agent
-from app.models.client_general_detail import ClientGeneralDetail
-from app.models.home_loan_detail import HomeLoanDetail
-from app.models.car_loan_detail import CarLoanDetail
-from app.models.personal_loan_detail import PersonalLoanDetail
-from app.models.loan_application import LoanApplication
+from dsa_common.models import Base
+from dsa_common.models import Product
+from dsa_common.models import Agent
+from dsa_common.models import ClientGeneralDetail
+from dsa_common.models import HomeLoanDetail
+from dsa_common.models import CarLoanDetail
+from dsa_common.models import PersonalLoanDetail
+from dsa_common.models import LoanApplication
 
 
 def seed_loan_applications():

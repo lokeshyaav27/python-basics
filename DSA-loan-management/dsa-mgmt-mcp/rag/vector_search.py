@@ -2,9 +2,9 @@ import logging
 import re
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
-from app.models.bank import Bank
-from app.models.product import Product
-from app.rag import rag_service
+from sqlalchemy import text
+from dsa_common.models import Bank, Product
+from rag.embeddings import get_embedding_model
 
 logger = logging.getLogger("mcp_rag.vector_search")
 
@@ -95,30 +95,57 @@ def perform_policy_vector_search(
         f"| ProductId={res_prod_id} | TopK={limit}"
     )
 
-    matches = rag_service.search_relevant_chunks(
-        db=db,
-        query_text=query,
-        bank_id=res_bank_id,
-        product_id=res_prod_id,
-        top_k=limit,
-    )
+    model = get_embedding_model()
+    query_vector = model.encode(query.strip(), normalize_embeddings=True).tolist()
+    query_vector_str = "[" + ",".join(str(x) for x in query_vector) + "]"
 
-    logger.debug(f"⚡ [pgvector Search] Retrieved {len(matches)} raw vector matches from PostgreSQL.")
+    where_clauses = ["1=1"]
+    params = {"query_vec": query_vector_str, "top_k": limit}
+
+    if res_bank_id is not None:
+        where_clauses.append("c.bank_id = :bank_id")
+        params["bank_id"] = res_bank_id
+
+    if res_prod_id is not None:
+        where_clauses.append("c.product_id = :product_id")
+        params["product_id"] = res_prod_id
+
+    where_sql = " AND ".join(where_clauses)
+
+    sql = text(f"""
+        SELECT 
+            c.id AS chunk_id,
+            c.bank_document_id,
+            b.name AS bank_name,
+            p.name AS product_name,
+            d.document_name,
+            c.page_number,
+            c.chunk_text,
+            1 - (c.embedding <=> :query_vec) AS similarity_score
+        FROM bank_document_chunks c
+        JOIN banks b ON b.id = c.bank_id
+        JOIN products p ON p.id = c.product_id
+        JOIN bank_documents d ON d.id = c.bank_document_id
+        WHERE {where_sql}
+        ORDER BY c.embedding <=> :query_vec
+        LIMIT :top_k
+    """)
+
+    results = db.execute(sql, params).mappings().all()
 
     compact_excerpts = []
-    for m in matches:
-        text_snippet = (m.get("chunkText") or "").strip()
+    for r in results:
+        text_snippet = (r["chunk_text"] or "").strip()
         if len(text_snippet) > 350:
             text_snippet = text_snippet[:350] + "..."
-        score = round(float(m.get("similarityScore", 0)), 4) if m.get("similarityScore") is not None else None
+        score = round(float(r["similarity_score"]), 4) if r["similarity_score"] is not None else None
         compact_excerpts.append({
-            "bankName": m.get("bankName"),
-            "documentName": m.get("documentName"),
-            "pageNumber": m.get("pageNumber") or 1,
+            "bankName": r["bank_name"],
+            "documentName": r["document_name"],
+            "pageNumber": r["page_number"] or 1,
             "policyExcerpt": text_snippet,
             "similarityScore": score,
         })
-        logger.debug(f"   📄 Match: [{m.get('bankName')}] Doc: '{m.get('documentName')}' Pg {m.get('pageNumber')} | Score: {score}")
 
     return {
         "query": query,

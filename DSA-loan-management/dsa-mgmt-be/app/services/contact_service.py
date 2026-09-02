@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
-from app.models.contact_enquiry import ContactEnquiry
-from app.repositories.contact_repository import ContactRepository
+from dsa_common.models import ContactEnquiry
+from dsa_common.repositories import ContactRepository
 
 
 class ContactService:

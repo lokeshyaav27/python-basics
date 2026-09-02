@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.repositories.bank_repository import BankRepository
+from dsa_common.repositories import BankRepository
 from app.services.bank_service import BankService
 from app.schemas.bank import BankRead
 from app.core.security import require_role, CurrentUser

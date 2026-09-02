@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.models.bank_document_chunk import BankDocumentChunk
+from dsa_common.models import BankDocumentChunk
 from app.rag.config import rag_config, RAGConfig
 from app.rag.text_extractor import extract_chunks_from_file
 from app.rag.embeddings import get_embedding_model

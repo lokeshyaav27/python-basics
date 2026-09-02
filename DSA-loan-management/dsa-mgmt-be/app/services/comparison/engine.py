@@ -5,11 +5,10 @@ from typing import Dict, Any, List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.bank import Bank
-from app.models.loan_application import LoanApplication
-from app.services.eligibility.engine import check_applicant_completeness
+from dsa_common.models import Bank, LoanApplication
+from dsa_common.services.eligibility import check_applicant_completeness
+from dsa_common.services.comparison import evaluate_single_bank_offer
 from app.ai.services.bank_comparison_ai_service import generate_comparative_ai_analysis
-from .bank_evaluator import evaluate_single_bank_offer
 
 
 def compare_banks_for_application(
@@ -116,4 +115,3 @@ def compare_banks_for_application(
             "Terms are subject to bank credit approval and document verification."
         ),
     }
-

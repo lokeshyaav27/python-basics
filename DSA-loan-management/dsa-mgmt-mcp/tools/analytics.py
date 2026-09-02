@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac, MCPAuthError
-from app.repositories.loan_application_repository import LoanApplicationRepository
+from dsa_common.repositories import LoanApplicationRepository
 
 logger = logging.getLogger("mcp_tools.analytics")
 

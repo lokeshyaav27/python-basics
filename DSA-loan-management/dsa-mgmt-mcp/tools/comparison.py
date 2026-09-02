@@ -2,10 +2,8 @@ import logging
 from typing import Dict, Any, List, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
-from app.models.loan_application import LoanApplication
-from app.models.product_bank_link import ProductBankLink
-from app.models.bank import Bank
-from app.services.comparison.engine import compare_banks_for_application
+from dsa_common.models import LoanApplication, ProductBankLink, Bank
+from dsa_common.services.comparison import compare_banks_for_application
 
 logger = logging.getLogger("mcp_tools.comparison")
 
@@ -85,11 +83,7 @@ def handle_compare_bank_offers(
             }
             if is_agent_or_admin:
                 comm_pct = b.get("commissionPct")
-                comm_amt = b.get("commissionAmount") or (
-                    b.get("dsaCommission", {}).get("commissionPayoutAmt")
-                    if isinstance(b.get("dsaCommission"), dict)
-                    else None
-                )
+                comm_amt = b.get("commissionAmount")
                 bank_entry["dsaCommissionPct"] = comm_pct
                 bank_entry["dsaCommissionPayoutAmt"] = comm_amt
 

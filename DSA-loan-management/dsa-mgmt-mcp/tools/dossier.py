@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 from db.session import get_db_session
 from core.auth import resolve_auth_user, enforce_tool_rbac, enforce_record_ownership
 from core.serializer import serialize_loan_application
-from app.models.loan_application import LoanApplication
+from dsa_common.models import LoanApplication
 
 logger = logging.getLogger("mcp_tools.dossier")
 

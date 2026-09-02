@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.db.session import get_db
-from app.repositories.contact_repository import ContactRepository
+from dsa_common.repositories import ContactRepository
 from app.services.contact_service import ContactService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response

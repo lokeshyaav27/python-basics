@@ -1,16 +1,16 @@
 from typing import List, Optional, Dict, Any, Tuple
 from fastapi import HTTPException
 from sqlalchemy import or_
-from app.models.loan_application import LoanApplication
-from app.models.agent import Agent
-from app.models.bank import Bank
-from app.models.client_general_detail import ClientGeneralDetail
-from app.models.home_loan_detail import HomeLoanDetail
-from app.models.car_loan_detail import CarLoanDetail
-from app.models.personal_loan_detail import PersonalLoanDetail
-from app.repositories.loan_application_repository import LoanApplicationRepository
-from app.repositories.agent_repository import AgentRepository
-from app.repositories.bank_repository import BankRepository
+from dsa_common.models import LoanApplication
+from dsa_common.models import Agent
+from dsa_common.models import Bank
+from dsa_common.models import ClientGeneralDetail
+from dsa_common.models import HomeLoanDetail
+from dsa_common.models import CarLoanDetail
+from dsa_common.models import PersonalLoanDetail
+from dsa_common.repositories import LoanApplicationRepository
+from dsa_common.repositories import AgentRepository
+from dsa_common.repositories import BankRepository
 from app.core.security import CurrentUser
 
 

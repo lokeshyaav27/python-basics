@@ -1,10 +1,10 @@
 import os
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, UploadFile
-from app.models.bank import Bank
-from app.models.product_bank_link import ProductBankLink
-from app.models.bank_document import BankDocument
-from app.repositories.bank_repository import BankRepository
+from dsa_common.models import Bank
+from dsa_common.models import ProductBankLink
+from dsa_common.models import BankDocument
+from dsa_common.repositories import BankRepository
 from app.schemas.bank import BankRead
 from app.rag import rag_service
 from app.rag.text_extractor import extract_chunks_from_file

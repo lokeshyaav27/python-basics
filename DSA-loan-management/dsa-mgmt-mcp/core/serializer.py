@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from app.models.loan_application import LoanApplication
+from dsa_common.models import LoanApplication
 
 
 def serialize_loan_application(app: LoanApplication, hide_commission: bool = False) -> Dict[str, Any]:
@@ -28,7 +28,7 @@ def serialize_loan_application(app: LoanApplication, hide_commission: bool = Fal
         "agentEmail": app.agent.email if app.agent else None,
         "bankId": app.bankId,
         "bankName": app.bank.name if app.bank else "Not Selected",
-        "bankLogo": app.bank.logo if app.bank else None,
+        "bankLogo": getattr(app.bank, "logo", None) if app.bank else None,
     }
 
     if cgd:

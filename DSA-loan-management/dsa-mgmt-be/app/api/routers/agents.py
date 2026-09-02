@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db.session import get_db
-from app.repositories.agent_repository import AgentRepository
+from dsa_common.repositories import AgentRepository
 from app.services.agent_service import AgentService
 from app.core.security import require_role, get_current_user, CurrentUser
 from app.core.response import success_response

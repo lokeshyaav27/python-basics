@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from app.api import routers as api_routers
 from app.db.session import engine
-from app.models.base import Base
+from dsa_common.models import Base
 from app.core.config import settings
 from app.core.response import error_response
 from fastapi.staticfiles import StaticFiles

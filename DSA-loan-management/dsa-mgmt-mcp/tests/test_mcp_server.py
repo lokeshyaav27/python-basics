@@ -1,7 +1,7 @@
 import sys
 import unittest
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import jwt
 
 CURRENT_DIR = Path(__file__).resolve().parent.parent
@@ -27,8 +27,8 @@ def generate_test_jwt(role: str, user_id: int = 1, name: str = "Test User") -> s
         "email": f"{role}@test.com",
         "mobile": "9999999999",
         "uniqueCustomerId": "CUST-001" if role == "customer" else None,
-        "exp": datetime.utcnow() + timedelta(hours=1),
-        "iat": datetime.utcnow(),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        "iat": datetime.now(timezone.utc),
     }
     return jwt.encode(payload, mcp_config.JWT_SECRET_KEY, algorithm=mcp_config.JWT_ALGORITHM)
 

@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 from app.db.session import get_db
-from app.repositories.loan_application_repository import LoanApplicationRepository
-from app.repositories.agent_repository import AgentRepository
-from app.repositories.bank_repository import BankRepository
+from dsa_common.repositories import LoanApplicationRepository
+from dsa_common.repositories import AgentRepository
+from dsa_common.repositories import BankRepository
 from app.services.loan_application_service import LoanApplicationService
 from app.core.security import require_role, CurrentUser
 from app.core.response import success_response

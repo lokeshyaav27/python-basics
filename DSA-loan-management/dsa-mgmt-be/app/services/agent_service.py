@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, UploadFile
-from app.models.agent import Agent
-from app.repositories.agent_repository import AgentRepository
+from dsa_common.models import Agent
+from dsa_common.repositories import AgentRepository
 from app.core.config import settings
 from app.core.security import hash_password, CurrentUser
 from app.core.storage import validate_and_save_image, delete_storage_file

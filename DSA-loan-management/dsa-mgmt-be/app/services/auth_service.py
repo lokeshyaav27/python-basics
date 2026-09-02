@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.repositories.agent_repository import AgentRepository
-from app.repositories.loan_application_repository import LoanApplicationRepository
+from dsa_common.repositories import AgentRepository
+from dsa_common.repositories import LoanApplicationRepository
 from app.core.security import (
     create_access_token,
     hash_password,

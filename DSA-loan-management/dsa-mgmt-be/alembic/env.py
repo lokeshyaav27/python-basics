@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.core.config import settings
 import app.models  # Ensure all models are registered on Base.metadata
-from app.models.base import Base
+from dsa_common.models import Base
 
 config = context.config
 fileConfig(config.config_file_name)

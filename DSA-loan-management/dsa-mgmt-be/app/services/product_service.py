@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException, UploadFile
-from app.models.product import Product
-from app.repositories.product_repository import ProductRepository
+from dsa_common.models import Product
+from dsa_common.repositories import ProductRepository
 from app.schemas.product import ProductRead
 from app.core.config import settings
 from app.core.storage import validate_and_save_image, delete_storage_file
